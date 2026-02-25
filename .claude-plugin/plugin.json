@@ -1,0 +1,33 @@
+{
+  "name": "finplan",
+  "description": "Personal finance projection engine — Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards. Powered by 60+ MCP tools.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Prethink",
+    "url": "https://prethink.io"
+  },
+  "homepage": "https://finplan.prethink.io",
+  "repository": "https://github.com/bestdan/finplan-plugin",
+  "license": "proprietary",
+  "keywords": [
+    "finance",
+    "projection",
+    "retirement",
+    "tax",
+    "monte-carlo",
+    "financial-planning"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "mcp__finplan__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-curl-allowlist.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
