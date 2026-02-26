@@ -67,11 +67,11 @@ result = run_projection(
 )
 
 # result["urls"]["data"] -> full time series JSON — NEVER read into context
-# result["urls"]["schema"] -> data dictionary (not needed; use inline schema below)
+# result["urls"]["schema"] -> data dictionary — read if you need to confirm field names
 # result["summary"] -> final balance percentiles, inputs, method info
 ```
 
-**CRITICAL**: NEVER use the Read tool on data files. Use `summary` for statistics, and `jq` for targeted queries. The data file schema is:
+**CRITICAL**: NEVER load data files into context. See [charts.md — data handling rules](charts.md#data-handling-rules) for the full policy. Use `summary` for statistics, `jq` for targeted queries. The data file schema is:
 
 ```json
 {

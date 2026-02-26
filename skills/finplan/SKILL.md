@@ -40,16 +40,22 @@ result = run_projection(
     monthly_contribution_cents=200_000,
 )
 # result["urls"]["data"] -> full time series JSON — NEVER read into context
-# result["urls"]["schema"] -> data dictionary — usually not needed (use inline schemas in package docs)
+# result["urls"]["schema"] -> data dictionary — read if you need to understand data structure
 # result["summary"] -> key statistics (final balance percentiles) for immediate use
 ```
 
-**CRITICAL**: NEVER use the Read tool on data files (`*_data.json`). They contain large time-series arrays (hundreds of KB) that waste context tokens and make sessions extremely slow. Instead:
+**CRITICAL**: NEVER load data files into context. This means:
+
+- No `Read` tool on `*_data.json` files
+- No `WebFetch` or `fetch()` on `urls.data` URLs
+- No hardcoding data arrays extracted from tool responses as JS literals (e.g., `const p50 = [100, 101, ...]`)
+
+All three do the same thing: push hundreds of KB of time-series data through the context window, wasting tokens and producing brittle output. Instead:
 
 - **Use `summary`** from the tool response for statistics, percentile values, and decision-making
-- **Use inline schemas** documented in [charts.md](packages/charts.md) and [file-tools.md](packages/file-tools.md) to understand data structure without reading files
+- **Use `urls.schema`** or inline schemas in [charts.md](packages/charts.md) to understand data structure
 - **Use `jq`** for targeted queries when you need specific values from data files
-- **Use bash** to inject data into HTML files for dashboards (see [file-tools.md](packages/file-tools.md))
+- **Use the placeholder/inject pattern** for any HTML that renders chart data (see [charts.md](packages/charts.md#html-rendering-workflow))
 
 **Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_scenario_comparison_chart`
 

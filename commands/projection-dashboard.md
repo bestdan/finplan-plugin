@@ -86,6 +86,7 @@ Each card shows:
 - X-axis: age (from current age to 90)
 - Vertical dashed milestone lines for: retirement age, Social Security age, college years, or any other goal target dates
 - Annotated milestone labels
+- Dashed purple net deposits line showing total capital committed over time (initial balance + cumulative contributions)
 
 #### Charts 2+: One chart per goal (2-column grid)
 
@@ -95,6 +96,7 @@ For each goal, generate the appropriate chart type:
 
 - Stacked area of linked accounts (each account a different color) showing their individual contribution to the combined total
 - Fan chart bands (P10-P90) overlaid on the combined median line
+- Dashed purple net deposits line showing total capital committed (initial balance + cumulative contributions)
 - Milestone markers for retirement age and SS start age
 - Use chained projections: accumulation phase (positive contributions) then retirement phase (negative contributions = withdrawals minus SS income)
 
@@ -102,6 +104,7 @@ For each goal, generate the appropriate chart type:
 
 - Fan chart of the linked account(s) balance over time
 - Horizontal dashed target line at the target_amount
+- Dashed purple net deposits line showing total capital committed (initial balance + cumulative contributions)
 - Milestone markers for key dates (e.g., college start/end, purchase date)
 - If the goal has a withdrawal phase (like college), show contributions stopping and withdrawals during that period
 
@@ -136,13 +139,13 @@ For each goal, generate the appropriate chart type:
 - `urls.schema` — data dictionary with field types and jq paths — **read this if you need to understand the data structure**
 - `summary` — key statistics for immediate use (final balance percentiles, etc.)
 
-#### CRITICAL: Do NOT read data files
+#### CRITICAL: Do NOT read or inline data
 
-**NEVER use the Read tool on data files.** Data files contain large time-series arrays (hundreds of KB). Reading them wastes tokens and makes the session extremely slow. You already have everything you need:
+**NEVER load data files into context** — no `Read` tool, no `WebFetch`, no hardcoded JS arrays. See [charts.md — data handling rules](../skills/finplan/packages/charts.md#data-handling-rules) for the full policy.
 
-- **Summary cards**: Use the inline `summary` from each MCP tool response (contains percentile statistics, final balances, etc.)
-- **Chart rendering code**: Read `urls.schema` if needed to confirm field names and types — or use the inline schemas below as a quick reference
-- **Embedding data into HTML**: Use bash to inject file contents directly into the HTML (see below)
+- **Summary cards**: Use `summary` from each MCP tool response (small scalar values, safe to use directly)
+- **Chart rendering**: Use the inline schemas below or read `urls.schema` to confirm field names
+- **Embedding data**: Use the placeholder/inject pattern below
 
 #### Data schemas (quick reference — or read `urls.schema` for full details)
 
@@ -189,6 +192,13 @@ const EDUCATION_DATA = __DATA_EDUCATION__;
 // TOTAL_PORTFOLIO_DATA.net_deposits[i].net_deposits_cents / 100
 ```
 
+**IMPORTANT — Net deposits must include the initial balance.** The `net_deposits` array
+from `run_projection` already includes the starting account balance at month 0 — it is
+NOT just cumulative contributions. Net deposits represents total capital committed
+(initial balance + cumulative contributions over time). When building custom charts,
+always use the pre-computed `net_deposits` data from `run_projection`. Never manually
+calculate net deposits as only cumulative contributions starting from zero.
+
 **Step 2**: Run a bash command to replace each placeholder with the actual data file:
 
 ```bash
@@ -214,33 +224,15 @@ with open(html_path, 'w') as f:
 
 Use the actual `urls.data` paths returned by each MCP tool call (strip the `file://` prefix for local paths, or use HTTP URLs as-is with `urllib` if remote).
 
-**Summary**: NEVER read `urls.data` files into context. Use `summary` for statistics, read `urls.schema` if you need to confirm data structure, and use bash to inject data files into the HTML.
+**Summary**: Use `summary` for statistics, placeholder tokens + bash injection for HTML data embedding.
 
-### Chart.js chart conventions
+### Chart styling
 
-- All charts: `{ responsive: true, maintainAspectRatio: false }`
-- Interaction mode: `{ mode: 'index', intersect: false }`
-- White backgrounds via CSS on canvas container
-- Grid color: `#e5e7eb`
-- Fan chart bands: use `fill: '-1'` with decreasing opacity from center (0.2 for p25-p75, 0.1 for outer bands)
-- Milestone lines: dashed, color-coded per milestone type via annotation plugin
-- Currency formatting: custom tick callback with `$` prefix and SI suffixes
-- Legend: positioned at top
+Follow the chart styling conventions in [charts.md](../skills/finplan/packages/charts.md#chart-styling) — colors, fonts, fan chart bands, account colors, goal colors, and page design are all defined there.
 
-### Color palette for accounts
+Dashboard-specific additions:
 
-Assign distinct colors to each account. Suggested defaults:
-
-- `#0ea5e9` (sky blue), `#8b5cf6` (purple), `#ec4899` (pink), `#f59e0b` (amber), `#10b981` (emerald), `#ef4444` (red), `#6366f1` (indigo)
-
-### Color palette for goal fan charts
-
-Each goal gets its own fan chart color:
-
-- Retirement: green tones (`rgba(16, 185, 129, ...)`)
-- Education/college: amber tones (`rgba(245, 158, 11, ...)`)
-- Total portfolio: blue tones (`rgba(59, 130, 246, ...)`)
-- Other goals: use remaining palette colors
+- Milestone lines: dashed, color-coded per milestone type via Chart.js annotation plugin
 
 ## Step 5: Open the file
 

@@ -29,17 +29,17 @@ MCP tools that produce large datasets always write full results to a file server
 }
 ```
 
-- **`urls.data`**: Full JSON dataset (large — **NEVER** load into context via Read)
-- **`urls.schema`**: Data dictionary describing field types, structure, and jq paths (usually not needed — use inline schemas in package docs instead)
+- **`urls.data`**: Full JSON dataset — **NEVER load into context** (see [charts.md — data handling rules](charts.md#data-handling-rules))
+- **`urls.schema`**: Data dictionary describing field types, structure, and jq paths — read if needed
 - **`summary`**: Key statistics extracted from the data (enough for most decisions)
 
 ## Workflow
 
 1. Call the tool — response always includes URLs + compact summary
 2. Use the inline **summary** for immediate insights/decisions
-3. If you need to understand the data structure, refer to the inline schemas documented in the relevant package reference (e.g., [charts.md](charts.md) for chart tools, [projection.md](projection.md) for projections). You should NOT need to read the schema file in most cases.
-4. If querying specific values, **use `jq`** — do NOT load the full data file into context via Read
-5. For **embedding data into HTML files** (e.g., dashboards), use bash to inject file contents directly (see below)
+3. If you need to understand the data structure, read `urls.schema` or refer to inline schemas in [charts.md](charts.md) and [projection.md](projection.md)
+4. If querying specific values, use `jq` — do NOT load the full data file into context
+5. For **embedding data into HTML**, use the placeholder/inject pattern (see below and [charts.md](charts.md#html-rendering-workflow))
 
 ```bash
 # Use jq to extract specific values (do NOT cat or Read the whole data file)
@@ -52,11 +52,11 @@ jq '.percentile_timelines.p50[0:12]' /tmp/finplan/{uid}_data.json
 jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' /tmp/finplan/{uid}_data.json
 ```
 
-**CRITICAL**: NEVER use the Read tool on data files (`*_data.json`). Data files can be hundreds of KB and reading them wastes context tokens and makes sessions extremely slow. Use `jq` for targeted queries, or use the inline summaries from tool responses.
+**CRITICAL**: NEVER load data files into context. Use `jq` for targeted queries, or use inline summaries from tool responses.
 
 ## Embedding data in self-contained HTML files
 
-When building HTML files (e.g., dashboards), data must be embedded inline as JavaScript constants. **Do NOT read data files into your context to embed them.** Instead, use this pattern:
+When building HTML files, embed data via the placeholder/inject pattern — **never read data files into context or hardcode arrays as JS literals**:
 
 1. **Write the HTML** with placeholder tokens where data should go (e.g., `__DATA_TOTAL_PORTFOLIO__`)
 2. **Run a bash command** to replace each placeholder with the actual file contents:
@@ -80,6 +80,8 @@ with open(html_path, 'w') as f:
 ```
 
 This keeps the data out of your context window entirely. You already know the data shapes from the inline schemas — use them to write correct JavaScript rendering code.
+
+For chart styling, colors, and the full HTML rendering workflow, see [charts.md](charts.md#html-rendering-workflow).
 
 ## Schema File Format
 
