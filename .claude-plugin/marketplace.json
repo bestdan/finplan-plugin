@@ -1,10 +1,19 @@
 {
   "name": "finplan-plugin",
-  "owner": "bestdan",
+  "description": "FinPlan personal finance projection engine",
+  "owner": {
+    "name": "Prethink",
+    "url": "https://prethink.io"
+  },
   "plugins": [
     {
       "name": "finplan",
-      "source": "."
+      "description": "Personal finance projection engine — Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards. Powered by 60+ MCP tools.",
+      "version": "1.0.0",
+      "source": {
+        "source": "github",
+        "repo": "bestdan/finplan-plugin"
+      }
     }
   ]
 }
