@@ -25,7 +25,12 @@ client_docs/
 └── commands/               # Slash commands (client-side operations)
     ├── read-state.md         # /read-state — Read state from local JSON
     ├── save-state.md         # /save-state — Save state to local JSON
-    └── projection-dashboard.md # /projection-dashboard — Generate HTML dashboard
+    ├── projection-dashboard.md # /projection-dashboard — Generate HTML dashboard
+    ├── profile.md            # /profile — View and update financial profile
+    ├── accounts.md           # /accounts — View and manage accounts
+    ├── goals.md              # /goals — View and manage goals
+    ├── setup.md              # /setup — Guided setup interview
+    └── checkup.md            # /checkup — Review plan for updates
 ```
 
 ### Skills vs Commands
@@ -62,7 +67,7 @@ claude plugin install finplan@finplan-plugin
 This installs:
 
 - The FinPlan skill (auto-discovers tools when relevant)
-- Slash commands: `/finplan:read-state`, `/finplan:save-state`, `/finplan:projection-dashboard`
+- Slash commands: `/finplan:read-state`, `/finplan:save-state`, `/finplan:projection-dashboard`, `/finplan:profile`, `/finplan:accounts`, `/finplan:goals`, `/finplan:setup`, `/finplan:checkup`
 - MCP server connection (auto-configured via `.mcp.json`)
 - A hook that prompts you to allowlist curl for the FinPlan file server (one-time)
 
@@ -120,6 +125,11 @@ Available slash commands:
 - `/finplan:read-state` — Read your financial state from the local JSON file
 - `/finplan:save-state` — Save the current state to the local JSON file
 - `/finplan:projection-dashboard` — Generate an interactive HTML projection dashboard
+- `/finplan:profile` — View and update your personal financial profile
+- `/finplan:accounts` — View and manage your financial accounts
+- `/finplan:goals` — View and manage your financial goals
+- `/finplan:setup` — Guided interview to set up your complete financial plan
+- `/finplan:checkup` — Review your plan for life changes and updates
 
 ### Claude Desktop — Cowork
 

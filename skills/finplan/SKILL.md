@@ -93,6 +93,11 @@ These commands are bundled with the FinPlan plugin and available automatically a
 - **`/read-state`** — Read state from local JSON file using targeted `jq` queries (minimal token usage). Supports: `/read-state`, `/read-state person`, `/read-state accounts`, `/read-state goals`, `/read-state account <id>`, `/read-state goal <id>`.
 - **`/save-state`** — Write the current state JSON to the local file system. Call after every state mutation.
 - **`/projection-dashboard`** — Generate a self-contained HTML dashboard with goal-oriented Monte Carlo projections and interactive Chart.js charts.
+- **`/profile`** — View and update the user's personal financial profile (age, income, employment, marital status, dependents).
+- **`/accounts`** — View and manage financial accounts (balances, allocations, add/update accounts).
+- **`/goals`** — View and manage financial goals with guided setup for common goal types (emergency fund, retirement, education, home, major purchase).
+- **`/setup`** — Guided interview to create a complete financial profile, accounts, and goals from scratch.
+- **`/checkup`** — Review an existing plan for life changes, update profile/accounts/goals, and identify gaps or new goals.
 
 ### When to save state
 
@@ -142,6 +147,8 @@ state = manage_state(action="update_goal", state_json=state, goal_json=goal["goa
 
 **Quick projection**: Use `run_projection` for fast analytical projections with percentile outputs. This is the recommended default.
 
+**New user setup**: Run `/finplan:setup` for a guided interview that creates the profile, adds accounts, and sets up goals.
+
 **Full planning session**:
 
 1. `/finplan:read-state` to load existing state (or skip if starting fresh)
@@ -151,6 +158,10 @@ state = manage_state(action="update_goal", state_json=state, goal_json=goal["goa
 5. `calculate_portfolio_characteristics` for return/volatility assumptions
 6. `run_projection` for projections
 7. `generate_projection_fan_chart` to visualize results
+
+**Periodic review**: Run `/finplan:checkup` to review the plan for life changes, update values, and identify new goals.
+
+**Quick updates**: Use `/finplan:profile`, `/finplan:accounts`, or `/finplan:goals` to view or update individual sections.
 
 **Social Security analysis**:
 
