@@ -83,7 +83,7 @@ When you add a new MCP tool:
 2. Add a `ToolEntry` to `TOOL_CATALOG` in `finplan_mcp/tools/tool_catalog.py`.
 3. Include descriptive keywords that users might search for.
 4. Update the expected tool set in `tests/test_server.py::test_list_tools`.
-5. Run `uv run pytest packages/mcp-server` to verify.
+5. Run `uv run pytest` from the `finplan` monorepo's `packages/mcp-server` directory to verify.
 
 ## Keeping the Catalog in Sync
 
