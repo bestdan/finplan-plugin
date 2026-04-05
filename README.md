@@ -20,6 +20,21 @@ claude plugin install finplan --plugin-dir ./finplan-plugin
 
 This installs the skill, commands, MCP server connection, and a hook that prompts you to allowlist curl for file downloads.
 
+### Authentication (optional)
+
+FinPlan works without authentication. To enable authenticated access, set an API key:
+
+1. Create an account at **https://mcp.finplan.prethink.io/auth/signup**
+2. After signing in, create an API key at **https://mcp.finplan.prethink.io/auth/keys**
+3. Add the key to your shell profile:
+
+```bash
+echo 'export FINPLAN_API_KEY="your-key-here"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+The plugin sends the key automatically via the `Authorization` header. Run `/finplan:login` to verify your key is working.
+
 **Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts:
 
 ```bash
@@ -36,6 +51,7 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 
 | Command                         | Description                                    |
 | ------------------------------- | ---------------------------------------------- |
+| `/finplan:login`                | Set up API key authentication                  |
 | `/finplan:read-state`           | Read financial state from local JSON file      |
 | `/finplan:save-state`           | Save current state to local JSON file          |
 | `/finplan:projection-dashboard` | Generate interactive HTML projection dashboard |

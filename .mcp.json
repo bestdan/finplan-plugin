@@ -2,7 +2,10 @@
   "mcpServers": {
     "finplan": {
       "type": "url",
-      "url": "https://mcp.finplan.prethink.io/mcp"
+      "url": "https://mcp.finplan.prethink.io/mcp",
+      "headers": {
+        "Authorization": "Bearer ${FINPLAN_API_KEY}"
+      }
     }
   }
 }
