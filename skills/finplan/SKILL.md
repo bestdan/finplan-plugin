@@ -19,6 +19,7 @@ https://mcp.finplan.prethink.io/mcp
 
 ## MCP conventions
 
+- **Cold starts**: The MCP server may sleep after inactivity. Call `ping()` as a lightweight warm-up before doing real work — it takes no parameters and returns server status, version, and auth state. If it fails, wait 5-10 seconds and retry. The `/finplan:setup` flow handles this automatically.
 - **Money inputs**: Cents (integer). `10000000` = $100,000.00
 - **Money outputs**: Both `_cents` and `_dollars` fields returned
 - **Displaying money**: Money values from tools are in cents. **Always reformat for display**: divide by 100 and format as `$X,XXX.XX` (e.g., `10000000` → `$100,000.00`). Use the `_dollars` field when available for convenience, but the `_cents` field is the canonical value
@@ -81,6 +82,7 @@ When working with a specific area, read its detailed reference for tool names, p
 | Profile & State | Person profiles, user state persistence                  | [packages/state.md](packages/state.md)                     |
 | Tool Search     | Dynamic tool discovery, search across all tools          | [packages/tool-search.md](packages/tool-search.md)         |
 | Reference Data  | Static lookup tables: account types, enums, limits       | [packages/reference-data.md](packages/reference-data.md)   |
+| System          | Server ping, readiness check, auth verification          | [packages/system.md](packages/system.md)                   |
 
 ## State Persistence Guidelines
 

@@ -2,7 +2,11 @@
 description: Guided interview to set up your complete financial profile, accounts, and goals from scratch
 allowed-tools:
   - Bash(jq *)
+  - Bash(echo *)
+  - Bash(curl *)
+  - Bash(mkdir *)
   - Skill(finplan)
+  - Skill(finplan:login)
   - Skill(finplan:read-state)
   - Skill(finplan:save-state)
   - Skill(finplan:profile)
@@ -14,7 +18,39 @@ allowed-tools:
 
 Walk the user through a complete financial profile setup in a guided, conversational interview. This creates their profile, adds accounts, and sets up goals — everything needed for projections.
 
-## Before starting
+## Step 0: Authentication & environment
+
+Run these checks before starting the interview. These ensure the MCP server is reachable and the user's environment is ready.
+
+### 0a. Login / API key
+
+Run `/finplan:login` to check authentication. This verifies whether the user has an API key set and guides them through creating one if not. **Do not skip this step** — users don't know they need to authenticate before setup begins.
+
+### 0b. Working directory
+
+Ask the user if they'd like to set up a dedicated directory for their financial planning files. Suggest something like `~/finances` or `~/finplan`. This is where their state file and any generated dashboards will live.
+
+If they agree, create the directory and cd into it:
+
+```bash
+mkdir -p ~/finances
+```
+
+Then tell them: "I'll save your financial data here. In future sessions, start Claude Code from this directory (or cd into it) so your state file is found automatically."
+
+If they prefer the current directory, that's fine — just note where the state file will be saved.
+
+### 0c. Wake up the MCP server
+
+The FinPlan MCP server may be sleeping if it hasn't been used recently. Call `ping()` to wake it up before the interview begins. This is a zero-parameter tool that returns server status, version, and whether the request is authenticated.
+
+If the call fails with a connection error or the tools aren't found, wait 5-10 seconds and retry once. The server typically wakes up within a few seconds. If it still fails after a retry, tell the user: "The FinPlan server is starting up — this can take up to 30 seconds on first use. Let me try again." and retry once more.
+
+If tools are still not found after 3 attempts, suggest the user check their MCP server connection and try again later.
+
+If `ping()` returns `authenticated: false` and the user set a key in step 0a, something is wrong with the key configuration — help them troubleshoot before continuing.
+
+## Before the interview
 
 Check for an existing state file using `/finplan:read-state`. If one exists, show a summary and ask the user if they want to:
 
@@ -31,7 +67,7 @@ Run through each section conversationally. Ask questions naturally, confirm answ
 
 Collect the following information:
 
-1. **Date of birth** — "When were you born?" (need YYYY-MM-DD)
+1. **Birth year and month** — "What year and month were you born?" (e.g., "March 1985"). Use the 15th of the month as the day when constructing the YYYY-MM-DD for tools (e.g., "1985-03-15"). Do NOT ask for the exact day — it doesn't materially affect projections.
 2. **Employment status** — "What's your current employment situation?" (employed, self_employed, retired, etc.)
 3. **Annual pretax income** — "What's your annual income before taxes?"
 4. **Marital status** — "Are you married, single, ...?"
@@ -40,7 +76,7 @@ Collect the following information:
 
 If married, also collect for spouse:
 
-- Name, date of birth, employment status, annual pretax income
+- Name, birth year and month, employment status, annual pretax income
 
 After collecting:
 
