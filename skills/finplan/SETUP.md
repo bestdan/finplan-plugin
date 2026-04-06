@@ -83,6 +83,12 @@ To update later:
 claude plugin update finplan
 ```
 
+**Recommended — enable auto-update** so the plugin stays current automatically:
+
+```
+/plugin → Marketplaces tab → finplan-plugin → Enable auto-update
+```
+
 ### Claude Code — Manual
 
 If you prefer manual installation instead of the plugin:
@@ -239,7 +245,13 @@ Once set up, try asking Claude things like:
 
 ## Updating
 
-**Plugin users** (Claude Code):
+**Plugin users** (Claude Code) — auto-update recommended:
+
+```
+/plugin → Marketplaces tab → finplan-plugin → Enable auto-update
+```
+
+Or update manually:
 
 ```bash
 claude plugin update finplan

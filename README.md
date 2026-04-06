@@ -72,11 +72,27 @@ On first FinPlan tool use, prompts you to allowlist `curl` for the file server i
 - "Compare a conservative vs aggressive portfolio over 20 years"
 - "Create a retirement projection with a fan chart showing percentile outcomes"
 
-## Update
+## Staying up to date
+
+### Enable auto-update (recommended)
+
+The FinPlan plugin can update itself automatically when new versions are published. Enable auto-update for the marketplace:
+
+```
+/plugin → Marketplaces tab → finplan-plugin → Enable auto-update
+```
+
+When an update is available, Claude Code refreshes the plugin at startup and prompts you to run `/reload-plugins`.
+
+### Manual update
 
 ```bash
 claude plugin update finplan
 ```
+
+### Version compatibility
+
+On first FinPlan tool call each session, the plugin checks whether it meets the MCP server's minimum version requirement. If your plugin is outdated, you'll see a one-time hint to update.
 
 ## Testing locally
 
