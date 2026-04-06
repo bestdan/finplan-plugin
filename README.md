@@ -51,10 +51,16 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 
 | Command                         | Description                                    |
 | ------------------------------- | ---------------------------------------------- |
+| `/finplan:setup`                | Guided interview to set up your financial plan |
 | `/finplan:login`                | Set up API key authentication                  |
+| `/finplan:diagnose`             | Diagnose MCP connection issues                 |
 | `/finplan:read-state`           | Read financial state from local JSON file      |
 | `/finplan:save-state`           | Save current state to local JSON file          |
 | `/finplan:projection-dashboard` | Generate interactive HTML projection dashboard |
+| `/finplan:profile`              | View and update your financial profile         |
+| `/finplan:accounts`             | View and manage financial accounts             |
+| `/finplan:goals`                | View and manage financial goals                |
+| `/finplan:checkup`              | Review plan for life changes and updates       |
 
 ### MCP Server
 

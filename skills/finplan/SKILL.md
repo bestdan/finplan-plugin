@@ -27,6 +27,10 @@ https://mcp.finplan.prethink.io/mcp
 - **Percentages**: Integer 0-100 for allocations. Float 0.0-1.0 for rates
 - **All tools return**: `success`, `summary`/`message`, plus detailed fields
 
+## If MCP tools aren't available
+
+If FinPlan tools don't appear in the deferred tools list (no `mcp__claude_ai_FinPlan` entries), the MCP connection failed to establish. Do NOT try to call MCP tools or curl the server directly — run `/finplan:diagnose` instead. It tests server reachability, authentication, and tool availability client-side and provides specific remediation steps.
+
 ## File-Based Responses
 
 Tools that produce large datasets always write full results to a file server and return URLs + compact inline summary. This keeps large arrays (timeseries, Chart.js specs, amortization schedules) out of the LLM context window.

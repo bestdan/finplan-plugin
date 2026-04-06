@@ -46,7 +46,7 @@ The FinPlan MCP server may be sleeping if it hasn't been used recently. Call `pi
 
 If the call fails with a connection error or the tools aren't found, wait 5-10 seconds and retry once. The server typically wakes up within a few seconds. If it still fails after a retry, tell the user: "The FinPlan server is starting up — this can take up to 30 seconds on first use. Let me try again." and retry once more.
 
-If tools are still not found after 3 attempts, suggest the user check their MCP server connection and try again later.
+If tools are still not found after 3 attempts, run `/finplan:diagnose` to identify the specific issue (server down, auth failure, or MCP connection not established).
 
 If `ping()` returns `authenticated: false` and the user set a key in step 0a, something is wrong with the key configuration — help them troubleshoot before continuing.
 

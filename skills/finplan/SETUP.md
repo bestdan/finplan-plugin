@@ -239,7 +239,9 @@ Once set up, try asking Claude things like:
 
 **Skill not triggering**: Check that it appears in Settings > Capabilities under Skills. Try invoking directly with `/finplan` (Claude Code) or rephrasing your request to mention financial planning explicitly.
 
-**MCP tools not available**: Verify the connector is active in Settings > Connectors. Look for the tools/hammer icon in Claude Desktop's bottom-right corner.
+**MCP tools not available (Claude Code)**: Run `/finplan:diagnose` — it tests server reachability, authentication, and tool availability client-side and gives specific next steps. Most common fix: restart Claude Code (`/exit` then `claude`).
+
+**MCP tools not available (Claude Desktop / Claude.ai)**: Verify the connector is active in Settings > Connectors. Look for the tools/hammer icon in Claude Desktop's bottom-right corner.
 
 **Skills don't sync across platforms**: This is expected. Skills uploaded to Claude.ai are separate from Claude Desktop and Claude Code. You need to install on each platform independently.
 
