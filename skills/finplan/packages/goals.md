@@ -35,6 +35,7 @@ Calculate the monthly contribution needed to reach a goal.
 | `time_horizon_months`   | int   | Number of months until target date     |
 | `initial_balance_cents` | int   | Current savings in cents (default: 0)  |
 | `annual_return_rate`    | float | Expected annual return (default: 0.07) |
+| `inflation`             | float | Annual inflation rate as decimal (default: 0.0). When > 0, target is inflated to nominal value before solving |
 
 Returns: `cashflow_cents`, `total_contributions_cents`, `projected_balance_without_new_cents`.
 

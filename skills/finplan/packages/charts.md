@@ -26,6 +26,7 @@ Percentile bands (p10/p25/p50/p75/p90) for projection results.
 | `monthly_contribution_cents` | int    | Monthly contribution (default: 0)             |
 | `title`                      | string | Chart title (default: "Portfolio Projection") |
 | `show_deposits_line`         | bool   | Show cumulative deposits (default: true)      |
+| `inflation`                  | float  | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power |
 
 ### generate_account_breakdown_chart
 
@@ -59,6 +60,7 @@ Line chart comparing multiple scenarios at a specific percentile.
 | `time_horizon_months` | int        | Months to project                                                                                            |
 | `percentile`          | int        | Percentile to compare (default: 50)                                                                          |
 | `title`               | string     | Chart title                                                                                                  |
+| `inflation`           | float      | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power     |
 
 ## File-based responses
 
