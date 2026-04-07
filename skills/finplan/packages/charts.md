@@ -17,15 +17,15 @@ These rules apply to ALL chart and projection work — dashboards, ad-hoc charts
 
 Percentile bands (p10/p25/p50/p75/p90) for projection results.
 
-| Parameter                    | Type   | Description                                   |
-| ---------------------------- | ------ | --------------------------------------------- |
-| `initial_balance_cents`      | int    | Starting balance in cents                     |
-| `expected_annual_return`     | float  | Expected return (0.07 = 7%)                   |
-| `time_horizon_months`        | int    | Months to project                             |
-| `annual_volatility`          | float  | Annual std dev (default: 0.15)                |
-| `monthly_contribution_cents` | int    | Monthly contribution (default: 0)             |
-| `title`                      | string | Chart title (default: "Portfolio Projection") |
-| `show_deposits_line`         | bool   | Show cumulative deposits (default: true)      |
+| Parameter                    | Type   | Description                                                                                             |
+| ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| `initial_balance_cents`      | int    | Starting balance in cents                                                                               |
+| `expected_annual_return`     | float  | Expected return (0.07 = 7%)                                                                             |
+| `time_horizon_months`        | int    | Months to project                                                                                       |
+| `annual_volatility`          | float  | Annual std dev (default: 0.15)                                                                          |
+| `monthly_contribution_cents` | int    | Monthly contribution (default: 0)                                                                       |
+| `title`                      | string | Chart title (default: "Portfolio Projection")                                                           |
+| `show_deposits_line`         | bool   | Show cumulative deposits (default: true)                                                                |
 | `inflation`                  | float  | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power |
 
 ### generate_account_breakdown_chart
@@ -60,7 +60,7 @@ Line chart comparing multiple scenarios at a specific percentile.
 | `time_horizon_months` | int        | Months to project                                                                                            |
 | `percentile`          | int        | Percentile to compare (default: 50)                                                                          |
 | `title`               | string     | Chart title                                                                                                  |
-| `inflation`           | float      | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power     |
+| `inflation`           | float      | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power      |
 
 ## File-based responses
 

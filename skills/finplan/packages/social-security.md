@@ -43,13 +43,13 @@ When total benefits from claiming at FRA equal claiming at 62. Living beyond thi
 
 Total lifetime benefits from claiming age through life expectancy.
 
-| Parameter               | Type | Description                          |
-| ----------------------- | ---- | ------------------------------------ |
-| `pia_cents`             | int  | PIA in cents                         |
-| `claiming_age_years`    | int  | Claiming age (62-70)                 |
-| `life_expectancy_years` | int  | Expected age at death                |
-| `birth_year`            | int  | Birth year                           |
-| `claiming_age_months`   | int  | Additional months (0-11, default: 0) |
+| Parameter               | Type  | Description                                                                                                                                                                                 |
+| ----------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pia_cents`             | int   | PIA in cents                                                                                                                                                                                |
+| `claiming_age_years`    | int   | Claiming age (62-70)                                                                                                                                                                        |
+| `life_expectancy_years` | int   | Expected age at death                                                                                                                                                                       |
+| `birth_year`            | int   | Birth year                                                                                                                                                                                  |
+| `claiming_age_months`   | int   | Additional months (0-11, default: 0)                                                                                                                                                        |
 | `inflation`             | float | Annual inflation rate as decimal (default: 0.0). When `inflation > 0`, COLA defaults to the inflation rate and `lifetime_benefits_real_cents`/`lifetime_benefits_real_dollars` are computed |
 
 ### apply_social_security_earnings_test
