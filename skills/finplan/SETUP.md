@@ -109,7 +109,7 @@ cp commands/*.md ~/.claude/commands/
 
 This installs the commands globally (available in all projects). To install per-project instead, copy to `.claude/commands/` in your project directory.
 
-**Step 3 — Add the MCP server** to your Claude Code settings (`~/.claude/settings.json`):
+**Step 3 — Add the MCP server** by creating `.mcp.json` in your project directory:
 
 ```json
 {

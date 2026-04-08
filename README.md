@@ -20,20 +20,17 @@ claude plugin install finplan --plugin-dir ./finplan-plugin
 
 This installs the skill, commands, MCP server connection, and a hook that prompts you to allowlist curl for file downloads.
 
+After installing, go to `/plugins` → Installed → finplan and make sure MCP is enabled, then restart your session.
+
 ### Authentication (optional)
 
-FinPlan works without authentication. To enable authenticated access, set an API key:
+FinPlan works without authentication. To enable authenticated access:
 
 1. Create an account at **https://mcp.finplan.prethink.io/auth/signup**
-2. After signing in, create an API key at **https://mcp.finplan.prethink.io/auth/keys**
-3. Add the key to your shell profile:
+2. Create an API key at **https://mcp.finplan.prethink.io/auth/keys**
+3. Run `/finplan:login` and paste your key
 
-```bash
-echo 'export FINPLAN_API_KEY="your-key-here"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-The plugin sends the key automatically via the `Authorization` header. Run `/finplan:login` to verify your key is working.
+The key is saved to `.mcp.json` in your project directory and used automatically on the next session. If your project is version-controlled, add `.mcp.json` to `.gitignore` to avoid committing the token.
 
 **Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts:
 

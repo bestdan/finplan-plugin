@@ -48,7 +48,13 @@ If the call fails with a connection error or the tools aren't found, wait 5-10 s
 
 If tools are still not found after 3 attempts, run `/finplan:diagnose` to identify the specific issue (server down, auth failure, or MCP connection not established).
 
-If `ping()` returns `authenticated: false` and the user set a key in step 0a, something is wrong with the key configuration — help them troubleshoot before continuing.
+If `ping()` returns `authenticated: false` and the user set a key in step 0a, the key may not have taken effect yet. Tell the user to restart Claude Code so the MCP server picks up the updated `.mcp.json`.
+
+### 0d. Enable auto-update
+
+Tell the user: "I recommend enabling auto-update so you always have the latest version of the FinPlan plugin. Go to `/plugin` → Marketplaces tab → finplan-plugin → Enable auto-update."
+
+This is a recommendation, not a blocker — continue with the interview regardless.
 
 ## Before the interview
 

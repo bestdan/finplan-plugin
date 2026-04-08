@@ -3,6 +3,9 @@ description: Set up API key authentication for FinPlan
 allowed-tools:
   - Bash(echo *)
   - Bash(curl *)
+  - Read
+  - Write
+  - Edit
 ---
 
 # FinPlan Login
@@ -11,15 +14,17 @@ Help the user set up API key authentication for the FinPlan MCP server.
 
 ## Steps
 
-### 1. Check for existing key
+### 1. Check for existing authentication
 
-Check if `FINPLAN_API_KEY` is set in the current environment:
+Read the project's `.mcp.json` using the Read tool:
 
-```bash
-echo "${FINPLAN_API_KEY:+set}"
+```
+.mcp.json
 ```
 
-If already set, skip to step 3 (verification).
+If the file doesn't exist, that's fine — we'll create it in step 3.
+
+Look for `mcpServers.finplan.headers.Authorization` containing a `Bearer fp_live_...` value. **Do not print the full token** — only report whether a key is present and show the first 8 characters. If a key is already configured, skip to step 4 (verification).
 
 ### 2. Guide the user to get a key
 
@@ -29,25 +34,21 @@ Tell the user:
 >
 > 1. Create an account at **https://mcp.finplan.prethink.io/auth/signup**
 > 2. After signing in, create an API key at **https://mcp.finplan.prethink.io/auth/keys**
-> 3. Copy the key (it starts with `fp_live_...`)
+> 3. Copy the key (it starts with `fp_live_...`) and paste it here
 
-Then explain how to configure it. Present **two options**:
+Wait for the user to paste their key.
 
-**Option A — Environment variable (recommended)**
+### 3. Save the key
 
-Add to your shell profile so it's available in all sessions:
+Once the user provides their key, write it to `.mcp.json` in the current working directory. This is the project-level MCP config that Claude Code reads on startup.
 
-```bash
-echo 'export FINPLAN_API_KEY="your-key-here"' >> ~/.zshrc
+**Read the existing `.mcp.json`** (if it exists) using the Read tool:
+
+```
+.mcp.json
 ```
 
-Then restart your terminal or run `source ~/.zshrc`.
-
-**Option B — Claude Code settings (per-project or global)**
-
-Add the key directly to your Claude Code MCP settings. This avoids needing an environment variable.
-
-In `~/.claude/settings.json` (global) or `.claude/settings.json` (project-level):
+**Update the `mcpServers.finplan` entry** to add the auth header. Use the Edit tool if the file exists, or Write if creating from scratch. Only modify the `finplan` entry — leave all other `mcpServers` entries untouched. The result should look like:
 
 ```json
 {
@@ -56,31 +57,42 @@ In `~/.claude/settings.json` (global) or `.claude/settings.json` (project-level)
       "type": "url",
       "url": "https://mcp.finplan.prethink.io/mcp",
       "headers": {
-        "Authorization": "Bearer fp_live_your-key-here"
+        "Authorization": "Bearer {{BEARER_TOKEN}}"
       }
     }
   }
 }
 ```
 
-> **How this works**: The FinPlan plugin includes an `.mcp.json` file that auto-connects to the MCP server using `${FINPLAN_API_KEY}` from your environment. If you set the env var (Option A), the plugin config picks it up automatically. Option B bypasses the env var by putting the key directly in the MCP server config.
+Important:
 
-Wait for the user to confirm they have set the key before continuing. Do NOT modify their shell profile or settings files directly.
+- Preserve all existing settings — only add/update the `mcpServers.finplan` entry.
+- If the file doesn't exist, create it with the full block above.
+- If there are other mcpServers entries, keep them.
+- Replace `{{BEARER_TOKEN}}` with the actual key the user provided.
 
-### 3. Verify the key works
+After writing, confirm to the user: "Your API key has been saved to `.mcp.json` in this directory."
 
-Once the user says the key is set, test it:
+If the project has a `.gitignore`, check whether `.mcp.json` is already listed. If not, warn the user: "`.mcp.json` now contains your API key. Consider adding it to `.gitignore` to avoid committing it to source control."
+
+### 4. Verify the key works
+
+Test the key with a lightweight auth check:
 
 ```bash
-curl -sf -H "Authorization: Bearer ${FINPLAN_API_KEY}" https://mcp.finplan.prethink.io/auth/verify-key
+curl -sf -H "Authorization: Bearer {{BEARER_TOKEN}}" https://mcp.finplan.prethink.io/auth/verify-key
 ```
+
+Replace `{{BEARER_TOKEN}}` with the key the user provided.
 
 If the response includes `"status": "authenticated"`, confirm that the API key is valid and working.
 
-If the response is a 401 or empty (curl `-f` fails silently), the key is missing, invalid, or revoked — help the user troubleshoot.
+If the response is a 401 or empty, the key is invalid or revoked — help the user troubleshoot (check for typos, try regenerating at the keys page).
 
-If the user chose Option B (settings.json), the env var won't be set in the current shell. Instead, tell them: "Your key is configured in settings.json — the MCP server will pick it up on the next tool call. Let's verify by making a test call." Then try a lightweight MCP call like `search_finplan_tools(query="test")` to confirm the connection works.
+### 5. Restart required
 
-### 4. Note on unauthenticated usage
+Tell the user: "Restart Claude Code so the MCP server connects with your new key. Run `/exit` then start a new session from this directory."
+
+### 6. Note on unauthenticated usage
 
 Remind the user: FinPlan works without an API key — setting one is optional but enables authenticated features and usage tracking.
