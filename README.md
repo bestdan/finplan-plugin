@@ -11,6 +11,15 @@ claude plugin marketplace add bestdan/finplan-plugin
 claude plugin install finplan@finplan-plugin
 ```
 
+To install for a specific project directory instead of globally:
+
+```bash
+claude plugin marketplace add bestdan/finplan-plugin
+claude plugin install finplan@finplan-plugin --scope project
+```
+
+This writes the plugin config into `.claude/plugins/` in the current directory, so it only activates when you run Claude Code from that project. Useful if you don't want FinPlan loaded in every session.
+
 Or from a local clone:
 
 ```bash
@@ -18,7 +27,7 @@ git clone https://github.com/bestdan/finplan-plugin.git
 claude plugin install finplan --plugin-dir ./finplan-plugin
 ```
 
-This installs the skill, commands, MCP server connection, and a hook that prompts you to allowlist curl for file downloads.
+Both approaches install the skill, commands, MCP server connection, and a hook that prompts you to allowlist curl for file downloads.
 
 After installing, go to `/plugins` → Installed → finplan and make sure MCP is enabled, then restart your session.
 
