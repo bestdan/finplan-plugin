@@ -13,7 +13,7 @@ Run client-side diagnostics to identify why FinPlan MCP tools may not be loading
 
 ## Steps
 
-### 1. Check for API key
+### 1. Check for a manual API key
 
 Read the project's `.mcp.json` using the Read tool:
 
@@ -21,13 +21,18 @@ Read the project's `.mcp.json` using the Read tool:
 .mcp.json
 ```
 
-If the file doesn't exist, note this and continue — the server may work unauthenticated.
+If the file doesn't exist, continue — that's expected when Claude Code installed the plugin globally.
 
-Look for `mcpServers.finplan.headers.Authorization` containing a `Bearer fp_live_...` value. If a key is found, extract the bearer token for use in the curl commands below. **Do not print the full token** — only report whether a key is present and show the first 8 characters (e.g., `fp_live_a...`).
+Look for `mcpServers.finplan.headers.Authorization` containing a `Bearer fp_live_...` value:
+
+- **If present**: a manual key is configured. Extract the bearer token for the curl commands below. **Do not print the full token** — report only the first 8 characters (e.g. `fp_live_a...`).
+- **If absent**: this is expected under the default OAuth flow. Claude Code stores OAuth-issued tokens internally, not in `.mcp.json`. Treat this as "no manual key; OAuth handles auth."
+
+For the curl steps below, if no manual key is present, run the auth test against `/mcp` directly (which will return 401 + `WWW-Authenticate` under OAuth) rather than `/auth/verify-key`.
 
 ### 2. Test server reachability
 
-Replace `{{BEARER_TOKEN}}` with the actual token from step 1. If no key was found, omit the Authorization header entirely.
+Replace `{{BEARER_TOKEN}}` with the actual token from step 1. If no manual key was found, omit the Authorization header entirely — a 401 back is expected and actually confirms the auth layer is working.
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}" -X POST "https://mcp.finplan.prethink.io/mcp" \
@@ -37,8 +42,9 @@ curl -s -o /dev/null -w "%{http_code}" -X POST "https://mcp.finplan.prethink.io/
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"diagnose","version":"1.0.0"}}}'
 ```
 
-- `200` — server is reachable and responding
-- `4xx` or `5xx` — server returned an error; note the status code
+- `200` — server is reachable and the bearer token authenticated
+- `401` — server is reachable; bearer token missing or invalid. Under the OAuth flow this is expected when no manual key is in `.mcp.json` — Claude Code handles the 401 itself by opening the browser. A 401 from curl is **not** a problem on its own.
+- Other `4xx` or `5xx` — server returned an error; note the status code
 - No response or connection error — network issue or server is down
 
 ### 3. Test authentication
@@ -59,11 +65,12 @@ Use the `ToolSearch` tool to search for `mcp__claude_ai_FinPlan` (e.g., query `"
 
 Based on the results above, report what you found and give the user one of these specific next steps:
 
-- **No `.mcp.json` found**: "No `.mcp.json` in this directory. Make sure you're running Claude Code from your FinPlan project directory, or run `/finplan:login` to set one up."
+- **No `.mcp.json` + tools present in session**: "Everything looks good — Claude Code is handling FinPlan auth via OAuth automatically."
+- **No `.mcp.json` + tools not in session**: "The plugin isn't configuring MCP. Check `/plugins` → Installed → finplan and ensure MCP is enabled, then restart Claude Code."
 - **Server unreachable** (connection error or no response): "Can't reach the FinPlan server. Check your network or try again in a minute."
-- **Server reachable + auth fails** (4xx or verify-key failed): "Server is up but your API key is invalid. Re-run `/finplan:login` to get a new key."
-- **Server reachable + auth works + tools not in session**: "The server is fine but the MCP connection didn't establish. Restart Claude Code (`/exit` then start a new session from this directory)."
-- **Server reachable + auth works + tools present**: "Everything looks good — FinPlan MCP tools are loaded and ready."
+- **Manual key present + auth fails** (verify-key returned 401): "Your manual API key in `.mcp.json` is invalid or revoked. Either delete the `headers.Authorization` entry to fall back to OAuth, or re-run `/finplan:login` to get a new key."
+- **Server reachable + tools not in session**: "The server is fine but the MCP connection didn't establish. Restart Claude Code (`/exit` then start a new session from this directory). If you signed in via OAuth and the token may have expired, the first tool call in the new session will re-open the browser."
+- **Server reachable + tools present**: "Everything looks good — FinPlan MCP tools are loaded and ready."
 
 ## Known setup issues
 
@@ -73,4 +80,5 @@ If the automated steps above don't resolve the problem, check for these common i
 - **Wrong `type` in `.mcp.json`**: The MCP server type must be `"type": "url"`, not `"type": "http"`. If your `.mcp.json` has `"http"`, change it to `"url"` and restart.
 - **Project `.mcp.json` overrides plugin**: If there's a `.mcp.json` in the project directory defining `mcpServers.finplan`, it completely overrides the plugin's MCP config. Make sure the project-level config is valid — check the `type` and `url` fields.
 - **Key saved but not active**: `.mcp.json` is read at session startup. If you just ran `/finplan:login` and saved a key, you must restart Claude Code for the MCP server to connect with the new credentials.
+- **OAuth token expired mid-session**: OAuth-issued tokens last 3 days. If tool calls start failing with 401 after working earlier, Claude Code should re-open the browser on the next call. If it doesn't, restart the session to force a fresh OAuth handshake.
 - **Cached plugin version**: If you previously installed the plugin from the marketplace and are now testing with `--plugin-dir`, the cached version at `~/.claude/plugins/cache/finplan-plugin/` may take precedence. Uninstall the marketplace version first or delete the cache directory.

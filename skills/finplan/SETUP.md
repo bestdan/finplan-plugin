@@ -53,6 +53,12 @@ https://mcp.finplan.prethink.io/mcp
 
 How you connect it depends on which Claude product you're using (see setup instructions below).
 
+### Authentication
+
+The server requires authentication. On Claude Code, the first FinPlan tool call in a new session will open your browser to sign in (Google, GitHub, or email magic link) and Claude Code captures the token automatically — no manual setup needed. OAuth-issued tokens last 3 days and renew silently via the same flow.
+
+For non-interactive environments (Claude Agent SDK, scripts, shared projects) run `/finplan:login` to paste a long-lived 90-day API key into `.mcp.json`. On Claude Desktop and Claude.ai, the Connectors UI handles sign-in when you add the server.
+
 ## Setup by platform
 
 ### Claude Code — Plugin (Recommended)
@@ -240,6 +246,8 @@ Once set up, try asking Claude things like:
 **Skill not triggering**: Check that it appears in Settings > Capabilities under Skills. Try invoking directly with `/finplan` (Claude Code) or rephrasing your request to mention financial planning explicitly.
 
 **MCP tools not available (Claude Code)**: Run `/finplan:diagnose` — it tests server reachability, authentication, and tool availability client-side and gives specific next steps. Most common fix: restart Claude Code (`/exit` then `claude`).
+
+**Tool calls fail with 401 after working earlier**: Your OAuth token likely expired (3-day TTL). The next tool call should re-open the browser automatically. If it doesn't, restart the session.
 
 **MCP tools not available (Claude Desktop / Claude.ai)**: Verify the connector is active in Settings > Connectors. Look for the tools/hammer icon in Claude Desktop's bottom-right corner.
 

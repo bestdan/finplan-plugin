@@ -31,15 +31,11 @@ Both approaches install the skill, commands, MCP server connection, and a hook t
 
 After installing, go to `/plugins` → Installed → finplan and make sure MCP is enabled, then restart your session.
 
-### Authentication (optional)
+### Authentication
 
-FinPlan works without authentication. To enable authenticated access:
+The FinPlan server requires authentication. The first time you invoke a FinPlan tool in a session, Claude Code opens your browser to sign in (Google, GitHub, or email magic link) and captures the token automatically — no manual config. OAuth-issued tokens last 3 days and renew silently via the same flow on expiry.
 
-1. Create an account at **https://mcp.finplan.prethink.io/auth/signup**
-2. Create an API key at **https://mcp.finplan.prethink.io/auth/keys**
-3. Run `/finplan:login` and paste your key
-
-The key is saved to `.mcp.json` in your project directory and used automatically on the next session. If your project is version-controlled, add `.mcp.json` to `.gitignore` to avoid committing the token.
+Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. for Claude Agent SDK, scripts, Cowork, or a shared project where the token must be pinned into `.mcp.json`. If you go that route, add `.mcp.json` to `.gitignore` so the token isn't committed.
 
 **Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts:
 
