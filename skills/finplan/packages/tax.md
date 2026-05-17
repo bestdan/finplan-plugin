@@ -1,6 +1,6 @@
 # Tax Tools
 
-US federal income tax, capital gains calculations, and after-tax projection adjustments.
+US federal income tax, capital gains calculations, after-tax projection adjustments, and resident state/local income tax.
 
 ## Tools
 
@@ -20,13 +20,27 @@ Returns: `tax_owed_cents`, `tax_owed_dollars`, `marginal_rate`, `effective_rate`
 
 Get the long-term capital gains tax rate (0%, 15%, or 20%) for an income level.
 
-| Parameter              | Type   | Description                      |
-| ---------------------- | ------ | -------------------------------- |
-| `taxable_income_cents` | int    | Taxable income in cents                   |
-| `filing_status`        | string | Same options as above                     |
+| Parameter              | Type   | Description                                 |
+| ---------------------- | ------ | ------------------------------------------- |
+| `taxable_income_cents` | int    | Taxable income in cents                     |
+| `filing_status`        | string | Same options as above                       |
 | `tax_year`             | int    | `2024`, `2025`, or `2026` (default: `2026`) |
 
 Returns: `ltcg_rate` (float, e.g., 0.15 = 15%).
+
+### calculate_state_and_local_income_tax
+
+Calculate resident state and (optionally) local income tax using full progressive brackets. Returns `success: false` with a message identifying the unsupported field when a state/locality/year combination has no implementation.
+
+| Parameter                    | Type   | Description                                                                   |
+| ---------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `state_code`                 | string | Two-letter US state code                                                      |
+| `state_taxable_income_cents` | int    | State taxable income in cents (after state deductions)                        |
+| `filing_status`              | string | `"single"`, `"married_joint"`, `"married_separate"`, or `"head_of_household"` |
+| `locality`                   | string | Optional resident locality slug. Leave empty for state-only.                  |
+| `tax_year`                   | int    | Tax year (default: `2026`)                                                    |
+
+Returns: `success`, `state_tax_cents`, `state_marginal_rate`, `state_effective_rate`, `state_standard_deduction_cents`, `local_tax_cents`, `total_state_and_local_tax_cents`, `combined_effective_rate`, `explanation`.
 
 ### apply_after_tax_to_projection_result
 
