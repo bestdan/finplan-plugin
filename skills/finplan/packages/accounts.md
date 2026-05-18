@@ -26,6 +26,12 @@ Optionally specify `tax_treatment` to include a tax profile in the response.
 | `account_number_last4` | string | Last 4 digits (optional)                                                                                                                                                                                                                                                                               |
 | `is_current_employer`  | bool   | For 401k: current employer? (optional)                                                                                                                                                                                                                                                                 |
 
+### list_account_types
+
+Returns all valid `account_type` string values with short descriptions. Use this to discover the exact values accepted by `create_account`, `get_account_limits`, and `get_allowed_asset_classes_for_account`.
+
+No parameters.
+
 ### get_allowed_asset_classes_for_account
 
 Returns which asset classes (stocks/bonds/cash) an account type can hold.
