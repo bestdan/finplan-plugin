@@ -40,7 +40,7 @@ Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. f
 **Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts:
 
 ```bash
-claude settings add allowedTools 'Bash(curl*mcp.finplan.prethink.io*)'
+claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'
 ```
 
 ## What you get
@@ -66,7 +66,7 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 
 ### MCP Server
 
-Auto-connects to the FinPlan MCP server at `https://mcp.finplan.prethink.io/mcp` — no manual configuration needed.
+Auto-connects to the FinPlan MCP server at `https://mcp.finplan.tools/mcp` — no manual configuration needed.
 
 ### Hook
 

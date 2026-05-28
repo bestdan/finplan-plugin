@@ -11,7 +11,7 @@
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
 MARKER="/tmp/.finplan-version-check-$$"
-SERVER_URL="https://mcp.finplan.prethink.io"
+SERVER_URL="https://mcp.finplan.tools"
 
 # --- guard: only check once per session ---
 # Use parent PID as a rough session identifier so the check runs once per

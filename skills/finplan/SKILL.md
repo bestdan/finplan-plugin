@@ -1,6 +1,6 @@
 ---
 name: finplan
-description: Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, tax calculations, retirement planning, Social Security benefits, account management, goal planning, portfolio analysis, or mortgage calculations. All capabilities are accessed through MCP tools at https://mcp.finplan.prethink.io/mcp — never call Python or CLI directly.
+description: Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, tax calculations, retirement planning, Social Security benefits, account management, goal planning, portfolio analysis, or mortgage calculations. All capabilities are accessed through MCP tools at https://mcp.finplan.tools/mcp — never call Python or CLI directly.
 ---
 
 # FinPlan — Personal Finance Projection Engine
@@ -12,7 +12,7 @@ Future-focused projection engine accessed via MCP tools. Models current financia
 All interaction is through MCP tools served at:
 
 ```
-https://mcp.finplan.prethink.io/mcp
+https://mcp.finplan.tools/mcp
 ```
 
 **Do NOT** call Python, import packages, or use the CLI. All capabilities are exposed as MCP tools.

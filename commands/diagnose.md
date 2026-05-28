@@ -35,7 +35,7 @@ For the curl steps below, if no manual key is present, run the auth test against
 Replace `{{BEARER_TOKEN}}` with the actual token from step 1. If no manual key was found, omit the Authorization header entirely — a 401 back is expected and actually confirms the auth layer is working.
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" -X POST "https://mcp.finplan.prethink.io/mcp" \
+curl -s -o /dev/null -w "%{http_code}" -X POST "https://mcp.finplan.tools/mcp" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -H "Authorization: Bearer {{BEARER_TOKEN}}" \
@@ -52,7 +52,7 @@ curl -s -o /dev/null -w "%{http_code}" -X POST "https://mcp.finplan.prethink.io/
 If a key was found in step 1, replace `{{BEARER_TOKEN}}` with the actual token:
 
 ```bash
-curl -sf -H "Authorization: Bearer {{BEARER_TOKEN}}" https://mcp.finplan.prethink.io/auth/verify-key
+curl -sf -H "Authorization: Bearer {{BEARER_TOKEN}}" https://mcp.finplan.tools/auth/verify-key
 ```
 
 If the response includes `"status": "authenticated"`, the key is valid. If the command fails silently (curl `-f` flag) or returns a 401, the key is invalid or revoked.

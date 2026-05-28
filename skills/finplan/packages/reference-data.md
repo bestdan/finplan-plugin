@@ -125,10 +125,6 @@ Use `closed_form` for most cases. Use `monte_carlo` only for complex scenarios o
 | 2025 | $62,160            | $23,400                  | 2.5% | $176,100             | $1,226       | $7,391       |
 | 2026 | $63,780            | $24,120                  | 2.5% | $181,200             | $1,253       | $7,553       |
 
-## Supported SSA Benefit Years
-
-2024, 2025, 2026
-
 ## RMD Starting Ages (SECURE 2.0)
 
 | Birth Year    | RMD Starting Age | Rule                    |

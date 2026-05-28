@@ -142,8 +142,8 @@ Call `run_projection(...)`. The response includes:
 Download the files so the injection script can read them:
 
 ```bash
-curl -s "https://mcp.finplan.prethink.io/files/{uid}_data.json" -o /tmp/finplan_projection_data.json
-curl -s "https://mcp.finplan.prethink.io/files/{uid}_schema.json" -o /tmp/finplan_projection_schema.json
+curl -s "https://mcp.finplan.tools/files/{uid}_data.json" -o /tmp/finplan_projection_data.json
+curl -s "https://mcp.finplan.tools/files/{uid}_schema.json" -o /tmp/finplan_projection_schema.json
 ```
 
 Use the actual URLs from `urls.data` and `urls.schema` in the tool response.

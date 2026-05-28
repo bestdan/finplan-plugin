@@ -48,7 +48,7 @@ client_docs/
 You need the FinPlan MCP server connected to your Claude environment. The server endpoint is:
 
 ```
-https://mcp.finplan.prethink.io/mcp
+https://mcp.finplan.tools/mcp
 ```
 
 How you connect it depends on which Claude product you're using (see setup instructions below).
@@ -80,7 +80,7 @@ This installs:
 **Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts when tools download result files:
 
 ```bash
-claude settings add allowedTools 'Bash(curl*mcp.finplan.prethink.io*)'
+claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'
 ```
 
 To update later:
@@ -122,7 +122,7 @@ This installs the commands globally (available in all projects). To install per-
   "mcpServers": {
     "finplan": {
       "type": "url",
-      "url": "https://mcp.finplan.prethink.io/mcp"
+      "url": "https://mcp.finplan.tools/mcp"
     }
   }
 }
@@ -155,7 +155,7 @@ Available slash commands:
 2. Go to **Settings > Connectors**
 3. Click **Add connector** and enter the remote MCP server URL:
    ```
-   https://mcp.finplan.prethink.io/mcp
+   https://mcp.finplan.tools/mcp
    ```
 4. Save. You should see a tools icon confirming the connection.
 
@@ -188,7 +188,7 @@ Claude will create a plan, execute the tools, and deliver results.
 **Step 1 — Add the MCP connector**
 
 1. Go to [claude.ai](https://claude.ai) and open **Settings > Connectors**
-2. Add a new connector with the URL `https://mcp.finplan.prethink.io/mcp`
+2. Add a new connector with the URL `https://mcp.finplan.tools/mcp`
 
 **Step 2 — Install the skill**
 
@@ -216,7 +216,7 @@ Start a new conversation. Claude uses FinPlan tools automatically when relevant.
 
 3. Include `"Skill"` in your `allowed_tools` configuration.
 
-4. Configure the MCP server connection in your agent setup to point to `https://mcp.finplan.prethink.io/mcp`.
+4. Configure the MCP server connection in your agent setup to point to `https://mcp.finplan.tools/mcp`.
 
 ## How it works
 

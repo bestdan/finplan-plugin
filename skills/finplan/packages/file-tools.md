@@ -18,8 +18,8 @@ MCP tools that produce large datasets always write full results to a file server
 ```json
 {
   "urls": {
-    "data": "https://mcp.finplan.prethink.io/files/abc123_data.json",
-    "schema": "https://mcp.finplan.prethink.io/files/abc123_schema.json"
+    "data": "https://mcp.finplan.tools/files/abc123_data.json",
+    "schema": "https://mcp.finplan.tools/files/abc123_schema.json"
   },
   "summary": {
     "time_horizon_months": 360,

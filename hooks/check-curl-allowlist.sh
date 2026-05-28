@@ -3,8 +3,8 @@
 # allowlisted curl for the FinPlan file server. If not, suggest the one-liner.
 
 SETTINGS="$HOME/.claude/settings.json"
-MARKER="$HOME/.claude/.finplan-curl-hint-shown"
-PATTERN="mcp.finplan.prethink.io"
+MARKER="$HOME/.claude/.finplan-curl-hint-shown-finplan-tools"
+PATTERN="mcp.finplan.tools"
 
 # Only show once per install (marker file tracks this)
 [ -f "$MARKER" ] && exit 0
@@ -22,7 +22,7 @@ cat <<'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, run:\n\n  claude settings add allowedTools 'Bash(curl*mcp.finplan.prethink.io*)'\n\nThis allowlists curl only for the FinPlan file server."
+    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, run:\n\n  claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'\n\nThis allowlists curl only for the FinPlan file server."
   }
 }
 EOF

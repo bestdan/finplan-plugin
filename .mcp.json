@@ -2,7 +2,7 @@
   "mcpServers": {
     "finplan": {
       "type": "url",
-      "url": "https://mcp.finplan.prethink.io/mcp"
+      "url": "https://mcp.finplan.tools/mcp"
     }
   }
 }

@@ -16,7 +16,7 @@ The FinPlan MCP server requires authentication. In most cases you don't need thi
 
 ### Default path — browser OAuth (no action needed)
 
-When you invoke any FinPlan tool, the server replies with `401 + WWW-Authenticate`. Claude Code sees this, opens your browser to `https://mcp.finplan.prethink.io/auth/signup` (or login), and captures the returned token automatically. The token is stored by Claude Code internally — it is **not** written to `.mcp.json`. OAuth-issued tokens last 3 days and renew silently via the same flow on expiry.
+When you invoke any FinPlan tool, the server replies with `401 + WWW-Authenticate`. Claude Code sees this, opens your browser to `https://mcp.finplan.tools/auth/signup` (or login), and captures the returned token automatically. The token is stored by Claude Code internally — it is **not** written to `.mcp.json`. OAuth-issued tokens last 3 days and renew silently via the same flow on expiry.
 
 If a FinPlan tool call opened a browser tab and you signed in, you're done. Close this command.
 
@@ -44,8 +44,8 @@ Tell the user:
 
 > To get a manual API key:
 >
-> 1. Sign in at **https://mcp.finplan.prethink.io/auth/login**
-> 2. Create an API key at **https://mcp.finplan.prethink.io/auth/api-keys**
+> 1. Sign in at **https://mcp.finplan.tools/auth/login**
+> 2. Create an API key at **https://mcp.finplan.tools/auth/api-keys**
 > 3. Copy the key (it starts with `fp_live_...`) and paste it here
 
 Wait for the user to paste their key.
@@ -59,7 +59,7 @@ Write it to `.mcp.json` in the current working directory. Use Edit if the file e
   "mcpServers": {
     "finplan": {
       "type": "url",
-      "url": "https://mcp.finplan.prethink.io/mcp",
+      "url": "https://mcp.finplan.tools/mcp",
       "headers": {
         "Authorization": "Bearer {{BEARER_TOKEN}}"
       }
@@ -77,7 +77,7 @@ If the project has a `.gitignore`, check whether `.mcp.json` is listed. If not, 
 ### 4. Verify the key
 
 ```bash
-curl -sf -H "Authorization: Bearer {{BEARER_TOKEN}}" https://mcp.finplan.prethink.io/auth/verify-key
+curl -sf -H "Authorization: Bearer {{BEARER_TOKEN}}" https://mcp.finplan.tools/auth/verify-key
 ```
 
 If the response includes `"status": "authenticated"`, the key is valid. On 401 or empty, help the user troubleshoot (typos, try regenerating at the keys page).
