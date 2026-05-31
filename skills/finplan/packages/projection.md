@@ -16,24 +16,24 @@ Unified projection tool supporting both constant-return and time-varying (glide 
 
 **Two input modes:**
 
-1. **Constant returns** — provide `expected_annual_return`, `annual_volatility`, and `time_horizon_months`. Supports `annual_fee`, `inflation`, and custom `percentiles`. Uses Kan & Zhou analytical methodology.
+1. **Constant returns** — provide `expected_annual_return`, `annual_volatility`, and `time_horizon_months`. Supports `fees`, `inflation`, and custom `percentiles`. Uses Kan & Zhou analytical methodology.
 
 2. **Time-varying returns** — provide `return_distribution_timeline` with monthly entries for glide paths. The time horizon is derived from the timeline length.
 
-| Parameter                      | Type       | Description                                                                        |
-| ------------------------------ | ---------- | ---------------------------------------------------------------------------------- |
-| `initial_balance_cents`        | int        | Starting balance in cents                                                          |
-| `expected_annual_return`       | float      | Expected annual return (0.07 = 7%). For constant-return mode.                      |
-| `annual_volatility`            | float      | Annual std dev (0.15 = 15%). For constant-return mode.                             |
-| `time_horizon_months`          | int        | Months to project. Required for constant-return mode.                              |
-| `return_distribution_timeline` | list[dict] | Monthly entries: `{month, return, volatility}`. For timeline mode.                 |
-| `monthly_contribution_cents`   | int        | Monthly contribution in cents (default: 0)                                         |
-| `method`                       | string     | `"closed_form"` (default), `"auto"`, `"deterministic"`, `"monte_carlo"`            |
-| `iterations`                   | int        | Monte Carlo iterations (default: 1000)                                             |
-| `seed`                         | int        | Random seed for reproducibility                                                    |
-| `annual_fee`                   | float      | Annual fee as decimal (0.005 = 0.5%, default: 0). Constant-return mode only.       |
-| `inflation`                    | float      | Annual inflation rate (0.03 = 3%, default: 0). Constant-return mode only.          |
-| `percentiles`                  | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]). Constant-return mode only. |
+| Parameter                      | Type       | Description                                                                                                                                                                                         |
+| ------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initial_balance_cents`        | int        | Starting balance in cents                                                                                                                                                                           |
+| `expected_annual_return`       | float      | Expected annual return (0.07 = 7%). For constant-return mode.                                                                                                                                       |
+| `annual_volatility`            | float      | Annual std dev (0.15 = 15%). For constant-return mode.                                                                                                                                              |
+| `time_horizon_months`          | int        | Months to project. Required for constant-return mode.                                                                                                                                               |
+| `return_distribution_timeline` | list[dict] | Monthly entries: `{month, return, volatility}`. For timeline mode.                                                                                                                                  |
+| `monthly_contribution_cents`   | int        | Monthly contribution in cents (default: 0)                                                                                                                                                          |
+| `method`                       | string     | `"closed_form"` (default), `"auto"`, `"deterministic"`, `"monte_carlo"`                                                                                                                             |
+| `iterations`                   | int        | Monte Carlo iterations (default: 1000)                                                                                                                                                              |
+| `seed`                         | int        | Random seed for reproducibility                                                                                                                                                                     |
+| `fees`                         | list[dict] | Optional list of fee specs, e.g. `[{"type": "flat_percent", "annual_rate": 0.005}]` (percent of AUM) or `[{"type": "flat_dollar", "annual_amount_cents": 500000}]` (fixed dollars/year). Stackable. |
+| `inflation`                    | float      | Annual inflation rate (0.03 = 3%, default: 0). Constant-return mode only.                                                                                                                           |
+| `percentiles`                  | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]). Constant-return mode only.                                                                                                                  |
 
 Provide **either** constant-return params **or** `return_distribution_timeline`, not both.
 
