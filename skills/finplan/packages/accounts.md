@@ -44,6 +44,7 @@ Returns which asset classes (stocks/bonds/cash) an account type can hold.
 
 Returns non-tax limits: FDIC insurance, RMD requirements, purchase limits, early withdrawal penalties.
 
-| Parameter      | Type   | Description  |
-| -------------- | ------ | ------------ |
-| `account_type` | string | Account type |
+| Parameter      | Type   | Description                                                                                                                                                     |
+| -------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_type` | string | Account type                                                                                                                                                    |
+| `birth_year`   | int    | Optional owner birth year; corrects RMD start age per SECURE 2.0 (72 if born before 1951, 73 for 1951-1959, 75 for 1960 or later). Omit for the default age 73. |
