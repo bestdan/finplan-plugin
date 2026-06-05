@@ -46,30 +46,30 @@ Returns: `success`, `state_tax_cents`, `state_marginal_rate`, `state_effective_r
 
 Calculate the full federal tax liability for a single year — AGI, deductions, taxable income, ordinary-bracket tax, preferential-rate (LTCG/qualified-dividend) stacking, NIIT, Additional Medicare, and AMT — composing the underlying primitives. When the filer itemizes, the deductible SALT amount is automatically added back as an AMT exclusion preference.
 
-| Parameter                                  | Type   | Description                                                                                                |
-| ------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------- |
-| `filing_status`                            | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"`        |
-| `wages_cents`                              | int    | Regular W-2 wages in cents (default `0`; must exclude RSU/NQSO supplemental compensation)                  |
-| `supplemental_ordinary_fica_subject_cents` | int    | RSU vest / NQSO exercise ordinary income, FICA-subject, in cents (default `0`)                             |
-| `supplemental_ordinary_fica_exempt_cents`  | int    | ISO disqualifying-disposition ordinary-income portion, FICA-exempt, in cents (default `0`)                 |
-| `qualified_dividends_cents`                | int    | Qualified dividends in cents — subset of `ordinary_dividends_cents` (default `0`)                          |
-| `ordinary_dividends_cents`                 | int    | Total ordinary dividends (1099-DIV Box 1a) in cents (default `0`)                                          |
-| `short_term_capital_gains_cents`           | int    | Short-term capital gains in cents (default `0`)                                                            |
-| `long_term_capital_gains_cents`            | int    | Long-term capital gains in cents (default `0`)                                                             |
-| `interest_income_cents`                    | int    | Taxable interest income in cents (default `0`)                                                             |
-| `other_ordinary_cents`                     | int    | Other ordinary income in cents (default `0`)                                                               |
-| `above_the_line_adjustments_cents`         | int    | Above-the-line adjustments (401(k), HSA, SE tax/2, etc.) in cents (default `0`)                            |
-| `salt_paid_state_cents`                    | int    | State income tax paid in cents (default `0`)                                                               |
-| `salt_paid_local_cents`                    | int    | Local income tax paid in cents (default `0`)                                                               |
-| `salt_paid_property_cents`                 | int    | Property tax paid in cents (default `0`)                                                                   |
-| `mortgage_interest_cents`                  | int    | Home mortgage interest in cents (default `0`)                                                              |
-| `mortgage_principal_balance_cents`         | int    | Average mortgage principal balance in cents (default `0`)                                                  |
-| `mortgage_origination_year`                | int    | Mortgage origination year — pre-2018 gets the $1M grandfathered cap; 2018+ gets $750K (default `2024`)     |
-| `charitable_cash_cents`                    | int    | Charitable cash contributions in cents (subject to the IRC §170 AGI ceiling, default `0`)                  |
-| `charitable_appreciated_asset_cents`       | int    | Charitable gifts of appreciated long-term capital-gain property in cents (lower §170 ceiling, default `0`) |
-| `charitable_other_property_cents`          | int    | Charitable gifts of other (non-cash, non-appreciated) property in cents (default `0`)                      |
-| `iso_preference_cents`                     | int    | ISO exercise-and-hold bargain element in cents (AMT deferral preference, default `0`)                      |
-| `tax_year`                                 | int    | Tax year, `2026` only (default: `2026`)                                                                    |
+| Parameter                                  | Type   | Description                                                                                                                                            |
+| ------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `filing_status`                            | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"`                                                    |
+| `wages_cents`                              | int    | Regular W-2 wages in cents (default `0`; must exclude RSU/NQSO supplemental compensation)                                                              |
+| `supplemental_ordinary_fica_subject_cents` | int    | RSU vest / NQSO exercise ordinary income, FICA-subject, in cents (default `0`)                                                                         |
+| `supplemental_ordinary_fica_exempt_cents`  | int    | ISO disqualifying-disposition ordinary-income portion, FICA-exempt, in cents (default `0`)                                                             |
+| `qualified_dividends_cents`                | int    | Qualified dividends in cents — subset of `ordinary_dividends_cents` (default `0`)                                                                      |
+| `ordinary_dividends_cents`                 | int    | Total ordinary dividends (1099-DIV Box 1a) in cents (default `0`)                                                                                      |
+| `short_term_capital_gains_cents`           | int    | Short-term capital gains in cents (default `0`)                                                                                                        |
+| `long_term_capital_gains_cents`            | int    | Long-term capital gains in cents (default `0`)                                                                                                         |
+| `interest_income_cents`                    | int    | Taxable interest income in cents (default `0`)                                                                                                         |
+| `other_ordinary_cents`                     | int    | Other ordinary income in cents (default `0`)                                                                                                           |
+| `above_the_line_adjustments_cents`         | int    | Above-the-line adjustments (401(k), HSA, SE tax/2, etc.) in cents (default `0`)                                                                        |
+| `salt_paid_state_cents`                    | int    | State income tax paid in cents (default `0`)                                                                                                           |
+| `salt_paid_local_cents`                    | int    | Local income tax paid in cents (default `0`)                                                                                                           |
+| `salt_paid_property_cents`                 | int    | Property tax paid in cents (default `0`)                                                                                                               |
+| `mortgage_interest_cents`                  | int    | Home mortgage interest in cents (default `0`)                                                                                                          |
+| `mortgage_principal_balance_cents`         | int    | Average mortgage principal balance in cents (default `0`)                                                                                              |
+| `mortgage_origination_year`                | int    | Mortgage origination year — pre-2018 gets the $1M grandfathered cap; 2018+ gets $750K. Required when `mortgage_interest_cents > 0`; ignored otherwise. |
+| `charitable_cash_cents`                    | int    | Charitable cash contributions in cents (subject to the IRC §170 AGI ceiling, default `0`)                                                              |
+| `charitable_appreciated_asset_cents`       | int    | Charitable gifts of appreciated long-term capital-gain property in cents (lower §170 ceiling, default `0`)                                             |
+| `charitable_other_property_cents`          | int    | Charitable gifts of other (non-cash, non-appreciated) property in cents (default `0`)                                                                  |
+| `iso_preference_cents`                     | int    | ISO exercise-and-hold bargain element in cents (AMT deferral preference, default `0`)                                                                  |
+| `tax_year`                                 | int    | Tax year, `2026` only (default: `2026`)                                                                                                                |
 
 Returns: `agi_cents`/`_dollars`, `magi_niit_cents`/`_dollars`, `deduction_taken_cents`/`_dollars`, `deduction_choice`, `taxable_income_cents`/`_dollars`, `ordinary_bracket_tax_cents`/`_dollars`, `preferential_rate_tax_cents`/`_dollars`, `niit_cents`/`_dollars`, `additional_medicare_cents`/`_dollars`, `amt_owed_cents`/`_dollars`, `amt_credit_carryforward_cents`/`_dollars`, `total_federal_liability_cents`/`_dollars`, `marginal_ordinary_rate`, `effective_rate`, `explanation`.
 
