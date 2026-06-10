@@ -4,6 +4,23 @@ Comprehensive SSA benefit estimation, claiming strategies, and earnings test.
 
 ## Tools
 
+### compare_social_security_claiming_ages
+
+Composite claiming-age analysis in a single call: per-age monthly and lifetime benefits (nominal and today's dollars), pairwise breakeven ages, a life-expectancy sensitivity grid, the best claiming age per assumed lifespan, and optional household/survivor figures. A single age returns its full statistics; multiple ages add the pairwise breakevens. Prefer this over orchestrating the single-purpose tools below when the question is "when should I claim?".
+
+| Parameter                   | Type      | Description                                                        |
+| --------------------------- | --------- | ------------------------------------------------------------------ |
+| `pia_cents`                 | int       | Primary Insurance Amount in cents                                  |
+| `birth_year`                | int       | Birth year                                                         |
+| `life_expectancy_years`     | int       | Assumed age at death (default: 85)                                 |
+| `claiming_ages`             | list[int] | Whole-year ages to analyze, each 62-70 (default: 62, FRA, 70)      |
+| `inflation`                 | float     | Annual inflation as decimal; COLA defaults to it (default: 0.0)    |
+| `spouse_pia_cents`          | int       | Spouse's own PIA in cents; 0 = no own work record (default: 0)     |
+| `spouse_birth_year`         | int       | Spouse's birth year; provide to include household/survivor figures |
+| `spouse_claiming_age_years` | int       | Spouse's claiming age in whole years (default: spouse's FRA)       |
+
+Returns: `assumptions` (echoes every default applied — re-call with one changed parameter for follow-ups), `by_claiming_age`, `breakevens`, `life_expectancy_sensitivity`, `best_claiming_age_at_assumed_life_expectancy`.
+
 ### estimate_social_security_pia_from_salary
 
 Estimate Primary Insurance Amount from salary history.
@@ -105,7 +122,5 @@ Survivor benefit (up to 100% of worker's benefit at FRA, claimable from age 60).
 ## Typical workflow
 
 1. `estimate_social_security_pia_from_salary` to get PIA from salary
-2. `estimate_social_security_benefits_all_ages` to see all claiming options
-3. `estimate_social_security_breakeven_age` for claiming strategy
-4. `calculate_social_security_lifetime_benefits` to compare total benefits at different ages
-5. `estimate_social_security_spousal_benefit` if married
+2. `compare_social_security_claiming_ages` for full claiming-age analysis (benefits, breakevens, sensitivity, household figures) in one call
+3. Single-purpose tools (`estimate_social_security_benefits_all_ages`, `estimate_social_security_breakeven_age`, `calculate_social_security_lifetime_benefits`, `estimate_social_security_spousal_benefit`) for month-precision claiming ages or to audit individual figures

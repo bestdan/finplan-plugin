@@ -172,6 +172,5 @@ state = manage_state(action="update_goal", state_json=state, goal_json=goal["goa
 **Social Security analysis**:
 
 1. `estimate_social_security_pia_from_salary` to estimate PIA
-2. `estimate_social_security_benefits_all_ages` to compare claiming ages
-3. `estimate_social_security_breakeven_age` for claiming strategy
-4. `calculate_social_security_lifetime_benefits` for total benefit comparison
+2. `compare_social_security_claiming_ages` for full claiming-age analysis (benefits, breakevens, life-expectancy sensitivity, household figures) in one call
+3. Single-purpose tools (`estimate_social_security_benefits_all_ages`, `estimate_social_security_breakeven_age`, `calculate_social_security_lifetime_benefits`) for month-precision ages or auditing individual figures
