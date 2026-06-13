@@ -8,7 +8,22 @@ Persistence (save/load) is handled client-side via slash commands (`/finplan:rea
 
 ### manage_state
 
-State management tool for creating and modifying user state. Returns the full UserState JSON after every action.
+State management tool for creating and modifying user state.
+
+**Response shape:** `action="create"` returns the full UserState JSON (plus `success`, `message`, `state_hash`). The `update_*` actions return a **compact delta by default** — only the changed section plus a verification hash — instead of echoing the whole document back on every edit (see PRE-134):
+
+```json
+{
+  "success": true,
+  "message": "...",
+  "action": "update_account",
+  "changed": { "section": "accounts", "item": { "...": "the changed entity" } },
+  "state_hash": "sha256:...",
+  "last_updated": "YYYY-MM-DD"
+}
+```
+
+You already hold the full state (you passed it in as `state_json`). To rebuild the document, apply `changed.item` to the section named in `changed.section`: for list sections (`accounts`, `goals`, `income_streams`, `expenses`) update-or-append by id (`account_id` for accounts; `id` for the rest); for `person` replace `.person`. `/finplan:save-state` does this for you. `state_hash` is a SHA-256 over the resulting full document so you can verify the rebuild. Pass `return_full_state=true` to get the full UserState returned inline instead.
 
 | Parameter            | Type   | Description                                                                                                                                                                                           |
 | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -19,6 +34,7 @@ State management tool for creating and modifying user state. Returns the full Us
 | `goal_json`          | dict   | Goal from `create_goal` result. Required for: update_goal.                                                                                                                                            |
 | `income_stream_json` | dict   | Income stream from `create_income_stream` result. Required for: update_income_stream.                                                                                                                 |
 | `expense_json`       | dict   | Expense from `create_expense` result. Required for: update_expense.                                                                                                                                   |
+| `return_full_state`  | bool   | When `true`, `update_*` actions return the full UserState inline instead of a delta (default `false`). Ignored by `create`.                                                                           |
 
 **Actions:**
 
@@ -60,25 +76,31 @@ Call `/finplan:save-state` immediately after:
 
 Use the `update_*` actions to integrate created objects:
 
+Each `update_*` returns a delta; apply it to the state you passed in (or let `/finplan:save-state` do it) to keep your full document current.
+
 ```
 # Create and integrate an account
 account_result = create_account(...)
-state = manage_state(action="update_account", state_json=state, account_json=account_result["account"])
+delta = manage_state(action="update_account", state_json=state, account_json=account_result["account"])
+state = apply_delta(state, delta)   # update-or-append changed.item into changed.section
 /finplan:save-state
 
 # Create and integrate a goal
 goal_result = create_goal(...)
-state = manage_state(action="update_goal", state_json=state, goal_json=goal_result["goal"])
+delta = manage_state(action="update_goal", state_json=state, goal_json=goal_result["goal"])
+state = apply_delta(state, delta)
 /finplan:save-state
 
 # Create and integrate an income stream
 income_result = create_income_stream(...)
-state = manage_state(action="update_income_stream", state_json=state, income_stream_json=income_result["income_stream"])
+delta = manage_state(action="update_income_stream", state_json=state, income_stream_json=income_result["income_stream"])
+state = apply_delta(state, delta)
 /finplan:save-state
 
 # Create and integrate an expense
 expense_result = create_expense(...)
-state = manage_state(action="update_expense", state_json=state, expense_json=expense_result["expense"])
+delta = manage_state(action="update_expense", state_json=state, expense_json=expense_result["expense"])
+state = apply_delta(state, delta)
 /finplan:save-state
 ```
 

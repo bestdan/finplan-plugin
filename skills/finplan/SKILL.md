@@ -137,17 +137,23 @@ create_goal(...)            # Creates goal but it's lost!
 ✅ **Correct**: Use integration tools and save after each change
 
 ```
-state = manage_state(action="create", ...)
+state = manage_state(action="create", ...)   # returns the full document
 /finplan:save-state
 
 account = create_account(...)
-state = manage_state(action="update_account", state_json=state, account_json=account["account"])
+# update_* returns a compact delta by default, NOT the full document:
+#   {success, message, changed: {section, item}, state_hash, last_updated}
+delta = manage_state(action="update_account", state_json=state, account_json=account["account"])
+state = apply_delta(state, delta)             # update-or-append changed.item into changed.section
 /finplan:save-state
 
 goal = create_goal(...)
-state = manage_state(action="update_goal", state_json=state, goal_json=goal["goal"])
+delta = manage_state(action="update_goal", state_json=state, goal_json=goal["goal"])
+state = apply_delta(state, delta)
 /finplan:save-state
 ```
+
+> **Mutation responses are deltas by default** (see PRE-134). `update_*` actions return only the changed section plus a `state_hash`, instead of echoing the whole 5–10 KB document back through context on every edit. You already hold the full state (you passed it in as `state_json`), so apply `changed.item` to the section named in `changed.section` to rebuild it — `/finplan:save-state` does this for you. Pass `return_full_state=true` if you need the complete document returned inline.
 
 ## Recommended workflows
 
