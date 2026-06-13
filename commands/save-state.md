@@ -23,7 +23,7 @@ Save to the same `*_finplan_state.json` file in the current working directory th
      - For list sections (`accounts`, `goals`, `income_streams`, `expenses`): replace the existing item whose id matches (`account_id` for accounts; `id` for the rest), or append it if there is no match.
      - For `person`: replace the `person` object with `changed.item`.
 3. Update the `last_updated` field to today's date (YYYY-MM-DD format).
-4. Strip the transient response metadata (`success`, `message`, `state_hash`, `action`, `changed`) before writing — a full-document result carries these merged in alongside the state fields, and they must not be persisted. Write only the state fields: `person`, `accounts`, `goals`, `income_streams`, `expenses`, `created_at`, `last_updated`.
+4. Strip the transient response metadata (`success`, `message`, `state_hash`, `action`, `changed`) before writing — a full-document result carries these merged in alongside the state fields, and they must not be persisted. Write only the state fields: `schema_version` (default to `1` if the state being written has none — a legacy file predating the field is version 1), `person`, `accounts`, `goals`, `income_streams`, `expenses`, `created_at`, `last_updated`.
 5. Write the full state JSON to the file using the Write tool, with consistent formatting (2-space indentation).
 6. Confirm to the user that the state was saved, including the file path and a brief summary of what's in it (number of accounts, goals, etc.).
 
