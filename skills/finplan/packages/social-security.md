@@ -68,6 +68,7 @@ Total lifetime benefits from claiming age through life expectancy.
 | `birth_year`            | int   | Birth year                                                                                                                                                                                  |
 | `claiming_age_months`   | int   | Additional months (0-11, default: 0)                                                                                                                                                        |
 | `inflation`             | float | Annual inflation rate as decimal (default: 0.0). When `inflation > 0`, COLA defaults to the inflation rate and `lifetime_benefits_real_cents`/`lifetime_benefits_real_dollars` are computed |
+| `cola_rate`             | float | Annual COLA rate as decimal (default: None). Overrides the inflation-derived COLA, letting benefits grow at a rate independent of the inflation used for discounting                        |
 
 ### apply_social_security_earnings_test
 
