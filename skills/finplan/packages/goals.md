@@ -50,10 +50,12 @@ Returns: `progress_percentage`, `remaining_amount_cents`, `is_complete`.
 
 ### project_goal_progress
 
-Project goal progress forward with compound growth (no future contributions).
+Project goal progress forward with compound growth, including the goal's ongoing contributions and any scheduled payouts.
 
-| Parameter            | Type  | Description                             |
-| -------------------- | ----- | --------------------------------------- |
-| `goal_json`          | dict  | Goal as JSON dictionary                 |
-| `annual_return_rate` | float | Expected annual return (default: 0.07)  |
-| `months_ahead`       | int   | Months to project forward (default: 12) |
+| Parameter              | Type  | Description                                                                 |
+| ---------------------- | ----- | --------------------------------------------------------------------------- |
+| `goal_json`            | dict  | Goal as JSON dictionary                                                     |
+| `annual_return_rate`   | float | Expected annual return (default: 0.07)                                      |
+| `months_ahead`         | int   | Months to project forward (default: 12)                                     |
+| `monthly_income_cents` | int   | Monthly income in cents; only used for percentage-income goals (default: 0) |
+| `inflation`            | float | Annual inflation rate; inflates a real-terms target (default: 0.0)          |
