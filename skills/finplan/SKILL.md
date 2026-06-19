@@ -84,6 +84,7 @@ When working with a specific area, read its detailed reference for tool names, p
 | Charts          | Chart.js fan charts, account breakdowns, comparisons     | [packages/charts.md](packages/charts.md)                   |
 | File Tools      | File-based responses, `generate_data` parameter          | [packages/file-tools.md](packages/file-tools.md)           |
 | Profile & State | Person profiles, user state persistence                  | [packages/state.md](packages/state.md)                     |
+| Snapshots       | Build point-in-time facts records, diff two snapshots    | [packages/snapshot.md](packages/snapshot.md)               |
 | Tool Search     | Dynamic tool discovery, search across all tools          | [packages/tool-search.md](packages/tool-search.md)         |
 | Reference Data  | Static lookup tables: account types, enums, limits       | [packages/reference-data.md](packages/reference-data.md)   |
 | System          | Server ping, readiness check, auth verification          | [packages/system.md](packages/system.md)                   |
