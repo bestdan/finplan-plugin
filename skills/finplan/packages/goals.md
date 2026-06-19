@@ -6,13 +6,12 @@ Financial goal definitions, progress tracking, and contribution calculations.
 
 ### create_goal
 
-Create a financial goal with strategy and targets.
+Create a financial goal with targets.
 
 | Parameter                   | Type   | Description                                                                                                                                                                    |
 | --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`                      | string | Goal name (1-200 chars)                                                                                                                                                        |
 | `goal_type`                 | string | `"retirement"`, `"emergency_fund"`, `"education"`, `"major_purchase"`, `"home_downpayment"`, `"vacation"`, `"wedding"`, `"business_startup"`, `"vehicle_purchase"`, `"custom"` |
-| `strategy`                  | string | `"fixed_contribution"`, `"percentage_income"`, `"fill_to_target"`, `"minimum_balance"`, `"surplus_allocation"`                                                                 |
 | `importance`                | float  | Success probability target (0.50-0.99)                                                                                                                                         |
 | `target_amount_cents`       | int    | Target amount in cents (optional)                                                                                                                                              |
 | `target_date`               | string | YYYY-MM-DD format (optional)                                                                                                                                                   |

@@ -48,29 +48,24 @@ If `$ARGUMENTS` is `add`, present the common goal types and walk the user throug
 
 1. **Emergency Fund** (`emergency_fund`) — 3-6 months of expenses in liquid savings
    - Ask: monthly expenses, target months (default: 6)
-   - Strategy: `minimum_balance`
    - Suggest linking to: `taxable_savings` or `taxable_checking`
 
 2. **Retirement** (`retirement`) — Long-term retirement savings
    - Ask: target retirement age, desired annual spending in retirement
-   - Strategy: `percentage_income` or `fixed_contribution`
    - Suggest linking to: `traditional_401k`, `roth_401k`, `traditional_ira`, `roth_ira`
    - Note: mention Social Security estimation is available via `estimate_social_security_pia_from_salary`
 
 3. **Home Down Payment** (`home_downpayment`) — Save for a house purchase
    - Ask: target home price, down payment percentage (default: 20%), target purchase date
-   - Strategy: `fill_to_target` or `fixed_contribution`
    - Suggest linking to: `taxable_savings` or `taxable_brokerage`
 
 4. **Kids' Education** (`education`) — College or education fund
    - Ask: child's name and age (or birth year), target school type (public/private), years until college
-   - Strategy: `fill_to_target`
    - Suggest linking to: `plan_529`
    - Target amount guidance: ~$25,000/yr public, ~$60,000/yr private (4 years)
 
 5. **Major Purchase** (`major_purchase`) — Vehicle, renovation, wedding, etc.
    - Ask: what the purchase is, target amount, target date
-   - Strategy: `fixed_contribution` or `fill_to_target`
    - Suggest linking to: `taxable_savings` or `taxable_brokerage`
 
 ### For any goal type, collect:
@@ -101,7 +96,6 @@ Display the current goal details and ask what the user wants to change:
 - **Monthly contribution** — Adjusted amount
 - **Status** — Change to active/paused/completed/abandoned
 - **Importance** — Adjust priority
-- **Strategy** — Change funding strategy
 
 To update, use `create_goal(...)` with the full updated parameters (preserving the existing goal ID), then:
 

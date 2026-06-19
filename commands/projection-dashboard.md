@@ -23,7 +23,7 @@ Read the local state JSON file (look for `*_finplan_state.json` or `finplan_stat
 
 - **Person**: name(s), age(s), income(s), dependents, marital status, filing status
 - **Accounts**: each account's type, name, balance, allocation (stocks_pct/bonds_pct/cash_pct), and any notes
-- **Goals**: each goal's name, type, target_date, target_amount, strategy, contributions, importance, status, linked_account_ids, and notes
+- **Goals**: each goal's name, type, target_date, target_amount, contributions, importance, status, linked_account_ids, and notes
 - **Tax profile**: filing status and any relevant deductions
 
 Calculate the current age from date_of_birth and today's date. Determine months from today to each goal's target_date.

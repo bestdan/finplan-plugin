@@ -83,16 +83,6 @@ Use `closed_form` for most cases. Use `monte_carlo` only for complex scenarios o
 
 `retirement`, `emergency_fund`, `major_purchase`, `education`, `annual_tax`, `debt_payoff`, `general_savings`, `charitable_giving`, `home_downpayment`, `vacation`, `wedding`, `business_startup`, `medical_expense`, `home_improvement`, `vehicle_purchase`, `custom`
 
-## Goal Funding Strategies
-
-| Value                | Description                                                                                                |
-| -------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `fixed_contribution` | Fixed dollar amount each month (requires `contribution_amount_cents`)                                      |
-| `percentage_income`  | Percentage of monthly income (requires `contribution_percentage`)                                          |
-| `fill_to_target`     | Calculate required contribution to reach target by date (requires `target_amount_cents` and `target_date`) |
-| `minimum_balance`    | Maintain a minimum balance at all times (requires `target_amount_cents`)                                   |
-| `surplus_allocation` | Allocate any surplus funds after other obligations                                                         |
-
 ## 401(k) Match Formula Types
 
 | Value                  | Description                                                                        |
