@@ -32,3 +32,9 @@ Compute structured, signed deltas between two snapshots (old → new): money del
 | `new_snapshot_json` | object | The later `finplan_snapshot` document   |
 
 Rejects a document whose `kind` is not `finplan_snapshot`. Returns: `diff` with `as_of_old`/`as_of_new` and per-section deltas.
+
+### get_checkin_template
+
+Return the canonical check-in narrative template as plaintext markdown (no parameters). The template is YAML front-matter (`type: checkin`, `as_of`) plus a facts table of `${dotted.path}` markers and reserved `${narrative:*}` sections.
+
+The template is versioned with the snapshot schema, so fetch it fresh rather than caching a copy. Fill it against a `finplan_snapshot`: `${dotted.path}` markers resolve against the snapshot JSON (a `*_cents` leaf renders as a dollar amount), while `${narrative:*}` markers are left untouched for the strategy/narrative layer (or a human) to write. Returns: `template` (markdown string).
