@@ -124,6 +124,20 @@ Model the tax effect of a non-qualified stock option (NQSO) exercise. Returns th
 
 Returns: `shares`, `strike_cents`/`_dollars`, `fmv_cents`/`_dollars`, `ordinary_income_fica_subject_cents`/`_dollars`, `ordinary_income_fica_exempt_cents`/`_dollars`, `amt_preference_cents`/`_dollars`, `short_term_capital_gain_cents`/`_dollars`, `long_term_capital_gain_cents`/`_dollars`, `supplemental_withholding_cents`/`_dollars`, `shares_surrendered_for_strike`, `shares_surrendered_for_tax`, `shares_retained`, `explanation`.
 
+### model_rsu_vest
+
+Model the tax effect of a restricted stock unit (RSU) vest. Returns the vest value (FMV × shares_vesting) as FICA-subject ordinary (W-2) income, the mandatory federal supplemental-wage withholding (flat 22% up to the $1M aggregate YTD cap, mandatory 37% above), and zero AMT preference — in both `_cents` and `_dollars` form, plus a plain-English explanation.
+
+| Parameter                     | Type   | Description                                                                                                                          |
+| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `fmv_cents`                   | int    | Per-share fair market value at vest, in cents                                                                                        |
+| `shares_vesting`              | int    | Number of shares vesting                                                                                                             |
+| `filing_status`               | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"`                                  |
+| `ytd_supplemental_paid_cents` | int    | Year-to-date supplemental wages already paid before this event in cents — positions the vest value against the $1M cap (default `0`) |
+| `tax_year`                    | int    | Tax year, `2026` only (default: `2026`)                                                                                              |
+
+Returns: `shares_vesting`, `fmv_cents`/`_dollars`, `ordinary_income_fica_subject_cents`/`_dollars`, `ordinary_income_fica_exempt_cents`/`_dollars`, `amt_preference_cents`/`_dollars`, `short_term_capital_gain_cents`/`_dollars`, `long_term_capital_gain_cents`/`_dollars`, `supplemental_withholding_cents`/`_dollars`, `shares_surrendered_for_strike`, `shares_surrendered_for_tax`, `shares_retained`, `explanation`.
+
 ### estimate_underpayment_safe_harbor
 
 Estimate whether withholding meets the IRS safe-harbor threshold for avoiding underpayment penalties (IRC §6654(d)). Returns the safe-harbor target, the basis used (90% of current-year tax or 100/110% of prior-year tax), whether a penalty would apply, and suggested quarterly 1040-ES payments to close any gap.
