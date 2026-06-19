@@ -17,7 +17,7 @@ historical fact, so this command **never overwrites silently**.
 Use the most recent `build_snapshot` result from the current conversation. That tool
 returns `{ success, snapshot }`; the `snapshot` object (top-level `kind`,
 `snapshot_format_version`, `as_of`, `provenance`, `facts`, `derived`) is what gets
-persisted — losslessly, in the canonical on-disk form described below.
+persisted — losslessly, in the on-disk form described below.
 
 If no `build_snapshot` result is available in this session, stop and tell the user to
 build one first (`build_snapshot` over their current state via the MCP/CLI tools).
@@ -44,9 +44,11 @@ date — derive it from the snapshot so the path and the contents can't disagree
      overwrite it. Do not write.
    - If it exists and `--force` is present, proceed (overwrite).
    - If it does not exist, proceed.
-3. Write the snapshot JSON to the path with the Write tool in the canonical on-disk form
-   — 2-space indentation, keys sorted (matching the engine's `snapshot_to_json`). Write
-   parent directories as needed.
+3. Write the snapshot JSON to the path with the Write tool, 2-space indentation, preserving
+   the data exactly (matching `/finplan:save-state`). Write parent directories as needed.
+   Don't try to hand-sort keys — the snapshot embeds a full `facts` state, so reordering it
+   by hand is error-prone, and the file is written once and immutable: key order doesn't
+   affect the period-to-period diff (`diff_snapshots` reads by field, not by byte).
 4. Confirm to the user: the path written, the `as_of` date, net worth from
    `derived.net_worth.net_worth_cents` (formatted as dollars), and whether this was a new
    write or a `--force` overwrite.
@@ -54,5 +56,5 @@ date — derive it from the snapshot so the path and the contents can't disagree
 ## Important
 
 - Persist the snapshot losslessly — never drop, add, or alter a field or value. Only the
-  formatting is canonicalized (2-space indent, sorted keys); the data is unchanged.
+  indentation is normalized (2-space); the data is preserved exactly as returned by the tool.
 - A snapshot is immutable history; only ever overwrite on an explicit `--force`.
