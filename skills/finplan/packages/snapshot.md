@@ -38,3 +38,14 @@ Rejects a document whose `kind` is not `finplan_snapshot`. Returns: `diff` with 
 Return the canonical check-in narrative template as plaintext markdown (no parameters). The template is YAML front-matter (`type: checkin`, `as_of`) plus a facts table of `${dotted.path}` markers and reserved `${narrative:*}` sections.
 
 The template is versioned with the snapshot schema, so fetch it fresh rather than caching a copy. Fill it against a `finplan_snapshot`: `${dotted.path}` markers resolve against the snapshot JSON (a `*_cents` leaf renders as a dollar amount), while `${narrative:*}` markers are left untouched for the strategy/narrative layer (or a human) to write. Returns: `template` (markdown string).
+
+### fill_checkin_template
+
+Fill a check-in template's facts markers directly from a `finplan_snapshot`, so consumers never map dotted paths or convert cents → dollars by hand. This is the MCP surface of the internal filler, so its output cannot drift from the snapshot.
+
+| Parameter       | Type   | Description                                                                                             |
+| --------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| `snapshot_json` | object | A `finplan_snapshot` document to fill the template from                                                 |
+| `template`      | string | Template markdown with `${dotted.path}` markers (optional; defaults to the canonical check-in template) |
+
+Substitutes every resolvable `${dotted.path}` marker (`${derived.*}`, `${provenance.*}`, `${as_of}`, etc.; `*_cents` leaves rendered as dollar amounts) and leaves `${narrative:*}` markers — and any path it cannot resolve — verbatim. Rejects a document whose `kind` is not `finplan_snapshot`. Returns: `filled` (the substituted markdown) and `unresolved` (non-narrative markers that had no matching snapshot value).
