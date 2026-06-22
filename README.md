@@ -60,6 +60,8 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 | `/finplan:save-state`           | Save current state to local JSON file          |
 | `/finplan:read-snapshot`        | Read a saved snapshot from `snapshots/`        |
 | `/finplan:save-snapshot`        | Save an immutable snapshot to `snapshots/`     |
+| `/finplan:checkin-init`         | Scaffold a `snapshots/` check-in workspace     |
+| `/finplan:checkin`              | Run a recurring check-in (build, save, diff)   |
 | `/finplan:projection-dashboard` | Generate interactive HTML projection dashboard |
 | `/finplan:profile`              | View and update your financial profile         |
 | `/finplan:accounts`             | View and manage financial accounts             |
