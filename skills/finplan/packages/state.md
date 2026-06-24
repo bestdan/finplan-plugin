@@ -39,8 +39,8 @@ You already hold the full state (you passed it in as `state_json`). To rebuild t
 **Actions:**
 
 - **create** — Create a new UserState with person profile. Requires `person_json`.
-- **update_account** — Add or update an account in state. Requires `state_json` and `account_json`. If account has an 'id' field matching an existing account, it replaces it; otherwise adds new.
-- **update_goal** — Add or update a goal in state. Requires `state_json` and `goal_json`. If goal has an 'id' field matching an existing goal, it replaces it; otherwise adds new.
+- **update_account** — Add or update an account in state. Requires `state_json` and `account_json`. If account has an 'account_id' field matching an existing account, it replaces it; otherwise adds new.
+- **update_goal** — Add or update a goal in state. Requires `state_json` and `goal_json`. If goal has an 'id' field matching an existing goal, it replaces it; otherwise adds new. A goal's funded amount is account-derived, so **adding a new goal establishes a backing account**: dedicated-savings types (emergency fund, vacation, …) auto-create a provisional Taxable Savings account linked to the goal (returned as `provisional_account` with `assumptions` to confirm; an auto-create returns the full document, not a delta); retirement/education and ambiguous types instead return `eligible_accounts` to link plus a `warnings` entry that the goal is not yet funded. A multi-owner household defers the auto-create with a `warnings` entry + `candidate_owner_ids`. Editing an existing goal never re-runs establishment.
 - **update_person** — Update (edit) person info in state. Requires `state_json` and `person_json` with fields to change.
 - **update_income_stream** — Add or update an income stream in state. Requires `state_json` and `income_stream_json`. If income stream has an 'id' field matching an existing one, it replaces it; otherwise adds new.
 - **update_expense** — Add or update an expense in state. Requires `state_json` and `expense_json`. If expense has an 'id' field matching an existing one, it replaces it; otherwise adds new.

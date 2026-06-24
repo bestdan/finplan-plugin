@@ -6,7 +6,12 @@ Financial goal definitions, progress tracking, and contribution calculations.
 
 ### create_goal
 
-Create a financial goal with targets.
+Create a financial goal with targets. A goal's funded amount is account-derived
+(earmark an account to it via `goal_id`), so there is no manual current-balance
+input — a new goal starts unfunded at $0. When the goal is added to state with
+`manage_state(action="update_goal")`, a backing account is established
+automatically for dedicated-savings goal types (or eligible accounts are offered
+to link for retirement/education); see the state tools.
 
 | Parameter                   | Type   | Description                                                                                                                                                                    |
 | --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -16,7 +21,6 @@ Create a financial goal with targets.
 | `target_amount_cents`       | int    | Target amount in cents (optional)                                                                                                                                              |
 | `target_date`               | string | YYYY-MM-DD format (optional)                                                                                                                                                   |
 | `target_date_flexibility`   | string | `"firm"`, `"flexible"`, `"very_flexible"` (optional)                                                                                                                           |
-| `current_balance_cents`     | int    | Current savings toward goal in cents (default: 0)                                                                                                                              |
 | `contribution_amount_cents` | int    | Fixed monthly contribution in cents (optional)                                                                                                                                 |
 | `contribution_percentage`   | float  | % of income (0.0-1.0, optional)                                                                                                                                                |
 | `months_expenses`           | int    | Months of expenses for emergency fund (optional)                                                                                                                               |
