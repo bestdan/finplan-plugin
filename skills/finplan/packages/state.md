@@ -45,6 +45,12 @@ You already hold the full state (you passed it in as `state_json`). To rebuild t
 - **update_income_stream** — Add or update an income stream in state. Requires `state_json` and `income_stream_json`. If income stream has an 'id' field matching an existing one, it replaces it; otherwise adds new.
 - **update_expense** — Add or update an expense in state. Requires `state_json` and `expense_json`. If expense has an 'id' field matching an existing one, it replaces it; otherwise adds new.
 
+### describe_state_schema
+
+Return the JSON Schema for a `finplan_state` document. Fetch it **once** to author a valid state in a single pass, instead of discovering required fields by submitting and reading validation errors. The schema describes every nested shape under `json_schema["$defs"]` — including the `PeriodRate` / `ReturnPeriod` rate types and all enums such as `property_type` — so you don't have to probe level-by-level.
+
+Takes no parameters. Returns `{kind, schema_fingerprint, json_schema}`. The result is static for a given server version and safe to cache; `schema_fingerprint` identifies the schema version a document must match.
+
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
