@@ -102,9 +102,11 @@ When an update is available, Claude Code refreshes the plugin at startup and pro
 claude plugin update finplan
 ```
 
+Restart Claude Code afterward to apply the update.
+
 ### Version compatibility
 
-On first FinPlan tool call each session, the plugin checks whether it meets the MCP server's minimum version requirement. If your plugin is outdated, you'll see a one-time hint to update.
+On first FinPlan tool call each session, the plugin checks whether a newer version has been published (and, if the MCP server advertises a minimum, whether your version is still compatible). If your plugin is behind, you'll see a one-time hint to update.
 
 ## Testing locally
 

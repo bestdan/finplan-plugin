@@ -83,7 +83,7 @@ This installs:
 claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'
 ```
 
-To update later:
+To update later (restart Claude Code afterward to apply):
 
 ```bash
 claude plugin update finplan
@@ -261,7 +261,7 @@ Once set up, try asking Claude things like:
 /plugin → Marketplaces tab → finplan-plugin → Enable auto-update
 ```
 
-Or update manually:
+Or update manually (restart Claude Code afterward to apply):
 
 ```bash
 claude plugin update finplan

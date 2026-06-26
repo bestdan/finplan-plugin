@@ -1,22 +1,34 @@
 #!/usr/bin/env bash
-# PostToolUse hook: On first FinPlan MCP tool call per session, check whether
-# the plugin is outdated relative to the server's minimum required version.
+# PostToolUse hook: On first FinPlan MCP tool call per session, check whether the
+# installed plugin is out of date, and if so surface a one-time hint to update.
 #
-# The MCP server's root endpoint (/) returns JSON including:
-#   { "version": "0.1.0", "min_plugin_version": "1.0.2" }
+# Two independent signals, each optional (a missing one is simply skipped):
+#   1. latest  — the newest published version, read from the public marketplace
+#                repo's plugin.json (authoritative, CI-bumped on every release).
+#   2. min     — a hard compatibility floor, read from the MCP server's / endpoint
+#                ({ "min_plugin_version": "x.y.z" }). Only set on breaking releases;
+#                the server omits it otherwise, so today this stays unused.
 #
-# If min_plugin_version is present and the installed plugin version is older,
-# surface a one-time hint to update.
+# Tiering:
+#   installed < min     -> strong "update required" (some tools may not work)
+#   installed < latest  -> gentle "update available"
+#   otherwise           -> say nothing
+#
+# The hook never blocks or errors a real tool call: any missing field, network
+# failure, or parse error degrades to silence (exit 0).
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 PLUGIN_JSON="$PLUGIN_ROOT/.claude-plugin/plugin.json"
-MARKER="/tmp/.finplan-version-check-$$"
 SERVER_URL="https://mcp.finplan.tools"
+REPO_RAW_URL="https://raw.githubusercontent.com/bestdan/finplan-plugin/main/.claude-plugin/plugin.json"
 
 # --- guard: only check once per session ---
 # Use parent PID as a rough session identifier so the check runs once per
-# Claude Code process, not once per tool call.
-SESSION_MARKER="/tmp/.finplan-version-check-$(ps -o ppid= $$ 2>/dev/null | tr -d ' ')"
+# Claude Code process, not once per tool call. Marker lives under TMPDIR (a
+# stable per-session temp dir) so the check stays once-per-session in real use
+# and a test can isolate its markers by pointing TMPDIR at a scratch dir.
+TMP_DIR="${TMPDIR:-/tmp}"
+SESSION_MARKER="${TMP_DIR%/}/.finplan-version-check-$(ps -o ppid= $$ 2>/dev/null | tr -d ' ')"
 [ -f "$SESSION_MARKER" ] && exit 0
 
 # Read installed plugin version
@@ -24,7 +36,7 @@ if [ ! -f "$PLUGIN_JSON" ]; then
   exit 0
 fi
 PLUGIN_VERSION=$(python3 -c "
-import json, sys
+import json
 with open('$PLUGIN_JSON') as f:
     print(json.load(f).get('version', '0.0.0'))
 " 2>/dev/null || echo "0.0.0")
@@ -32,42 +44,79 @@ with open('$PLUGIN_JSON') as f:
 # Mark as checked regardless of outcome
 touch "$SESSION_MARKER"
 
-# Fetch server info (short timeout to avoid blocking)
-SERVER_INFO=$(curl -s --max-time 3 "$SERVER_URL/" 2>/dev/null) || exit 0
-
-# Extract min_plugin_version (exit silently if the field doesn't exist yet)
-MIN_PLUGIN_VERSION=$(echo "$SERVER_INFO" | python3 -c "
+# --- gather reference versions (each optional) ---
+# .version from a JSON document on stdin, or empty string if absent/unparseable.
+_json_field() {
+  python3 -c "
 import json, sys
-data = json.load(sys.stdin)
-v = data.get('min_plugin_version')
-if v:
-    print(v)
-else:
-    sys.exit(1)
-" 2>/dev/null) || exit 0
+try:
+    print(json.load(sys.stdin).get('$1') or '')
+except Exception:
+    print('')
+" 2>/dev/null || echo ""
+}
 
-# Compare versions: is PLUGIN_VERSION < MIN_PLUGIN_VERSION?
-IS_OUTDATED=$(python3 -c "
+# Fetch both endpoints in parallel so the worst-case first-call delay is one
+# timeout (~3s), not the sum of two.
+_server_out="${TMP_DIR%/}/.finplan-vc-server-$$"
+_repo_out="${TMP_DIR%/}/.finplan-vc-repo-$$"
+curl -s --max-time 3 "$SERVER_URL/" >"$_server_out" 2>/dev/null &
+_server_pid=$!
+curl -s --max-time 3 "$REPO_RAW_URL" >"$_repo_out" 2>/dev/null &
+_repo_pid=$!
+wait "$_server_pid" "$_repo_pid" 2>/dev/null
+SERVER_INFO=$(cat "$_server_out" 2>/dev/null)
+REPO_INFO=$(cat "$_repo_out" 2>/dev/null)
+rm -f "$_server_out" "$_repo_out"
+MIN_PLUGIN_VERSION=$(printf '%s' "$SERVER_INFO" | _json_field min_plugin_version)
+LATEST_PLUGIN_VERSION=$(printf '%s' "$REPO_INFO" | _json_field version)
+
+# Nothing to compare against -> stay silent (this is today's behavior).
+if [ -z "$MIN_PLUGIN_VERSION" ] && [ -z "$LATEST_PLUGIN_VERSION" ]; then
+  exit 0
+fi
+
+# "yes" if $1 < $2 (both non-empty), else "no". Empty operands never compare.
+_ver_lt() {
+  python3 -c "
 import sys
+a, b = sys.argv[1], sys.argv[2]
+if not a or not b:
+    print('no'); sys.exit(0)
 try:
     from packaging.version import Version
-    outdated = Version('$PLUGIN_VERSION') < Version('$MIN_PLUGIN_VERSION')
+    print('yes' if Version(a) < Version(b) else 'no')
 except Exception:
     # packaging not installed — fall back to simple tuple comparison
     def parse(v):
-        base = v.split('-')[0]
+        base = v.split('-')[0].split('+')[0]
         return tuple(int(x) for x in base.split('.'))
-    outdated = parse('$PLUGIN_VERSION') < parse('$MIN_PLUGIN_VERSION')
-print('yes' if outdated else 'no')
-" 2>/dev/null || echo "no")
-
-if [ "$IS_OUTDATED" = "yes" ]; then
-  cat <<EOF
-{
-  "hookSpecificOutput": {
-    "hookEventName": "PostToolUse",
-    "additionalContext": "UPDATE AVAILABLE: Your FinPlan plugin (v${PLUGIN_VERSION}) is older than the minimum version required by the server (v${MIN_PLUGIN_VERSION}). Some tools may not work correctly.\n\nTo update:\n  claude plugin update finplan\n\nOr enable auto-updates:\n  /plugin → Marketplaces → finplan-plugin → Enable auto-update"
-  }
+    try:
+        print('yes' if parse(a) < parse(b) else 'no')
+    except Exception:
+        print('no')
+" "$1" "$2" 2>/dev/null || echo "no"
 }
-EOF
+
+# Emit a PostToolUse additionalContext payload (JSON-escaped via python).
+_emit() {
+  python3 -c "
+import json, sys
+print(json.dumps({'hookSpecificOutput': {
+    'hookEventName': 'PostToolUse',
+    'additionalContext': sys.argv[1],
+}}))
+" "$1"
+}
+
+# Real newlines (not literal "\n"): _emit's json.dumps turns these into proper
+# JSON \n escapes. Embedding literal backslash-n here would instead emit \\n and
+# render as visible "\n" in the hint.
+NL=$'\n'
+UPDATE_STEPS="To update:${NL}  claude plugin update finplan   (then restart Claude Code to apply)${NL}${NL}Or enable auto-updates so this happens for you:${NL}  /plugin → Marketplaces → finplan-plugin → Enable auto-update"
+
+if [ "$(_ver_lt "$PLUGIN_VERSION" "$MIN_PLUGIN_VERSION")" = "yes" ]; then
+  _emit "UPDATE REQUIRED: Your FinPlan plugin (v${PLUGIN_VERSION}) is older than the minimum version required by the server (v${MIN_PLUGIN_VERSION}). Some tools may not work correctly.${NL}${NL}${UPDATE_STEPS}"
+elif [ "$(_ver_lt "$PLUGIN_VERSION" "$LATEST_PLUGIN_VERSION")" = "yes" ]; then
+  _emit "UPDATE AVAILABLE: A newer FinPlan plugin is available (v${PLUGIN_VERSION} → v${LATEST_PLUGIN_VERSION}).${NL}${NL}${UPDATE_STEPS}"
 fi
