@@ -22,7 +22,7 @@ Write to: `$ARGUMENTS` (default: `comprehensive_projection_update_$TIMESTAMP.htm
 Read the local state JSON file (look for `*_finplan_state.json` or `finplan_state.json` in the working directory). Extract:
 
 - **Person**: name(s), age(s), income(s), dependents, marital status, filing status
-- **Accounts**: each account's type, name, balance, allocation (stocks_pct/bonds_pct/cash_pct), and any notes
+- **Accounts**: each account's type, name, balance, allocation (stocks_pct/bonds_pct/cash_pct/crypto_pct/real_estate_pct/other_pct), and any notes
 - **Goals**: each goal's name, type, target_date, target_amount, contributions, importance, status, linked_account_ids, and notes
 - **Tax profile**: filing status and any relevant deductions
 
@@ -36,7 +36,7 @@ Store these as a lookup so accounts with the same allocation share characteristi
 
 ## Step 3: Run projections per goal
 
-**CRITICAL**: Each projection tool below returns file URLs + compact inline summary:
+**CRITICAL**: `run_projection` returns file URLs + a compact inline summary; `project_goal_progress` returns inline scalar percentiles only (no `urls.*` fields).
 
 For each goal with a target_amount or target_date:
 
@@ -44,6 +44,7 @@ For each goal with a target_amount or target_date:
 2. **Sum monthly contributions** for those accounts (from the goal's contribution_amount_cents or each account's known contribution rate).
 3. **Call `run_projection`** with the combined balance, expected return, volatility, contribution, and months to the goal's target date.
 4. **Record the percentile results** (p10, p25, p50, p75, p90) for the summary cards and to validate the chart.
+5. **Call `project_goal_progress`** for the goal-native band: pass the goal JSON, the `annual_return_rate` and `annual_volatility` for the goal's allocation (from Step 2 — Calculate portfolio characteristics), `inflation`, and `monthly_income_cents` (the household monthly income from Step 1 — required so goals funded by `contribution_percentage` are projected correctly; harmless otherwise). Pass the allocation's **actual** volatility: a risk-bearing allocation spreads the result into `projected_balance_percentiles` and `projected_progress_percentiles` (p10/p25/p50/p75/p90), while a cash-like allocation with ~0 volatility collapses the band to the median (correct for a deterministic goal — don't fabricate a spread). Record the **progress band**: p10 (pessimistic), p50 (median), p90 (optimistic) fraction of target. This is the goal-aware "will I hit my target?" view that drives the status badge below; `run_projection` (step 3) drives the balance fan chart.
 
 For goals without linked accounts (e.g., unfunded goals), calculate the required monthly contribution using `calculate_monthly_contribution_needed` instead.
 
@@ -74,10 +75,11 @@ Each card shows:
 
 - Goal name and current balance of linked accounts
 - Key projection stat (median at target date, or target vs projected)
-- Color-coded status badge:
-  - **Green ("On Track")**: p25 meets or exceeds target, or no explicit target and trajectory is healthy
-  - **Amber ("Needs Plan")**: goal has no funding, or p50 falls short of target
-  - **Red ("At Risk")**: p50 falls significantly short of target
+- **Progress band** — for goals with a positive `target_amount`, the goal-native pessimistic / median / optimistic fraction of target from `project_goal_progress`'s `projected_progress_percentiles`: render p10 / p50 / p90 (e.g. `48% · 71% · 96% of target`) so the uncertainty around hitting the goal is visible, not just a single number. The percentiles are fractions (e.g. `0.71` = 71%), so multiply by 100 for display. Optionally show the matching `projected_balance_percentiles` p10/p50/p90 underneath. **Skip the progress band for goals with no target_amount** (e.g. open-ended retirement) — core reports progress as `1.0` by definition there, so a band would show a meaningless 100/100/100; fall back to the "no explicit target" badge path below.
+- Color-coded status badge, driven by the goal-native progress band (`projected_progress_percentiles`, compared as fractions against `1.0`). Evaluate as mutually exclusive, ordered branches so every goal lands in exactly one:
+  - **Red ("At Risk")**: even the optimistic case falls short — `p90 < 1.0`.
+  - else **Green ("On Track")**: the pessimistic case still meets the target — `p10 >= 1.0` (or no explicit target and the trajectory is healthy).
+  - else **Amber ("Needs Plan")**: everything in between (the goal will likely hit its target in the median but is at risk in the downside), or the goal has no funding.
 - Left border color matches status
 
 #### Chart 1: Total Portfolio (full width)
@@ -130,6 +132,8 @@ For each goal, generate the appropriate chart type:
 **Do NOT reimplement projections in JavaScript.** All projection math is handled by the MCP tools. The HTML file renders pre-computed data.
 
 **`run_projection(...)`** — returns `urls.data` with full monthly time series per percentile, `urls.schema` with the data dictionary, and `summary` with key statistics.
+
+**`project_goal_progress(...)`** — the goal-native band for the summary cards. Pass `goal_json`, `annual_return_rate`, the allocation's actual `annual_volatility` (a risk-bearing allocation spreads the band; ~0 collapses it to the median), `inflation`, and `monthly_income_cents` (needed only for `contribution_percentage`-funded goals). Returns small inline scalars only (no file URLs): `projected_balance_percentiles` and `projected_progress_percentiles`, each as `{p10, p25, p50, p75, p90}` of fractions. Use the progress percentiles to render the per-goal progress band and drive the status badge; the headline `projected_progress_percentage` is the p50. Unlike `run_projection`, this accounts for the goal's own contributions, scheduled payouts, and inflation-adjusted target, so it answers "will this goal hit its target?" rather than "how does this lump grow?".
 
 **You do NOT need `generate_projection_fan_chart`**. It runs its own projection internally (duplicating work) and returns a pre-built Chart.js config that doesn't support the custom layouts this dashboard needs (stacked accounts, milestone annotations, goal-specific colors). Use `run_projection` for everything — summary stats, chart data, and time series.
 
