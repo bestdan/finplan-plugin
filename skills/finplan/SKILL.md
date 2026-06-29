@@ -62,7 +62,7 @@ All three do the same thing: push hundreds of KB of time-series data through the
 - **Use `jq`** for targeted queries when you need specific values from data files
 - **Use the placeholder/inject pattern** for any HTML that renders chart data (see [charts.md](packages/charts.md#html-rendering-workflow))
 
-**Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_scenario_comparison_chart`
+**Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `project_liability_payoff`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_scenario_comparison_chart`
 
 See [packages/file-tools.md](packages/file-tools.md) for full details and the HTML embedding workflow.
 
@@ -80,6 +80,7 @@ When working with a specific area, read its detailed reference for tool names, p
 | Goals           | Financial goals, contribution calc, progress tracking    | [packages/goals.md](packages/goals.md)                     |
 | Social Security | Benefits, claiming strategies, spousal/survivor, PIA     | [packages/social-security.md](packages/social-security.md) |
 | Mortgage        | Monthly payments, amortization, P&I splits               | [packages/mortgage.md](packages/mortgage.md)               |
+| Liabilities     | Debt paydown trajectory + payoff date (cards, loans)     | [packages/liability.md](packages/liability.md)             |
 | Employer Match  | 401(k) matching formulas, vesting, calculations          | [packages/employer-match.md](packages/employer-match.md)   |
 | Charts          | Chart.js fan charts, account breakdowns, comparisons     | [packages/charts.md](packages/charts.md)                   |
 | File Tools      | File-based responses, `generate_data` parameter          | [packages/file-tools.md](packages/file-tools.md)           |
