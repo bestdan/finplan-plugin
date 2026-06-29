@@ -61,6 +61,31 @@ Upgrade a state document to the current schema **once** and hand it back as a do
 
 Returns `{success, urls, summary}` on success — the migrated document lives at `urls.data`, and `summary` carries `kind`, `schema_hash`, `migrated`, `schema_drift`, and `warnings`. Returns an error envelope with structured `errors` when the document cannot validate.
 
+### link_account
+
+Persist external-sync crosswalk links onto FinPlan accounts so a Monarch↔FinPlan link is confirmed **once** and every later sync matches deterministically on `external_id`. Batch and many-to-one (several source ids onto one FinPlan account); appending an already-linked id is a no-op. The whole batch fails (nothing persisted) if any `finplan_account_id` is unknown, if an id is already linked to a different account, or if the account is already linked to a different `system`. Returns the linked-account summaries and a new `state_ref`.
+
+| Parameter    | Type   | Description                                                                                                                   |
+| ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `links`      | list   | Links to persist, each `{finplan_account_id, external_ids}` (external_ids is a list of source ids mapping onto that account). |
+| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).                                    |
+| `state_path` | string | Path to a state file on disk, stdio only (one-of).                                                                            |
+| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                                                        |
+| `system`     | string | The external source system being linked (default: monarch).                                                                   |
+
+### unlink_account
+
+Remove some or all external-sync crosswalk links from a FinPlan account. With `external_ids`, only those ids are removed; omitting them clears the account's link entirely. Scoped to one `system`; a no-op (wrong system, or ids not present) succeeds without churning state. Returns the remaining link state, a `changed` flag, and a `state_ref`.
+
+| Parameter            | Type   | Description                                                                                |
+| -------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `finplan_account_id` | string | The FinPlan account to unlink.                                                             |
+| `state_json`         | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref). |
+| `state_path`         | string | Path to a state file on disk, stdio only (one-of).                                         |
+| `state_ref`          | string | Handle to an already-uploaded state document (one-of).                                     |
+| `external_ids`       | list   | Source ids to remove; omit to clear the account's crosswalk entirely (default: none).      |
+| `system`             | string | The external source system to unlink (default: monarch).                                   |
+
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
