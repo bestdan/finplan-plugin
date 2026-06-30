@@ -86,6 +86,19 @@ Remove some or all external-sync crosswalk links from a FinPlan account. With `e
 | `external_ids`       | list   | Source ids to remove; omit to clear the account's crosswalk entirely (default: none).      |
 | `system`             | string | The external source system to unlink (default: monarch).                                   |
 
+### reconcile_with_monarch
+
+Reconcile a Monarch account pull against FinPlan state. Translates and gates each raw Monarch account, diffs it against the state's accounts via the persisted crosswalk, and reports four buckets: `matched` balance deltas, `only_in_monarch` (READY adds with no FinPlan link), `only_in_finplan` (accounts no candidate carried — reported, never touched), and `held_back` (items the gate couldn't accept, e.g. an unmodeled mortgage — surfaced, never dropped). With `confirm=False` (default) it writes nothing and returns an `apply_preview` of what the apply would do per each account's `sync_policy`; with `confirm=True` it applies the matched deltas (`live` overwritten, `estimate` overwritten but flagged noisy, `manual` skipped), persists the new state, and returns the `apply_report` plus a new `state_ref`. A re-run dry run after a confirm shows no residual drift on the applied accounts (idempotent).
+
+| Parameter               | Type   | Description                                                                                          |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `monarch_accounts_json` | list   | Raw Monarch GetAccounts items (each `{id, type, balance, name?}`) to reconcile against the state.    |
+| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).           |
+| `state_path`            | string | Path to a state file on disk, stdio only (one-of).                                                   |
+| `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
+| `confirm`               | bool   | False (default) = dry-run diff + apply_preview, no writes; True = apply per sync_policy and persist. |
+| `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto each refreshed account's source.last_synced; defaults to today.  |
+
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
