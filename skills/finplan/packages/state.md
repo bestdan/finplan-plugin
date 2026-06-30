@@ -99,6 +99,18 @@ Reconcile a Monarch account pull against FinPlan state. Translates and gates eac
 | `confirm`               | bool   | False (default) = dry-run diff + apply_preview, no writes; True = apply per sync_policy and persist. |
 | `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto each refreshed account's source.last_synced; defaults to today.  |
 
+### exclude_account
+
+Record external accounts as knowingly excluded from the modeled state (batch). Use it when an `only_in_monarch` (or held-back) account is one the user deliberately won't model — a mortgage, a spouse's account, an extra card. Each exclusion is written onto `UserState.excluded_external_accounts` keyed on `(system, external_id)`, so every snapshot/check-in surfaces "seen in Monarch, not modeled" and a later `reconcile_with_monarch` stops re-proposing it as an add or held-back item. Idempotent: re-excluding the same key refreshes its record. Returns the recorded exclusions and a new `state_ref`.
+
+| Parameter    | Type   | Description                                                                                |
+| ------------ | ------ | ------------------------------------------------------------------------------------------ |
+| `exclusions` | list   | Accounts to exclude, each `{external_id, label, reason, last_seen_balance_cents?}`.        |
+| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref). |
+| `state_path` | string | Path to a state file on disk, stdio only (one-of).                                         |
+| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                     |
+| `system`     | string | The external source system the exclusions belong to (default: monarch).                    |
+
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
