@@ -111,6 +111,24 @@ Record external accounts as knowingly excluded from the modeled state (batch). U
 | `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                     |
 | `system`     | string | The external source system the exclusions belong to (default: monarch).                    |
 
+### complete_synced_account
+
+Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_input` in `reconcile_with_monarch`'s `held_back` bucket) with the loan terms / property details the source can't supply, plus the ownership it omits, then write it. The candidate is re-identified from the fresh `monarch_accounts_json` by `external_id` (never a stale copy), so balance/name/type stay current; the account is built via the same validated builder as `create_account` and written carrying its `source` provenance (stamped `last_synced`), so a later `reconcile_with_monarch` matches it. It's a no-op (writes nothing) when the id is already linked, knowingly excluded, not in the latest pull, or no longer held back; a mortgage missing `mortgage_terms_json` (or real estate missing `property_details_json`) is reported pending, never partially written. With `confirm=False` (default) it returns an `account_preview`; with `confirm=True` it appends the account and persists a new `state_ref`.
+
+| Parameter               | Type   | Description                                                                                          |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `monarch_accounts_json` | list   | Raw Monarch GetAccounts items (each `{id, type, balance, name?}`); the candidate is re-found here.   |
+| `external_id`           | string | The source id of the held-back account to complete (from a prior `held_back` entry).                 |
+| `ownership_json`        | dict   | Account ownership (required — the source omits it): `{ownership_type, owner_ids, beneficiary_id?}`.  |
+| `mortgage_terms_json`   | dict   | Mortgage loan terms (required for a `mortgage`; same shape as `create_account`).                     |
+| `property_details_json` | dict   | Property details (required for a `real_estate` account; same shape as `create_account`).             |
+| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).           |
+| `state_path`            | string | Path to a state file on disk, stdio only (one-of).                                                   |
+| `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
+| `system`                | string | The external source system the external_id belongs to (default: monarch).                            |
+| `confirm`               | bool   | False (default) = validate + return account_preview, no writes; True = append the account + persist. |
+| `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto the created account's source.last_synced; defaults to today.     |
+
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
