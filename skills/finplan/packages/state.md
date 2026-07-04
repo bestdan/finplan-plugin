@@ -4,6 +4,8 @@ Person profiles and user state management.
 
 Persistence (save/load) is handled client-side via slash commands (`/finplan:read-state`, `/finplan:save-state`), not by the MCP server. These commands are bundled with the FinPlan plugin — see [SETUP.md](../SETUP.md) for installation instructions.
 
+**Reading efficiently:** `/finplan:read-state` reads via targeted `jq` so the full document never enters context. Beyond single sections it supports **multi-section fetch** (`sections accounts,goals` → one object) and **derived rollups** — `balances-by-type`, `goals-by-status`, and `net-worth` (financial-assets / real-estate / liabilities). Prefer these over pulling whole `accounts`/`goals` arrays to compute a total by hand.
+
 ## Tools
 
 ### manage_state
