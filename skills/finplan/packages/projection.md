@@ -54,6 +54,27 @@ Compare conservative (5%/8%), moderate (7%/15%), and aggressive (9%/22%) scenari
 | `num_simulations`       | int   | Simulations per scenario (default: 1000)                                                           |
 | `inflation`             | float | Annual inflation rate as decimal (default: 0.0). When > 0, results are in today's purchasing power |
 
+### project_plan
+
+Project a whole household plan: decompose `UserState` accounts into per-account projections and aggregate them into one after-tax outcome. Each account is projected with its own allocation → return distribution; the household net monthly surplus (income − expenses) is fed in as contributions split by balance; per-account withdrawal tax treatment yields after-tax spendable values. Liability and real-estate accounts are reported under `skipped_accounts`, not projected.
+
+| Parameter                | Type      | Description                                                                                                                          |
+| ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `state_json`             | object    | A full UserState document as JSON (accounts, income_streams, and expenses drive the whole-plan projection).                          |
+| `time_horizon_months`    | int       | Number of months to project (default: 360 = 30 years).                                                                               |
+| `assumptions_preset`     | string    | Capital-market assumptions applied to every account's allocation: `"standard"` (default), `"conservative"`, or `"optimistic"`.       |
+| `inflation`              | float     | Annual inflation rate as a decimal (default: 0.0). When > 0, values are in today's purchasing power (real); 0 gives nominal dollars. |
+| `marginal_ordinary_rate` | float     | Household marginal ordinary income tax rate for after-tax values (default: 0.22).                                                    |
+| `ltcg_rate`              | float     | Household long-term capital gains tax rate for after-tax values (default: 0.15).                                                     |
+| `percentiles`            | list[int] | Percentiles to compute (default: [10, 25, 50, 75, 90]).                                                                              |
+| `method`                 | string    | `"closed_form"` (default), `"auto"`, `"deterministic"`, `"monte_carlo"`.                                                             |
+| `iterations`             | int       | Monte Carlo iterations (default: 1000, only used for `method="monte_carlo"`).                                                        |
+| `seed`                   | int       | Random seed (only used for `method="monte_carlo"`).                                                                                  |
+
+Accounts are projected independently and aggregated by summing matching percentiles (a perfectly-correlated / comonotonic assumption), surfaced in the response `assumptions` block.
+
+**Response**: file URLs + compact inline summary (per-account headline figures, skipped accounts, household final pre/after-tax balances, assumptions). The full per-account and household time series live in the data file.
+
 ## Working with file-based responses
 
 The response always includes URLs + compact inline summary. The inline summary contains key statistics for immediate use. Full time series data is in the data file.
