@@ -7,13 +7,14 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 - **Scenario**: a named, ordered list of typed overrides (a delta) applied against a base `UserState`. It stores only inputs; outcomes are always re-derived.
 - **Override**: one typed change, tagged by `kind`: `retirement_age`, `return_assumption`, `inflation`, `tax_rate` (at least one of `marginal_ordinary_rate` / `ltcg_rate`), `monthly_contribution`, `account_balance`, `income_change`, `expense_change`, `goal_target`. Amounts are in cents. E.g. `{"kind": "retirement_age", "age": 60}`.
 - **BaseRef**: identifies the base plan: `{"state_hash": "sha256:…"}` (required — the hash `manage_state` returns) plus an optional `"state_ref": "st_…"` in-session accelerator. Supplying `state_json` inline always works and takes precedence.
+- **Authority boundaries**: the `UserState` owns current facts (mutated only via `manage_state`); a Snapshot is an immutable point-in-time record; a Scenario owns hypothetical intent only. Computed outcomes live in none of them — always re-derived.
 - Distinct from `compare_return_assumptions`, which varies return assumptions on a single balance — these tools compare whole _plans_.
 
 ## Tools
 
 ### create_scenario
 
-Create a plan scenario: a named, validated delta of typed overrides against a base plan. Returns a small, portable scenario document the client owns — store it and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
+Create a plan scenario: a named, validated delta of typed overrides against a base plan. The response nests the scenario document under its `scenario` key — small, portable JSON the client owns. Store that document (not the whole response) and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
 
 | Parameter     | Type       | Description                                                                                                    |
 | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
@@ -61,7 +62,7 @@ Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 
 ## Typical workflow
 
-1. `manage_state` (or `save_user_state`) → note the returned `state_hash` (and `state_ref` if uploaded).
-2. `create_scenario` with the BaseRef and overrides → store the returned scenario document client-side.
+1. `manage_state(action="save")` → note the returned `state_hash` (and `state_ref` if uploaded).
+2. `create_scenario` with the BaseRef and overrides → store the scenario document from the response's `scenario` key client-side.
 3. `compare_scenarios` with the same BaseRef and the scenario document(s) → present the inline summary; pull timelines from the data file for charts.
 4. Optionally `apply_scenario` to get a `state_ref` for the hypothetical state, usable with other state-driven tools.
