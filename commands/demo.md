@@ -15,7 +15,7 @@ Load a complete fictional household — the Larsons — into a local state file 
 
 ## Who the Larsons are
 
-Married couple in Columbus, OH, filing jointly, two kids:
+Married couple in Rochester, NY, filing jointly, two kids:
 
 - **Mark** (43) — W-2 software engineer, $148,500/yr, 401(k) with employer match
 - **Dana** (40) — self-employed designer, $87,000/yr, SEP-IRA
@@ -53,7 +53,7 @@ jq '{household: "the Larsons", accounts: (.accounts | length), goals: [.goals[].
 Tell the user the sample is loaded, then offer these five starters (all of which the Larsons' data answers well):
 
 1. "Can the Larsons actually retire when Mark turns 62? Run a Monte Carlo projection."
-2. "What's their federal + Ohio tax bill this year, filing jointly with two kids?"
+2. "What's their federal + New York state tax bill this year, filing jointly with two kids?"
 3. "Should Mark claim Social Security at 62, 67, or 70? Compare lifetime benefits."
 4. "Are both 529s on track to cover four years of college each? Which kid is behind?"
 5. "Build the projection dashboard so I can see every goal on one page."

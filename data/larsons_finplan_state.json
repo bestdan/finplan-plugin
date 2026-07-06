@@ -6,14 +6,14 @@
     "employment_status": "employed",
     "annual_pretax_income_cents": 14850000,
     "marital_status": "married",
-    "zipcode": "43214",
+    "zipcode": "14618",
     "id": "mark-larson",
     "spouse": {
       "date_of_birth": "1985-09-15",
       "employment_status": "self_employed",
       "annual_pretax_income_cents": 8700000,
       "marital_status": "married",
-      "zipcode": "43214",
+      "zipcode": "14618",
       "id": "dana-larson",
       "spouse": null,
       "dependents": []
@@ -24,7 +24,7 @@
         "employment_status": "unemployed",
         "annual_pretax_income_cents": 0,
         "marital_status": "single",
-        "zipcode": "43214",
+        "zipcode": "14618",
         "id": "ellie-larson",
         "spouse": null,
         "dependents": []
@@ -34,7 +34,7 @@
         "employment_status": "unemployed",
         "annual_pretax_income_cents": 0,
         "marital_status": "single",
-        "zipcode": "43214",
+        "zipcode": "14618",
         "id": "sam-larson",
         "spouse": null,
         "dependents": []
@@ -192,7 +192,7 @@
       },
       "name": "Ellie's 529",
       "account_id": "acct-529-ellie",
-      "institution": "Ohio CollegeAdvantage",
+      "institution": "NY 529 College Savings Program",
       "goal_id": "goal-college-ellie",
       "sync_policy": "live"
     },
@@ -219,7 +219,7 @@
       },
       "name": "Sam's 529",
       "account_id": "acct-529-sam",
-      "institution": "Ohio CollegeAdvantage",
+      "institution": "NY 529 College Savings Program",
       "goal_id": "goal-college-sam",
       "sync_policy": "live"
     },
@@ -247,7 +247,7 @@
       },
       "name": "Joint Checking",
       "account_id": "acct-joint-checking",
-      "institution": "Huntington",
+      "institution": "M&T Bank",
       "sync_policy": "live"
     },
     {
@@ -306,9 +306,9 @@
         "purchase_price_cents": 43800000,
         "purchase_date": "2019-08-20",
         "building_type": "house",
-        "city": "Columbus",
-        "state": "OH",
-        "zip": "43214",
+        "city": "Rochester",
+        "state": "NY",
+        "zip": "14618",
         "estimated_value_cents": 51200000,
         "appreciation_rate": {
           "value": 0.03,
@@ -345,7 +345,7 @@
       },
       "name": "Home Mortgage",
       "account_id": "acct-home-mortgage",
-      "institution": "Huntington",
+      "institution": "M&T Bank",
       "mortgage_terms": {
         "original_principal_cents": 35040000,
         "interest_rate": {
