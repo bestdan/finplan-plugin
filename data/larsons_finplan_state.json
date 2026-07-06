@@ -1,0 +1,707 @@
+{
+  "kind": "finplan_state",
+  "schema_fingerprint": "1e7f10687e9e1e0c",
+  "person": {
+    "date_of_birth": "1983-04-11",
+    "employment_status": "employed",
+    "annual_pretax_income_cents": 14850000,
+    "marital_status": "married",
+    "zipcode": "43214",
+    "id": "mark-larson",
+    "spouse": {
+      "date_of_birth": "1985-09-15",
+      "employment_status": "self_employed",
+      "annual_pretax_income_cents": 8700000,
+      "marital_status": "married",
+      "zipcode": "43214",
+      "id": "dana-larson",
+      "spouse": null,
+      "dependents": []
+    },
+    "dependents": [
+      {
+        "date_of_birth": "2014-06-03",
+        "employment_status": "unemployed",
+        "annual_pretax_income_cents": 0,
+        "marital_status": "single",
+        "zipcode": "43214",
+        "id": "ellie-larson",
+        "spouse": null,
+        "dependents": []
+      },
+      {
+        "date_of_birth": "2017-02-19",
+        "employment_status": "unemployed",
+        "annual_pretax_income_cents": 0,
+        "marital_status": "single",
+        "zipcode": "43214",
+        "id": "sam-larson",
+        "spouse": null,
+        "dependents": []
+      }
+    ]
+  },
+  "accounts": [
+    {
+      "account_type": "traditional_401k",
+      "balance_cents": 29630000,
+      "ownership": {
+        "ownership_type": "individual",
+        "owner_ids": [
+          "mark-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 80,
+        "bonds_pct": 15,
+        "cash_pct": 5,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": true,
+        "rmd_start_age": 73,
+        "early_withdrawal_penalty_age": 59
+      },
+      "name": "Meridian Software 401(k)",
+      "account_id": "acct-mark-401k",
+      "is_current_employer": true,
+      "employer_match": {
+        "formula_type": "basic_safe_harbor",
+        "tiers": [
+          {
+            "match_rate": 1.0,
+            "up_to_deferral_pct": 3.0
+          },
+          {
+            "match_rate": 0.5,
+            "up_to_deferral_pct": 5.0
+          }
+        ],
+        "vesting_schedule": {
+          "vesting_type": "immediate"
+        },
+        "is_qaca": false,
+        "true_up": false
+      },
+      "institution": "Fidelity",
+      "goal_id": "goal-retirement-62",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "sep_ira",
+      "balance_cents": 13250000,
+      "ownership": {
+        "ownership_type": "individual",
+        "owner_ids": [
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 75,
+        "bonds_pct": 20,
+        "cash_pct": 5,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": true,
+        "rmd_start_age": 73,
+        "early_withdrawal_penalty_age": 59
+      },
+      "name": "Dana's SEP-IRA (design practice)",
+      "account_id": "acct-dana-sep-ira",
+      "institution": "Schwab",
+      "goal_id": "goal-retirement-62",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "taxable_brokerage",
+      "balance_cents": 21490000,
+      "ownership": {
+        "ownership_type": "joint",
+        "owner_ids": [
+          "mark-larson",
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 85,
+        "bonds_pct": 10,
+        "cash_pct": 5,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false
+      },
+      "name": "Joint Brokerage (incl. exercised employer shares)",
+      "account_id": "acct-joint-brokerage",
+      "institution": "Vanguard",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "hsa",
+      "balance_cents": 2890000,
+      "ownership": {
+        "ownership_type": "individual",
+        "owner_ids": [
+          "mark-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 70,
+        "bonds_pct": 20,
+        "cash_pct": 10,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false,
+        "early_withdrawal_penalty_age": 65
+      },
+      "name": "Family HSA",
+      "account_id": "acct-mark-hsa",
+      "institution": "HealthEquity",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "plan_529",
+      "balance_cents": 4130000,
+      "ownership": {
+        "ownership_type": "beneficiary",
+        "owner_ids": [
+          "mark-larson"
+        ],
+        "beneficiary_id": "ellie-larson"
+      },
+      "allocation": {
+        "stocks_pct": 70,
+        "bonds_pct": 20,
+        "cash_pct": 10,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false
+      },
+      "name": "Ellie's 529",
+      "account_id": "acct-529-ellie",
+      "institution": "Ohio CollegeAdvantage",
+      "goal_id": "goal-college-ellie",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "plan_529",
+      "balance_cents": 2760000,
+      "ownership": {
+        "ownership_type": "beneficiary",
+        "owner_ids": [
+          "mark-larson"
+        ],
+        "beneficiary_id": "sam-larson"
+      },
+      "allocation": {
+        "stocks_pct": 80,
+        "bonds_pct": 15,
+        "cash_pct": 5,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false
+      },
+      "name": "Sam's 529",
+      "account_id": "acct-529-sam",
+      "institution": "Ohio CollegeAdvantage",
+      "goal_id": "goal-college-sam",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "taxable_checking",
+      "balance_cents": 940000,
+      "ownership": {
+        "ownership_type": "joint",
+        "owner_ids": [
+          "mark-larson",
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 0,
+        "bonds_pct": 0,
+        "cash_pct": 100,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "fdic_insured_limit_cents": 25000000,
+        "requires_rmd": false
+      },
+      "name": "Joint Checking",
+      "account_id": "acct-joint-checking",
+      "institution": "Huntington",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "taxable_savings",
+      "balance_cents": 4820000,
+      "ownership": {
+        "ownership_type": "joint",
+        "owner_ids": [
+          "mark-larson",
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 0,
+        "bonds_pct": 0,
+        "cash_pct": 100,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "fdic_insured_limit_cents": 25000000,
+        "requires_rmd": false
+      },
+      "name": "High-Yield Savings",
+      "account_id": "acct-joint-savings",
+      "institution": "Marcus",
+      "goal_id": "goal-emergency-fund",
+      "sync_policy": "live"
+    },
+    {
+      "account_type": "real_estate",
+      "balance_cents": 51200000,
+      "ownership": {
+        "ownership_type": "joint",
+        "owner_ids": [
+          "mark-larson",
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 0,
+        "bonds_pct": 0,
+        "cash_pct": 0,
+        "crypto_pct": 0,
+        "real_estate_pct": 100,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false
+      },
+      "name": "Primary Residence",
+      "account_id": "acct-home",
+      "property_details": {
+        "property_type": "primary_residence",
+        "purchase_price_cents": 43800000,
+        "purchase_date": "2019-08-20",
+        "building_type": "house",
+        "city": "Columbus",
+        "state": "OH",
+        "zip": "43214",
+        "estimated_value_cents": 51200000,
+        "appreciation_rate": {
+          "value": 0.03,
+          "period": {
+            "years": "1",
+            "time_basis": "calendar"
+          },
+          "inflation_adjustment": "nominal"
+        },
+        "linked_mortgage_account_id": "acct-home-mortgage"
+      },
+      "sync_policy": "estimate"
+    },
+    {
+      "account_type": "mortgage",
+      "balance_cents": 31740000,
+      "ownership": {
+        "ownership_type": "joint",
+        "owner_ids": [
+          "mark-larson",
+          "dana-larson"
+        ]
+      },
+      "allocation": {
+        "stocks_pct": 0,
+        "bonds_pct": 0,
+        "cash_pct": 100,
+        "crypto_pct": 0,
+        "real_estate_pct": 0,
+        "other_pct": 0
+      },
+      "limits": {
+        "requires_rmd": false
+      },
+      "name": "Home Mortgage",
+      "account_id": "acct-home-mortgage",
+      "institution": "Huntington",
+      "mortgage_terms": {
+        "original_principal_cents": 35040000,
+        "interest_rate": {
+          "value": 0.03875,
+          "period": {
+            "years": "1",
+            "time_basis": "calendar"
+          },
+          "inflation_adjustment": "nominal"
+        },
+        "term_months": 360,
+        "origination_date": "2019-08-20",
+        "monthly_payment_cents": 164800,
+        "is_fixed_rate": true
+      },
+      "sync_policy": "live"
+    }
+  ],
+  "income_streams": [
+    {
+      "id": "income-mark-salary",
+      "name": "Mark's Salary (Meridian Software)",
+      "income_type": "salary",
+      "amount_cents": 618750,
+      "frequency": "semi_monthly",
+      "is_pretax": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "income-dana-practice",
+      "name": "Dana's Design Practice (net)",
+      "income_type": "self_employment",
+      "amount_cents": 725000,
+      "frequency": "monthly",
+      "is_pretax": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.025,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    }
+  ],
+  "expenses": [
+    {
+      "id": "expense-mortgage",
+      "name": "Mortgage Payment (P&I)",
+      "category": "housing",
+      "amount_cents": 164800,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.0,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-property-tax-insurance",
+      "name": "Property Tax + Homeowners Insurance",
+      "category": "housing",
+      "amount_cents": 87500,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-groceries",
+      "name": "Groceries",
+      "category": "food",
+      "amount_cents": 135000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-utilities",
+      "name": "Utilities",
+      "category": "utilities",
+      "amount_cents": 41000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-kids-activities",
+      "name": "Kids' Activities + After-School Care",
+      "category": "childcare",
+      "amount_cents": 78000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": "2035-06-30",
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-insurance",
+      "name": "Auto + Umbrella Insurance",
+      "category": "insurance",
+      "amount_cents": 52000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-healthcare",
+      "name": "Healthcare Out-of-Pocket",
+      "category": "healthcare",
+      "amount_cents": 47000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-transportation",
+      "name": "Gas + Car Maintenance",
+      "category": "transportation",
+      "amount_cents": 64000,
+      "frequency": "monthly",
+      "is_essential": true,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-discretionary",
+      "name": "Dining Out + Entertainment",
+      "category": "entertainment",
+      "amount_cents": 85000,
+      "frequency": "monthly",
+      "is_essential": false,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    },
+    {
+      "id": "expense-travel",
+      "name": "Annual Family Trip",
+      "category": "entertainment",
+      "amount_cents": 680000,
+      "frequency": "annual",
+      "is_essential": false,
+      "start_date": null,
+      "end_date": null,
+      "annual_growth_rate": {
+        "value": 0.03,
+        "period": "annual",
+        "inflation_adjustment": "nominal"
+      },
+      "notes": null
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal-retirement-62",
+      "name": "Retire at 62",
+      "description": "Mark retires at 62; Dana winds down the practice around the same time.",
+      "goal_type": "retirement",
+      "target_amount_cents": null,
+      "target_date": "2045-05-01",
+      "target_date_flexibility": "flexible",
+      "current_balance_cents": 0,
+      "importance": "0.90",
+      "status": "active",
+      "contribution_amount_cents": 230000,
+      "contribution_percentage": null,
+      "months_expenses": null,
+      "payout_schedule": [],
+      "precondition_goal_id": null,
+      "precondition_threshold": null,
+      "tax_advantaged": true,
+      "target_price_level": null,
+      "notes": null
+    },
+    {
+      "id": "goal-college-ellie",
+      "name": "College for Ellie",
+      "description": null,
+      "goal_type": "education",
+      "target_amount_cents": 12800000,
+      "target_date": "2032-08-15",
+      "target_date_flexibility": "firm",
+      "current_balance_cents": 0,
+      "importance": "0.80",
+      "status": "active",
+      "contribution_amount_cents": 40000,
+      "contribution_percentage": null,
+      "months_expenses": null,
+      "payout_schedule": [
+        {
+          "payout_date": "2032-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2033-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2034-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2035-08-15",
+          "amount_cents": 3200000
+        }
+      ],
+      "precondition_goal_id": null,
+      "precondition_threshold": null,
+      "tax_advantaged": true,
+      "target_price_level": null,
+      "notes": null
+    },
+    {
+      "id": "goal-college-sam",
+      "name": "College for Sam",
+      "description": null,
+      "goal_type": "education",
+      "target_amount_cents": 12800000,
+      "target_date": "2035-08-15",
+      "target_date_flexibility": "firm",
+      "current_balance_cents": 0,
+      "importance": "0.80",
+      "status": "active",
+      "contribution_amount_cents": 35000,
+      "contribution_percentage": null,
+      "months_expenses": null,
+      "payout_schedule": [
+        {
+          "payout_date": "2035-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2036-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2037-08-15",
+          "amount_cents": 3200000
+        },
+        {
+          "payout_date": "2038-08-15",
+          "amount_cents": 3200000
+        }
+      ],
+      "precondition_goal_id": null,
+      "precondition_threshold": null,
+      "tax_advantaged": true,
+      "target_price_level": null,
+      "notes": null
+    },
+    {
+      "id": "goal-emergency-fund",
+      "name": "Emergency Fund",
+      "description": null,
+      "goal_type": "emergency_fund",
+      "target_amount_cents": 3500000,
+      "target_date": null,
+      "target_date_flexibility": null,
+      "current_balance_cents": 0,
+      "importance": "0.95",
+      "status": "active",
+      "contribution_amount_cents": null,
+      "contribution_percentage": null,
+      "months_expenses": 6,
+      "payout_schedule": [],
+      "precondition_goal_id": null,
+      "precondition_threshold": null,
+      "tax_advantaged": false,
+      "target_price_level": null,
+      "notes": null
+    },
+    {
+      "id": "goal-kitchen-renovation",
+      "name": "Kitchen Renovation",
+      "description": "Gut renovation of the 1998 kitchen; only funded once the emergency fund is full.",
+      "goal_type": "home_improvement",
+      "target_amount_cents": 4500000,
+      "target_date": "2028-09-01",
+      "target_date_flexibility": "very_flexible",
+      "current_balance_cents": 0,
+      "importance": "0.70",
+      "status": "active",
+      "contribution_amount_cents": 60000,
+      "contribution_percentage": null,
+      "months_expenses": null,
+      "payout_schedule": [],
+      "precondition_goal_id": "goal-emergency-fund",
+      "precondition_threshold": "1.0",
+      "tax_advantaged": false,
+      "target_price_level": null,
+      "notes": null
+    }
+  ],
+  "excluded_external_accounts": [],
+  "created_at": "2026-07-05",
+  "last_updated": "2026-07-05"
+}
