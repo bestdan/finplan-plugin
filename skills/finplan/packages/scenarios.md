@@ -35,7 +35,7 @@ Resolve a scenario's state-shaped overrides against the base and return a `state
 
 ### compare_scenarios
 
-The headline tool: compare plan scenarios against a base plan in one server-side operation. Each scenario's whole plan is projected (per-account allocations, household surplus split, after-tax treatment) and diffed against the base by `scenario_id`. Returns the input diff (what each scenario changes) and the outcome diff (household final-balance percentiles and deltas vs base) inline, with full per-scenario percentile timelines in the data file. Goal-outcome deltas are not part of this comparison.
+The headline tool: compare plan scenarios against a base plan in one server-side operation. Each scenario's whole plan is projected (per-account allocations, household surplus split, after-tax treatment) and diffed against the base by `scenario_id`. Returns the input diff (what each scenario changes), the outcome diff (household final-balance percentiles and deltas vs base), and per-goal deltas (success-probability changes, `meets_importance` flips) inline, with full per-scenario percentile timelines and goal-delta records in the data file. Goal success probabilities are censored to [0.10, 0.90]: a censored side reports the delta as a bound (`>=`/`<=`), not a point estimate. Goal deltas are a separate lens — goal bands use a blended return and are **not** numerically consistent with the portfolio percentile timelines; cite them side by side, never reconcile them. A goal a scenario's overrides drop out of evaluation surfaces as a per-scenario warning.
 
 Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 
