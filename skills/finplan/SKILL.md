@@ -62,7 +62,7 @@ All three do the same thing: push hundreds of KB of time-series data through the
 - **Use `jq`** for targeted queries when you need specific values from data files
 - **Use the placeholder/inject pattern** for any HTML that renders chart data (see [charts.md](packages/charts.md#html-rendering-workflow))
 
-**Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `project_liability_payoff`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_scenario_comparison_chart`
+**Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `project_liability_payoff`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_projection_comparison_chart`
 
 See [packages/file-tools.md](packages/file-tools.md) for full details and the HTML embedding workflow.
 
@@ -72,7 +72,7 @@ When working with a specific area, read its detailed reference for tool names, p
 
 | Category        | What it does                                             | Reference                                                  |
 | --------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
-| Projections     | Monte Carlo, closed-form, scenario comparison            | [packages/projection.md](packages/projection.md)           |
+| Projections     | Monte Carlo, closed-form, return-assumption comparison   | [packages/projection.md](packages/projection.md)           |
 | Tax             | Federal income tax, capital gains, after-tax projections | [packages/tax.md](packages/tax.md)                         |
 | RMD             | Required Minimum Distributions, IRS tables, penalties    | [packages/rmd.md](packages/rmd.md)                         |
 | Accounts        | Account types, allocations, ownership, creation          | [packages/accounts.md](packages/accounts.md)               |

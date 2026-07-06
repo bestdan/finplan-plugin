@@ -43,15 +43,15 @@ Each timeline entry: `{"month": 1, "return": 0.07, "volatility": 0.15}` (1-index
 
 **Data file**: All monetary values in **cents** (divide by 100 for dollars). Contains `net_deposits` (top-level, shared across percentiles) and `percentile_timelines` with per-percentile monthly snapshots containing `total_value_cents` and `cumulative_investment_return_cents`.
 
-### compare_investment_scenarios
+### compare_return_assumptions
 
-Compare conservative (5%/8%), moderate (7%/15%), and aggressive (9%/22%) scenarios.
+Compare market outcomes under conservative (5%/8%), moderate (7%/15%), and aggressive (9%/22%) return assumptions.
 
 | Parameter               | Type  | Description                                                                                        |
 | ----------------------- | ----- | -------------------------------------------------------------------------------------------------- |
 | `initial_balance_cents` | int   | Starting balance in cents                                                                          |
 | `years`                 | int   | Years to project (default: 30)                                                                     |
-| `num_simulations`       | int   | Simulations per scenario (default: 1000)                                                           |
+| `num_simulations`       | int   | Simulations per assumption set (default: 1000)                                                     |
 | `inflation`             | float | Annual inflation rate as decimal (default: 0.0). When > 0, results are in today's purchasing power |
 
 ### project_plan

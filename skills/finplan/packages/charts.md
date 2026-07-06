@@ -50,9 +50,9 @@ Stacked area chart of asset allocation (stocks/bonds/cash) over time. For glide 
 | `months`      | list[int]  | Corresponding month numbers                                |
 | `title`       | string     | Chart title                                                |
 
-### generate_scenario_comparison_chart
+### generate_projection_comparison_chart
 
-Line chart comparing multiple scenarios at a specific percentile.
+Line chart comparing projections under different return assumptions at a specific percentile.
 
 | Parameter             | Type       | Description                                                                                                  |
 | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
@@ -89,7 +89,7 @@ All chart data files (`urls.data`) share this structure. Use this as a quick ref
 ```json
 {
   "success": true,
-  "chart_type": "projection_fan_chart | account_breakdown_chart | allocation_chart | scenario_comparison_chart",
+  "chart_type": "projection_fan_chart | account_breakdown_chart | allocation_chart | projection_comparison_chart",
   "chartjs": {
     "type": "line",
     "data": {

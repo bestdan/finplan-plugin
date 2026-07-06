@@ -11,7 +11,7 @@ MCP tools that produce large datasets always write full results to a file server
 | `generate_projection_fan_chart`           | charts     | Chart.js chart spec       |
 | `generate_account_breakdown_chart`        | charts     | Chart.js chart spec       |
 | `generate_allocation_chart`               | charts     | Chart.js chart spec       |
-| `generate_scenario_comparison_chart`      | charts     | Chart.js chart spec       |
+| `generate_projection_comparison_chart`    | charts     | Chart.js chart spec       |
 
 ## Response format
 
