@@ -73,6 +73,7 @@ When working with a specific area, read its detailed reference for tool names, p
 | Category        | What it does                                             | Reference                                                  |
 | --------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
 | Projections     | Monte Carlo, closed-form, return-assumption comparison   | [packages/projection.md](packages/projection.md)           |
+| Scenarios       | Plan "what if" deltas: create, apply, compare scenarios  | [packages/scenarios.md](packages/scenarios.md)             |
 | Tax             | Federal income tax, capital gains, after-tax projections | [packages/tax.md](packages/tax.md)                         |
 | RMD             | Required Minimum Distributions, IRS tables, penalties    | [packages/rmd.md](packages/rmd.md)                         |
 | Accounts        | Account types, allocations, ownership, creation          | [packages/accounts.md](packages/accounts.md)               |
