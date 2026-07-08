@@ -6,7 +6,7 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 
 - **Scenario**: a named, ordered list of typed overrides (a delta) applied against a base `UserState`. It stores only inputs; outcomes are always re-derived.
 - **Override**: one typed change, tagged by `kind`: `retirement_age`, `return_assumption`, `inflation`, `tax_rate` (at least one of `marginal_ordinary_rate` / `ltcg_rate`), `monthly_contribution`, `account_balance`, `income_change`, `expense_change`, `goal_target`. Amounts are in cents. E.g. `{"kind": "retirement_age", "age": 60}`.
-- **BaseRef**: identifies the base plan: `{"state_hash": "sha256:…"}` (required — the hash `manage_state` returns) plus an optional `"state_ref": "st_…"` in-session accelerator. Supplying `state_json` inline always works and takes precedence.
+- **BaseRef**: identifies the base plan: `{"state_hash": "sha256:…"}` plus an optional `"state_ref": "st_…"` in-session accelerator. The canonical `state_hash` is derived server-side from the state you pass inline as `state_json` (echoed back as `base_state_hash`) — there is no separate "save" step. Supplying `state_json` inline always works and takes precedence; if you don't yet know the hash, pass `{"state_hash": "sha256:pending"}` and let the server resolve it from `state_json`.
 - **Authority boundaries**: the `UserState` owns current facts (mutated only via `manage_state`); a Snapshot is an immutable point-in-time record; a Scenario owns hypothetical intent only. Computed outcomes live in none of them — always re-derived.
 - Distinct from `compare_return_assumptions`, which varies return assumptions on a single balance — these tools compare whole _plans_.
 
@@ -62,7 +62,7 @@ Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 
 ## Typical workflow
 
-1. `manage_state(action="save")` → note the returned `state_hash` (and `state_ref` if uploaded).
+1. Pass the full state inline as `state_json`; the server canonicalizes it and echoes back the resolved `base_state_hash`. Pin `base` to that hash (or pass `{"state_hash": "sha256:pending"}` and let the server resolve from `state_json`) — there is no separate "save" step.
 2. `create_scenario` with the BaseRef and overrides → store the scenario document from the response's `scenario` key client-side.
 3. `compare_scenarios` with the same BaseRef and the scenario document(s) → present the inline summary; pull timelines from the data file for charts.
 4. Optionally `apply_scenario` to get a `state_ref` for the hypothetical state, usable with other state-driven tools.

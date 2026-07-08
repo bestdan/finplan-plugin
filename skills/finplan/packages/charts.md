@@ -294,6 +294,29 @@ open output.html
 
 The result is a self-contained HTML file with all data embedded inline. No runtime fetches needed (except Chart.js CDN).
 
+### Fully offline pages (vendored Chart.js)
+
+Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/npm/chart.js@4">`), which is fine when the page will be opened online. Some commands require a page that renders with **no external requests at all** (e.g. `/finplan:compare-scenarios`) — a CDN `<script src>` breaks that. For those, inline the vendored copy of Chart.js instead of linking it.
+
+- The plugin ships a pinned Chart.js UMD bundle at `${CLAUDE_PLUGIN_ROOT}/assets/chart.umd.min.js` (Chart.js v4.4.6). Treat it as read-only; to upgrade, re-vendor the same `dist/chart.umd.min.js` from the matching `chart.js@<version>` release and bump the note here.
+- Inline it with the **same placeholder/inject mechanism as the data files** — it is just another token → file replacement. In the `<head>`, write an empty script the injector fills:
+
+  ```html
+  <script>__CHARTJS__</script>
+  ```
+
+  Then add the vendored path to the same `python3` injection call:
+
+  ```bash
+  python3 -c "..." output.html \
+    "__CHARTJS__"          "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
+    "__DATA_BASE__"        "/tmp/finplan/base_data.json" \
+    "__DATA_SCENARIO_1__"  "/tmp/finplan/scn1_data.json"
+  ```
+
+  The vendored bundle contains no `</script>` sequence, so it is safe to inline between script tags. Keeping Chart.js on the same inject pass means it never enters your context either.
+- **Vertical milestone lines** (e.g. a dashed line at the retirement age) — draw them with a tiny inline `afterDraw` Chart.js plugin that strokes the canvas, rather than vendoring `chartjs-plugin-annotation`. Keeping one vendored asset keeps the offline story simple.
+
 ## Chart styling
 
 Use these conventions for consistent styling across all charts. These match the theme defined in `finplan_core.plotting.theme`.

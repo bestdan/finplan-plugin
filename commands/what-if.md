@@ -37,11 +37,15 @@ the comparative arithmetic yourself.
 2. Read it. Pull the header facts for the page (person name(s), age(s), filing
    status, current net worth) — you do not need to hold the whole document in prose,
    but you do need the full JSON to hand to the scenario tools.
-3. Pin the base: call `manage_state(action="save")` with the loaded state to get its
-   canonical `state_hash` (and a `state_ref` if uploaded). Every scenario is authored
-   against this hash so comparisons are apples-to-apples. Keep the full state JSON
-   around to pass inline to the scenario tools (`state_json` always works and takes
-   precedence over a stale `state_ref`).
+3. Pin the base: the canonical `state_hash` is **derived by the server from the state you
+   pass inline** — there is no separate "save" step. Keep the full state JSON around and
+   pass it as `state_json` to the scenario tools; `state_json` is authoritative and the
+   server canonicalizes it, echoing the resolved hash back (as `inputs.base_state_hash`
+   from `compare_scenarios`, or in a `base_drift` warning from `create_scenario`). If you
+   already know that hash (e.g. from an earlier call this session), set `base` to
+   `{"state_hash": "<that hash>"}` to pin it; otherwise pass `{"state_hash": "sha256:pending"}`
+   and let the server resolve from `state_json`. Every scenario is authored against this
+   base so comparisons are apples-to-apples.
 
 If the MCP server is unreachable or unauthenticated, say so and stop (offer
 `/finplan:diagnose` / `/finplan:login`). This command is MCP-first and has no
@@ -103,7 +107,11 @@ context. Read `urls.schema` (small) to confirm the field names/paths for the
 timelines before you write the chart JS.
 
 Surface any warnings compare_scenarios returns (base drift, dropped goals) in your
-chat reply — a scenario is never silently uncomparable.
+chat reply — a scenario is never silently uncomparable. One exception: a `base_drift`
+warning that fires only because you passed the `sha256:pending` placeholder (with
+`state_json` supplied and authoritative) is expected plumbing, not a real mismatch —
+don't surface it. Surface `base_drift` only when a real, previously-known base hash no
+longer matches the state.
 
 ## Step 5: Render the comparison page
 
@@ -113,10 +121,14 @@ chart conventions in [charts.md](../skills/finplan/packages/charts.md) (especial
 never pass through your context). Chart.js from the CDN
 (`https://cdn.jsdelivr.net/npm/chart.js@4`); everything else inline.
 
-> This is the built-in DIY comparison view. The dedicated scenario-management HTML UI
-> (view/compare/manage all your scenarios) is a separate surface; when it lands this
-> page can defer to it. For now `/finplan:what-if` renders its own comparison page so it
-> works standalone.
+> This is the built-in DIY comparison view. The dedicated scenario-management surface —
+> `/finplan:compare-scenarios` (view/compare/manage all your scenarios, fully offline) —
+> is a separate command; point the user there when they want to manage or re-render the
+> whole set. `/finplan:what-if` renders its own comparison page so it works standalone.
+>
+> **This is a local file, not a claude.ai Artifact.** Produce it with `Write` and open it
+> with `open` — do **not** use the Artifact tool or the `artifact-design` flow, which would
+> host it remotely instead of writing it next to the user's state.
 
 Page structure:
 
@@ -130,8 +142,9 @@ Page structure:
      a status color (good / caution / serious) so it never relies on color alone.
    - Fan chart of after-tax household wealth: p10–p90 band at low opacity, p25–p75
      above it, a solid p50 line. **One fixed hue per column in column order** — base
-     `#3b82f6`, then `#f59e0b`, `#10b981`, `#8b5cf6` — never re-colored as columns are
-     added. Share one y-axis max across all columns so the heights are comparable.
+     `#3b82f6`, then the four scenario slots `#f59e0b`, `#10b981`, `#8b5cf6`, `#ec4899`
+     (one per possible column up to the 4-scenario cap) — never re-colored as columns
+     are added. Share one y-axis max across all columns so the heights are comparable.
      X-axis in ages; mark the retirement age with a dashed vertical line.
 3. **Footer** — assumptions line (horizon, inflation, method) and a generation
    timestamp.
