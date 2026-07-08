@@ -151,7 +151,12 @@ validation standard** the finished palette must pass, not a from-scratch design 
 2. **Comparison grid** — one column per plan, **base first**, then each scenario in the
    Step 3 order. Each column:
    - Scenario `name` as the title, its one-line `description` underneath (base column
-     titled "Your plan (base)").
+     titled "Your plan (base)"). Make each **non-base** column's title a **drill-down
+     link** to that scenario's single-scenario page (`<slug>/scenario.html`, relative to
+     this page) — clicking a column opens the page scoped to just that scenario. If that
+     page hasn't been generated yet the link 404s locally; note in your reply that
+     `/finplan:scenario <slug>` builds it. This is the **next level down** the hierarchy
+     (see [scenarios.md](../skills/finplan/packages/scenarios.md#scenario-view-hierarchy-html-pages)).
    - Stat tiles: median (p50) after-tax wealth at the horizon; p10 ("if markets
      disappoint"); each goal's success probability. Every **non-base** column shows a
      **delta chip vs base** (e.g. `−$412k`, `−9 pts`) — always with **sign + label** and a

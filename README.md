@@ -65,6 +65,7 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 | `/finplan:projection-dashboard` | Generate interactive HTML projection dashboard                            |
 | `/finplan:what-if`              | Turn a plain-English what-if into a scenario + comparison page            |
 | `/finplan:compare-scenarios`    | Offline HTML page comparing base vs your scenarios; list/remove scenarios |
+| `/finplan:scenario`             | Drill into one scenario: detail page + ad-hoc analyses nested under it    |
 | `/finplan:profile`              | View and update your financial profile                                    |
 | `/finplan:accounts`             | View and manage financial accounts                                        |
 | `/finplan:goals`                | View and manage financial goals                                           |

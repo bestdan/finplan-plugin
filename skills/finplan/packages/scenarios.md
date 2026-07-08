@@ -66,3 +66,25 @@ Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 2. `create_scenario` with the BaseRef and overrides → store the scenario document from the response's `scenario` key client-side.
 3. `compare_scenarios` with the same BaseRef and the scenario document(s) → present the inline summary; pull timelines from the data file for charts.
 4. Optionally `apply_scenario` to get a `state_ref` for the hypothetical state, usable with other state-driven tools.
+
+## Scenario view hierarchy (HTML pages)
+
+The plugin renders scenarios as **offline, self-contained HTML** at three nested levels. Each level is one step more focused than the one above it, and the files live in a matching directory shape next to the user's state file:
+
+| Level               | Scope                                                                                 | Page                                                                        | Command                                   |
+| ------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| **Comparison**      | base vs **all** scenarios, side-by-side as peers                                      | `scenarios/scenario_comparison.html`                                        | `/finplan:compare-scenarios`              |
+| **Single scenario** | **one** scenario's overrides, projection detail, goal outcomes                        | `scenarios/<slug>/scenario.html`                                            | `/finplan:scenario <slug>`                |
+| **Ad-hoc visual**   | an on-demand analysis **within** one scenario (e.g. a year-by-year tax/college table) | `scenarios/<slug>/adhoc/<analysis>.json` → rendered on that scenario's page | `/finplan:scenario <slug> --analysis "…"` |
+
+```
+scenarios/
+  scenario_comparison.html      # comparison level — all scenarios
+  <slug>.json                   # the scenario record (/finplan:what-if writes this)
+  <slug>/
+    scenario.html               # single-scenario drill-down page
+    adhoc/
+      <analysis>.json           # ad-hoc analysis, a child of this scenario
+```
+
+**Drill direction:** a scenario column in the comparison page links down to that scenario's `<slug>/scenario.html`; the single-scenario page links back up to `../scenario_comparison.html`. **Ad-hocs are children of their scenario** — they render on `<slug>/scenario.html` and are stored under `scenarios/<slug>/adhoc/`, never promoted to a peer scenario at the comparison level. All three levels use the vendored-Chart.js offline convention and the light+dark dataviz palettes (see [charts.md](charts.md#fully-offline-pages-vendored-chartjs)).
