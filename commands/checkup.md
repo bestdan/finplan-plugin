@@ -96,11 +96,11 @@ After the review, present:
 2. **Updated snapshot** — Current profile, account totals, goal progress
 3. **Monthly cashflow check** — Total contributions needed across all goals vs income
    - Flag if total contributions exceed a reasonable percentage of income (e.g., >50% of take-home)
-4. **Recommendations**:
-   - Goals that need increased contributions
-   - Accounts that might benefit from rebalancing
+4. **Things worth a look** — surface what the numbers show; leave the decisions to the user:
+   - Goals that are off track at current contribution levels
    - Missing goals (e.g., no emergency fund, no retirement savings)
    - Upcoming milestones (approaching retirement, kids starting college, RMD age)
+   - Accounts whose recorded allocation the user said they'd revisit — offer to **model** an alternative split so they can see its effect. Do not tell them what allocation to hold, and never mention specific funds, ETFs, or tickers: FinPlan is asset-class only and has no basis for security-level advice.
 5. **Next steps**:
    - "Run `/finplan:projection-dashboard` to see updated projections"
    - "Ask about specific topics: Social Security, tax optimization, mortgage analysis"
@@ -109,7 +109,7 @@ After the review, present:
 
 - **Save after every change** — Call `/finplan:save-state` after each `manage_state` call.
 - **Be conversational** — Don't ask all questions at once. Go section by section.
-- **Be proactive with suggestions** — The value of a checkup is catching things the user hasn't thought about. Use the life-change-to-goal mapping above.
+- **Be proactive with suggestions** — The value of a checkup is catching things the user hasn't thought about. Use the life-change-to-goal mapping above. This means surfacing _planning_ gaps — an unfunded goal, a milestone approaching, a contribution rate that no longer reaches the target. It does not extend to investment advice: FinPlan never recommends securities and never prescribes an allocation.
 - **Show progress** — For each goal, show how much progress has been made and whether they're on track.
 - **Don't force changes** — If the user says everything is the same, confirm that their plan looks good and skip to recommendations.
 - **Calculate ages and dates** — Use date_of_birth to compute age-based milestones and flag upcoming ones.

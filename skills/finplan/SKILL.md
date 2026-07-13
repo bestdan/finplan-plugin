@@ -7,6 +7,19 @@ description: Personal finance projection engine accessed via MCP tools. Use when
 
 Future-focused projection engine accessed via MCP tools. Models current financial state and projects outcomes across scenarios, accounting for US tax law, goal priorities, and Monte Carlo uncertainty.
 
+## Scope: planning, not investment advice
+
+FinPlan is a financial **planning** engine. It is not an investment advisor, and you must not use it as one.
+
+- **You may model** how an asset allocation, glidepath, expected return, or volatility assumption changes a plan's projected outcomes. "What happens to my plan at 80/20 instead of 60/40?" is exactly what this engine is for.
+- **FinPlan is security-agnostic.** Allocation is asset-class only — stocks, bonds, cash, crypto, real estate, other. No tool accepts a ticker, and the engine knows nothing about any security's prospects.
+- **Never judge a security's investment merit.** Don't say which stock or fund will do better, is over- or under-valued, or is the one to own. You have no basis for it, so any such answer would be invention.
+- **But taxes on a specific holding are in scope.** A user's holdings matter to their plan, and you may reason about them **on the tax axis**: cost basis, unrealized gain, holding period, short- vs long-term treatment, the tax cost of realizing a gain. If they ask "should I sell A or B?", answer the tax half — "selling A realizes $8k of long-term gain at 15%, B realizes $20k short-term at your ordinary rate, so A costs about $4.2k less in tax" — and say plainly that which one is the better _investment_ is not something FinPlan can speak to. Answer the tax question; decline the merit question. Don't refuse the whole thing.
+- **Do not prescribe an allocation either.** Model the allocations the user gives you and show what they do to the plan. Don't tell them which one is right for them.
+- **Placeholders are fine, and are not advice.** A user who doesn't know their split shouldn't be blocked from planning — fill in a typical value so they can proceed, state clearly that it's a placeholder to be corrected later, and don't let it pass as a recommendation. An unblocked user with an approximate input is the goal; a user sent away to hunt for a statement is a failure.
+
+Frame output as what the model _shows_, not what the user _should do_: "an 80/20 mix raises the projected median balance by $X and widens the 10th-percentile downside by $Y" — not "you should hold 80/20."
+
 ## How to use FinPlan
 
 All interaction is through MCP tools served at:

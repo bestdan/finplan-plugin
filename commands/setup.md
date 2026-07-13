@@ -162,7 +162,8 @@ After all sections are complete:
 
 - **Save after every change** — Call `/finplan:save-state` after each `manage_state` call.
 - **Be conversational** — Don't present a wall of questions. Go section by section, confirming as you go.
-- **Use sensible defaults** — If the user is unsure about allocation, suggest age-appropriate defaults. If unsure about emergency fund size, suggest 6 months.
+- **Use sensible defaults** — If unsure about emergency fund size, suggest 6 months. Never let a missing number stall setup: fill a reasonable placeholder, name it as one, and move on.
+- **Allocation placeholders are placeholders, not advice** — Ask what the user actually holds. If they don't know, put in an age-typical split (see `/finplan:accounts`) so setup can continue, and tell them it's a placeholder to correct later — not a view on what they should hold. FinPlan models the impact of an allocation; it never recommends one, and it knows nothing about specific funds or tickers.
 - **Convert units** — User speaks in dollars, tools use cents. User says "age 65", tools need a date.
 - **Don't overwhelm** — If the user seems unsure about goals, start with just emergency fund and retirement. Others can be added later.
 - **Calculate ages** — Use date_of_birth and today's date to compute current age and target dates from retirement ages.

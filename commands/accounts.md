@@ -45,12 +45,17 @@ If `$ARGUMENTS` is `add`, walk the user through creating a new account:
    - _Real estate_: `real_estate`, `mortgage`
    - _Other_: `ibonds`, `crypto_exchange`
 2. **Balance** — Current balance in dollars (convert to cents)
-3. **Allocation** — Stocks/bonds/cash percentages (must sum to 100). Suggest defaults based on account type:
+3. **Allocation** — Asset-class percentages (must sum to 100): stocks, bonds, cash, and where relevant crypto, real estate, other. Ask what the account actually holds. FinPlan is asset-class only, so if the user names a fund, ask them for its rough asset-class breakdown rather than guessing at one.
+
+   If they don't have the real numbers to hand, **don't send them off to find a statement** — drop in a typical placeholder so they can keep going, and say plainly that it's a placeholder to be corrected later, not a suggestion of what they should hold:
+
    - Retirement (young): 80/15/5
    - Retirement (near retirement): 60/30/10
-   - Savings/checking/CD: 0/0/100
    - HSA: 60/30/10
    - 529: 70/20/10
+   - Savings/checking/CD/money market: 0/0/100 (structural — these types are cash-only, not a placeholder)
+
+   Phrase it as _"I'll put 80/15/5 in as a placeholder so we can move on — swap in your real split whenever you have it, and the projection will update"_, never as _"you should hold 80/15/5."_ Flag any placeholder again in the summary so it doesn't quietly harden into a fact.
 4. **Name** — Human-readable name (optional, suggest a default)
 5. **Institution** — Financial institution (optional)
 6. **Is current employer** — For 401k types only
