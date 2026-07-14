@@ -32,6 +32,16 @@ Calculate expected return and volatility for an allocation.
 
 Allocations must sum to 100. Returns: `expected_annual_return`, `annual_volatility`.
 
+### calculate_portfolio_characteristics_batch
+
+Batch/vectorized `calculate_portfolio_characteristics`: evaluate many allocations in **one call**. Use this instead of N serial calls when sizing several candidate mixes (e.g. for a dashboard).
+
+| Parameter     | Type       | Description                                                                                                                                                                                 |
+| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allocations` | list[dict] | List of allocations to evaluate. Each entry is a `calculate_portfolio_characteristics` parameter object — at minimum `{stocks_pct, bonds_pct, cash_pct}` plus any optional preset/override. |
+
+**Response**: `{success, count, succeeded, failed, allocations}`. `allocations` holds one result per input entry, **in the same order**; each successful element has the same shape the single tool returns. A malformed entry yields a per-entry `{success: false, error, message}` in its slot without failing the others. Up to 50 allocations per call.
+
 ### generate_glide_path
 
 Transition between two allocations over time. Supports both linear and age-based modes.

@@ -48,6 +48,16 @@ Each timeline entry: `{"month": 1, "return": 0.07, "volatility": 0.15}` (1-index
 
 **Data file**: All monetary values in **cents** (divide by 100 for dollars). Contains `net_deposits` (top-level, shared across percentiles) and `percentile_timelines` with per-percentile monthly snapshots containing `total_value_cents` and `cumulative_investment_return_cents`.
 
+### run_projections
+
+Batch/vectorized `run_projection`: run many independent projections in **one call**, fanned out in parallel. Use this instead of N serial `run_projection` calls whenever you have several same-shape, independent projections (a per-account retirement breakdown, one chart series per allocation, etc.).
+
+| Parameter     | Type       | Description                                                                                                                                                                                                                                    |
+| ------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `projections` | list[dict] | List of independent projections to run. Each entry is a `run_projection` parameter object — at minimum `{initial_balance_cents}` plus either constant-return params or a `return_distribution_timeline`, and any other `run_projection` param. |
+
+**Response**: `{success, count, succeeded, failed, projections}`. `projections` holds one result per input entry, **in the same order**; each successful element has the same shape `run_projection` returns (file URLs + compact summary). A malformed entry yields a per-entry `{success: false, error, message}` in its slot without failing the others. Up to 50 projections per call.
+
 ### compare_return_assumptions
 
 Compare market outcomes under conservative (5%/8%), moderate (7%/15%), and aggressive (9%/22%) return assumptions.
