@@ -32,15 +32,35 @@ Returns: `ltcg_rate` (float, e.g., 0.15 = 15%).
 
 Calculate resident state and (optionally) local income tax using full progressive brackets. Returns `success: false` with a message identifying the unsupported field when a state/locality/year combination has no implementation.
 
-| Parameter                    | Type   | Description                                                                                         |
-| ---------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
-| `state_code`                 | string | Two-letter US state code                                                                            |
-| `state_taxable_income_cents` | int    | State taxable income in cents (after state deductions)                                              |
-| `filing_status`              | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"` |
-| `locality`                   | string | Optional resident locality slug. Leave empty for state-only.                                        |
-| `tax_year`                   | int    | Tax year (default: `2026`)                                                                          |
+Income goes in as a **breakdown by kind**, not a single taxable-income figure, because states tax kinds of income differently — NY excludes Social Security in full and up to $20,000 of pension/annuity income for a filer who has reached 59.5 (NY Tax Law § 612(c)(3-a)), and the breakdown reaches the local calculation too. All component amounts are stated **after** any state-level deduction you apply. Pass `age` whenever the filer is retired: the retirement exclusions are age-gated, and omitting it forfeits them.
 
-Returns: `success`, `state_tax_cents`, `state_marginal_rate`, `state_effective_rate`, `state_standard_deduction_cents`, `local_tax_cents`, `total_state_and_local_tax_cents`, `combined_effective_rate`, `explanation`.
+**On a joint return, split the retirement income per spouse.** The exclusion belongs to each spouse and applies to _their own_ pension — an unused spouse's cap is not transferable. So pass `spouse_age` **and** put the spouse's retirement income in `spouse_pension_cents` / `spouse_retirement_distribution_cents` rather than pooling it into `pension_cents`. A NY couple both 59.5+, each with a pension, excludes $40,000; pool both pensions into `pension_cents` and they get only $20,000 (which overstates their tax — the split is what claims the second exclusion).
+
+| Parameter                              | Type   | Description                                                                                                                                                        |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `state_code`                           | string | Two-letter US state code                                                                                                                                           |
+| `filing_status`                        | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"`                                                                |
+| `wages_cents`                          | int    | Wages, salary, and other compensation in cents (default `0`)                                                                                                       |
+| `social_security_cents`                | int    | Social Security benefits in cents (default `0`) — most states exempt these                                                                                         |
+| `pension_cents`                        | int    | Pension and annuity income in cents (default `0`). On a joint return, the **taxpayer's** — see `spouse_pension_cents`                                              |
+| `retirement_distribution_cents`        | int    | IRA / 401(k) / 403(b) distributions in cents (default `0`). On a joint return, the **taxpayer's**                                                                  |
+| `interest_dividends_cents`             | int    | Taxable interest and dividend income in cents (default `0`)                                                                                                        |
+| `capital_gains_cents`                  | int    | Net capital gains in cents (default `0`)                                                                                                                           |
+| `business_income_cents`                | int    | Sole-proprietorship, partnership, and S-corp income in cents (default `0`)                                                                                         |
+| `other_income_cents`                   | int    | Ordinary income not covered above, in cents (default `0`) — no state exclusion attaches to it                                                                      |
+| `age`                                  | float  | Taxpayer age at year end (default `0`). Retirement exclusions are age-gated; NY's requires 59.5                                                                    |
+| `spouse_age`                           | float  | Spouse's age at year end, on a joint return (default `0`). Each spouse past the gate claims their own exclusion. Ignored unless `filing_status` is `married_joint` |
+| `spouse_pension_cents`                 | int    | Spouse's pension income in cents, on a joint return (default `0`). Kept separate because the cap applies to each spouse's own income                               |
+| `spouse_retirement_distribution_cents` | int    | Spouse's IRA / 401(k) / 403(b) distributions in cents, on a joint return (default `0`)                                                                             |
+| `federal_agi_cents`                    | int    | Federal AGI in cents, for states whose exclusions carry an income cutoff (default `0` = not supplied)                                                              |
+| `federal_taxable_income_cents`         | int    | Federal taxable income in cents, for states that start from it (default `0` = not supplied)                                                                        |
+| `federal_tax_paid_cents`               | int    | Federal income tax liability in cents, for states that subtract it — OR, AL, MO (default `0`)                                                                      |
+| `locality`                             | string | Optional resident locality slug. Leave empty for state-only.                                                                                                       |
+| `tax_year`                             | int    | Tax year (default: `2026`)                                                                                                                                         |
+
+Returns: `success`, `total_income_cents`, `state_excluded_income_cents`, `state_taxable_income_cents` (the base after the state's exclusions), `state_tax_cents`, `state_marginal_rate`, `state_effective_rate`, `state_effective_rate_on_total_income`, `state_standard_deduction_cents`, `local_tax_cents`, `total_state_and_local_tax_cents`, `combined_effective_rate`, `combined_effective_rate_on_total_income`, `explanation`.
+
+The two effective-rate pairs differ whenever income is excluded: `state_effective_rate` / `combined_effective_rate` are over the state **taxable base** (matching `calculate_federal_income_tax`), while the `_on_total_income` variants are over the total reported income — the lower figure, and the one a filer usually means by "my effective rate."
 
 ### calculate_federal_tax_liability
 
