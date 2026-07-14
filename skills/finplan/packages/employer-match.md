@@ -25,14 +25,15 @@ Create a complete employer match configuration.
 
 Calculate match for a given employee contribution. Optionally includes monthly breakdown and/or maximum possible annual match.
 
-| Parameter                     | Type | Description                                                                     |
-| ----------------------------- | ---- | ------------------------------------------------------------------------------- |
-| `employer_match_json`         | dict | Match config from `create_employer_match`                                       |
-| `employee_contribution_cents` | int  | Employee deferral in cents                                                      |
-| `annual_compensation_cents`   | int  | Annual compensation in cents                                                    |
-| `ytd_employer_match_cents`    | int  | YTD match already contributed (default: 0)                                      |
-| `include_monthly`             | bool | If True, also calculate monthly match by dividing annual by 12 (default: false) |
-| `include_max_match`           | bool | If True, also calculate maximum possible annual employer match (default: false) |
+| Parameter                     | Type | Description                                                                                               |
+| ----------------------------- | ---- | --------------------------------------------------------------------------------------------------------- |
+| `employer_match_json`         | dict | Match config from `create_employer_match`                                                                 |
+| `employee_contribution_cents` | int  | Employee deferral in cents                                                                                |
+| `annual_compensation_cents`   | int  | Annual compensation in cents                                                                              |
+| `ytd_employer_match_cents`    | int  | YTD match already contributed (default: 0)                                                                |
+| `include_monthly`             | bool | If True, also calculate monthly match by dividing annual by 12 (default: false)                           |
+| `include_max_match`           | bool | If True, also calculate maximum possible annual employer match (default: false)                           |
+| `compensation_limit_cents`    | int  | IRS annual compensation limit for the projection year, in cents. Defaults to the 2026 limit when omitted. |
 
 Returns: `employer_match_cents`, `effective_deferral_pct`, `effective_match_pct`. When `include_monthly=True`, also returns `monthly_employer_match_cents`. When `include_max_match=True`, also returns `max_annual_match_cents`.
 

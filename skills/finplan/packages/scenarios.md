@@ -26,13 +26,14 @@ Create a plan scenario: a named, validated delta of typed overrides against a ba
 
 ### apply_scenario
 
-Resolve a scenario's state-shaped overrides against the base and return a `state_ref` to the resolved (hypothetical) UserState for inspection or handing to other tools. The resolved state is ephemeral compute scratch (60-minute TTL) — it never becomes the base UserState. Projection-time overrides (`return_assumption`, `inflation`, account-scoped `monthly_contribution`) have no state slot and only take effect when the scenario is projected via `compare_scenarios`.
+Resolve a scenario's state-shaped overrides against the base and return a `state_ref` to the resolved (hypothetical) UserState — plus the resolved `state_json` inline when `return_state_json=True` — for inspection or handing to other tools. The resolved state is ephemeral compute scratch (60-minute TTL) — it never becomes the base UserState. Projection-time overrides (`return_assumption`, `inflation`, account-scoped `monthly_contribution`) have no state slot and only take effect when the scenario is projected via `compare_scenarios`.
 
-| Parameter    | Type   | Description                                                                                                    |
-| ------------ | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `base`       | object | BaseRef: `{"state_hash": …, "state_ref"?: …}`.                                                                 |
-| `scenario`   | object | The scenario to apply: a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.      |
-| `state_json` | object | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given. |
+| Parameter           | Type   | Description                                                                                                                                                                                                                      |
+| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`              | object | BaseRef: `{"state_hash": …, "state_ref"?: …}`.                                                                                                                                                                                   |
+| `scenario`          | object | The scenario to apply: a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.                                                                                                                        |
+| `state_json`        | object | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given.                                                                                                                   |
+| `return_state_json` | bool   | When True, also return the resolved hypothetical UserState inline as `state_json`. Pass it to `project_plan` / `run_projection` (which take `state_json`, not `state_ref`) to drive the state-level drill-down off the scenario. |
 
 ### compare_scenarios
 

@@ -29,13 +29,17 @@ You already hold the full state (you passed it in as `state_json`). To rebuild t
 
 | Parameter            | Type   | Description                                                                                                                                                                                           |
 | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`             | string | `"create"`, `"update_account"`, `"update_goal"`, `"update_person"`, `"update_income_stream"`, `"update_expense"`                                                                                      |
-| `state_json`         | dict   | Current UserState JSON. Required for: update_account, update_goal, update_person, update_income_stream, update_expense.                                                                               |
+| `action`             | string | `"create"`, `"update_account"`, `"update_goal"`, `"update_person"`, `"update_income_stream"`, `"update_expense"`, `"remove_account"`, `"remove_goal"`, `"remove_income_stream"`, `"remove_expense"`   |
+| `state_json`         | dict   | Current UserState JSON. Required for: update_account, update_goal, update_person, update_income_stream, update_expense, remove_account, remove_goal, remove_income_stream, remove_expense.            |
 | `person_json`        | dict   | Person profile with fields: date_of_birth (YYYY-MM-DD), employment_status, annual_pretax_income_cents, marital_status, zipcode, optionally number_of_dependents. Required for: create, update_person. |
 | `account_json`       | dict   | Account from `create_account` result. Required for: update_account.                                                                                                                                   |
 | `goal_json`          | dict   | Goal from `create_goal` result. Required for: update_goal.                                                                                                                                            |
 | `income_stream_json` | dict   | Income stream from `create_income_stream` result. Required for: update_income_stream.                                                                                                                 |
 | `expense_json`       | dict   | Expense from `create_expense` result. Required for: update_expense.                                                                                                                                   |
+| `account_id`         | string | `account_id` of the account to remove. Required for: remove_account.                                                                                                                                  |
+| `goal_id`            | string | `id` of the goal to remove. Required for: remove_goal.                                                                                                                                                |
+| `income_stream_id`   | string | `id` of the income stream to remove. Required for: remove_income_stream.                                                                                                                              |
+| `expense_id`         | string | `id` of the expense to remove. Required for: remove_expense.                                                                                                                                          |
 | `return_full_state`  | bool   | When `true`, `update_*` actions return the full UserState inline instead of a delta (default `false`). Ignored by `create`.                                                                           |
 
 **Actions:**
@@ -46,6 +50,10 @@ You already hold the full state (you passed it in as `state_json`). To rebuild t
 - **update_person** — Update (edit) person info in state. Requires `state_json` and `person_json` with fields to change.
 - **update_income_stream** — Add or update an income stream in state. Requires `state_json` and `income_stream_json`. If income stream has an 'id' field matching an existing one, it replaces it; otherwise adds new.
 - **update_expense** — Add or update an expense in state. Requires `state_json` and `expense_json`. If expense has an 'id' field matching an existing one, it replaces it; otherwise adds new.
+- **remove_account** — Remove an account from state by `account_id`. Requires `state_json` and `account_id`.
+- **remove_goal** — Remove a goal from state by `goal_id`. Requires `state_json` and `goal_id`.
+- **remove_income_stream** — Remove an income stream from state by `income_stream_id`. Requires `state_json` and `income_stream_id`.
+- **remove_expense** — Remove an expense from state by `expense_id`. Requires `state_json` and `expense_id`.
 
 ### describe_state_schema
 

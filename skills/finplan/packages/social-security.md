@@ -25,10 +25,11 @@ Returns: `assumptions` (echoes every default applied — re-call with one change
 
 Estimate Primary Insurance Amount from salary history.
 
-| Parameter             | Type | Description                         |
-| --------------------- | ---- | ----------------------------------- |
-| `annual_salary_cents` | int  | Annual salary in cents              |
-| `years_of_work`       | int  | Years working at this salary (1-45) |
+| Parameter             | Type | Description                                                                                            |
+| --------------------- | ---- | ------------------------------------------------------------------------------------------------------ |
+| `annual_salary_cents` | int  | Annual salary in cents                                                                                 |
+| `years_of_work`       | int  | Years working at this salary (1-45)                                                                    |
+| `year`                | int  | Year for SSA bend points and the wage-index (max taxable earnings) cap. Defaults to 2026 when omitted. |
 
 Returns: `estimated_pia_cents` (monthly PIA).
 

@@ -8,18 +8,27 @@ Capital market assumptions, portfolio characteristics, and glide path generation
 
 Calculate expected return and volatility for an allocation.
 
-| Parameter           | Type   | Description                                                           |
-| ------------------- | ------ | --------------------------------------------------------------------- |
-| `stocks_pct`        | int    | Stock allocation 0-100                                                |
-| `bonds_pct`         | int    | Bond allocation 0-100                                                 |
-| `cash_pct`          | int    | Cash allocation 0-100                                                 |
-| `assumption_preset` | string | `"standard"`, `"conservative"`, or `"optimistic"` (default: standard) |
-| `stocks_return`     | float  | Override stock return (optional)                                      |
-| `stocks_volatility` | float  | Override stock volatility (optional)                                  |
-| `bonds_return`      | float  | Override bond return (optional)                                       |
-| `bonds_volatility`  | float  | Override bond volatility (optional)                                   |
-| `cash_return`       | float  | Override cash return (optional)                                       |
-| `cash_volatility`   | float  | Override cash volatility (optional)                                   |
+| Parameter                | Type   | Description                                                           |
+| ------------------------ | ------ | --------------------------------------------------------------------- |
+| `stocks_pct`             | int    | Stock allocation 0-100                                                |
+| `bonds_pct`              | int    | Bond allocation 0-100                                                 |
+| `cash_pct`               | int    | Cash allocation 0-100                                                 |
+| `crypto_pct`             | int    | Crypto allocation 0-100 (default: 0)                                  |
+| `real_estate_pct`        | int    | Real estate allocation 0-100 (default: 0)                             |
+| `other_pct`              | int    | Other-asset allocation 0-100 (default: 0)                             |
+| `assumption_preset`      | string | `"standard"`, `"conservative"`, or `"optimistic"` (default: standard) |
+| `stocks_return`          | float  | Override stock return (optional)                                      |
+| `stocks_volatility`      | float  | Override stock volatility (optional)                                  |
+| `bonds_return`           | float  | Override bond return (optional)                                       |
+| `bonds_volatility`       | float  | Override bond volatility (optional)                                   |
+| `cash_return`            | float  | Override cash return (optional)                                       |
+| `cash_volatility`        | float  | Override cash volatility (optional)                                   |
+| `crypto_return`          | float  | Override crypto expected return (optional)                            |
+| `crypto_volatility`      | float  | Override crypto volatility (optional)                                 |
+| `real_estate_return`     | float  | Override real estate expected return (optional)                       |
+| `real_estate_volatility` | float  | Override real estate volatility (optional)                            |
+| `other_return`           | float  | Override other-asset expected return (optional)                       |
+| `other_volatility`       | float  | Override other-asset volatility (optional)                            |
 
 Allocations must sum to 100. Returns: `expected_annual_return`, `annual_volatility`.
 
@@ -55,14 +64,20 @@ When `age_based=True`, models a target-date fund glidepath with three phases:
 
 Create assumptions from a preset with optional per-asset-class overrides.
 
-| Parameter           | Type   | Description                                                           |
-| ------------------- | ------ | --------------------------------------------------------------------- |
-| `preset`            | string | `"standard"`, `"conservative"`, or `"optimistic"` (default: standard) |
-| `stocks_return`     | float  | Override stock expected return (optional)                             |
-| `stocks_volatility` | float  | Override stock volatility (optional)                                  |
-| `bonds_return`      | float  | Override bond expected return (optional)                              |
-| `bonds_volatility`  | float  | Override bond volatility (optional)                                   |
-| `cash_return`       | float  | Override cash expected return (optional)                              |
-| `cash_volatility`   | float  | Override cash volatility (optional)                                   |
+| Parameter                | Type   | Description                                                           |
+| ------------------------ | ------ | --------------------------------------------------------------------- |
+| `preset`                 | string | `"standard"`, `"conservative"`, or `"optimistic"` (default: standard) |
+| `stocks_return`          | float  | Override stock expected return (optional)                             |
+| `stocks_volatility`      | float  | Override stock volatility (optional)                                  |
+| `bonds_return`           | float  | Override bond expected return (optional)                              |
+| `bonds_volatility`       | float  | Override bond volatility (optional)                                   |
+| `cash_return`            | float  | Override cash expected return (optional)                              |
+| `cash_volatility`        | float  | Override cash volatility (optional)                                   |
+| `crypto_return`          | float  | Override crypto expected annual return (optional)                     |
+| `crypto_volatility`      | float  | Override crypto annual volatility (optional)                          |
+| `real_estate_return`     | float  | Override real estate expected annual return (optional)                |
+| `real_estate_volatility` | float  | Override real estate annual volatility (optional)                     |
+| `other_return`           | float  | Override other-asset expected annual return (optional)                |
+| `other_volatility`       | float  | Override other-asset annual volatility (optional)                     |
 
 Returns: portfolio assumptions object with per-asset-class return and volatility.
