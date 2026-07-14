@@ -27,7 +27,11 @@ Unified projection tool supporting both constant-return and time-varying (glide 
 | `annual_volatility`            | float      | Annual std dev (0.15 = 15%). For constant-return mode.                                                                                                                                                                                                                          |
 | `time_horizon_months`          | int        | Months to project. Required for constant-return mode.                                                                                                                                                                                                                           |
 | `return_distribution_timeline` | list[dict] | Monthly entries: `{month, return, volatility}`. For timeline mode.                                                                                                                                                                                                              |
-| `monthly_contribution_cents`   | int        | Monthly contribution in cents (default: 0)                                                                                                                                                                                                                                      |
+| `monthly_contribution_cents`   | int        | Constant monthly contribution in cents (default: 0). Negative = withdrawal. In retirement mode this is the pre-retirement (accumulation) contribution. Mutually exclusive with `contribution_timeline`.                                                                         |
+| `contribution_timeline`        | list[dict] | Explicit per-month contributions: `{month, contribution_cents}` (1-indexed, sequential, one entry per month of the horizon). Positive = contribution, negative = withdrawal. Mutually exclusive with `monthly_contribution_cents` and `retirement_month`.                       |
+| `retirement_month`             | int        | 1-indexed month at which contributions flip to withdrawals (accumulation -> decumulation) in a single call. Mutually exclusive with `contribution_timeline`.                                                                                                                    |
+| `retirement_withdrawal_cents`  | int        | Gross monthly withdrawal in cents from `retirement_month` onward (>= 0, default: 0). Requires `retirement_month`.                                                                                                                                                               |
+| `retirement_income_cents`      | int        | Monthly income in cents (e.g. Social Security) offsetting the withdrawal from `retirement_month` onward (>= 0, default: 0). Requires `retirement_month`.                                                                                                                        |
 | `method`                       | string     | `"closed_form"` (default), `"auto"`, `"deterministic"`, `"monte_carlo"`                                                                                                                                                                                                         |
 | `iterations`                   | int        | Monte Carlo iterations (default: 1000)                                                                                                                                                                                                                                          |
 | `seed`                         | int        | Random seed for reproducibility                                                                                                                                                                                                                                                 |
@@ -126,7 +130,7 @@ For embedding data in HTML dashboards, use bash to inject file contents directly
 
 ## Withdrawals (Retirement Phase)
 
-**Negative contributions work as withdrawals.** To model retirement or any spending phase, use a negative `monthly_contribution_cents`:
+**Negative contributions work as withdrawals.** To model a pure spending phase (drawing down from day one), use a negative `monthly_contribution_cents`. To model saving _then_ spending in one call, use `retirement_month` (see below):
 
 ```
 run_projection(
@@ -140,29 +144,39 @@ run_projection(
 
 ### Multi-phase planning (accumulation -> retirement)
 
-Chain projections for different life phases:
+Use `retirement_month` to model saving up to retirement and drawing down after it in a **single call**. Months before it contribute `monthly_contribution_cents`; from it onward the monthly cashflow is `retirement_income_cents - retirement_withdrawal_cents`:
 
-1. **Accumulation phase** (positive contributions):
-   ```
-   accumulation = run_projection(
-       initial_balance_cents=100_000_00,
-       monthly_contribution_cents=2_000_00,  # Save $2k/month
-       expected_annual_return=0.07,
-       annual_volatility=0.15,
-       time_horizon_months=240               # 20 years to retirement
-   )
-   ```
+```
+run_projection(
+    initial_balance_cents=100_000_00,
+    monthly_contribution_cents=2_000_00,    # Save $2k/month until retirement
+    retirement_month=241,                   # Retire after 20 years
+    retirement_withdrawal_cents=5_000_00,   # Then withdraw $5k/month
+    retirement_income_cents=2_000_00,       # Offset by $2k/month Social Security
+    expected_annual_return=0.06,
+    annual_volatility=0.12,
+    time_horizon_months=600                 # 20 accumulating + 30 in retirement
+)
+```
 
-2. **Retirement phase** (negative contributions = withdrawals):
-   ```
-   retirement = run_projection(
-       initial_balance_cents=accumulation["final_balance_percentiles"]["p50"]["cents"],
-       monthly_contribution_cents=-5_000_00,  # Withdraw $5k/month
-       expected_annual_return=0.05,
-       annual_volatility=0.10,
-       time_horizon_months=360                # 30-year retirement
-   )
-   ```
+Chaining two calls (feeding one projection's p50 into the next as the starting balance) is no longer necessary, and understates uncertainty by collapsing the first phase to a single percentile.
+
+### Time-varying contributions
+
+When saving or spending changes month to month (a raise, a sabbatical, a lumpy expense), pass `contribution_timeline` instead of a scalar — one entry per month of the horizon:
+
+```
+run_projection(
+    initial_balance_cents=100_000_00,
+    contribution_timeline=[
+        {"month": m, "contribution_cents": 2_000_00 if m <= 12 else 3_000_00}
+        for m in range(1, 25)
+    ],
+    expected_annual_return=0.07,
+    annual_volatility=0.15,
+    time_horizon_months=24
+)
+```
 
 ## After-tax projections
 
