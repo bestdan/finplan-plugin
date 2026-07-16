@@ -30,7 +30,7 @@ Returns: `ltcg_rate` (float, e.g., 0.15 = 15%).
 
 ### calculate_state_and_local_income_tax
 
-Calculate resident state and (optionally) local income tax using full progressive brackets. Returns `success: false` with a message identifying the unsupported field when a state/locality/year combination has no implementation.
+Calculate resident state and (optionally) local income tax using full progressive brackets. **Covers all 50 states + DC** (resident returns, before state credits), plus the local layers: NYC, Yonkers, every Maryland county, Philadelphia, Detroit, Columbus/Cleveland/Cincinnati/Toledo, St. Louis, Kansas City, Louisville, Birmingham, and Wilmington. Returns `success: false` with a message identifying the unsupported field when a state/locality/year combination has no implementation.
 
 Income goes in as a **breakdown by kind**, not a single taxable-income figure, because states tax kinds of income differently — NY excludes Social Security in full and up to $20,000 of pension/annuity income for a filer who has reached 59.5 (NY Tax Law § 612(c)(3-a)), and the breakdown reaches the local calculation too. All component amounts are stated **after** any state-level deduction you apply. Pass `age` whenever the filer is retired: the retirement exclusions are age-gated, and omitting it forfeits them.
 

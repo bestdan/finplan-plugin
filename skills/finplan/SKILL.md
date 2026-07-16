@@ -83,26 +83,26 @@ See [packages/file-tools.md](packages/file-tools.md) for full details and the HT
 
 When working with a specific area, read its detailed reference for tool names, parameters, and usage:
 
-| Category        | What it does                                             | Reference                                                  |
-| --------------- | -------------------------------------------------------- | ---------------------------------------------------------- |
-| Projections     | Monte Carlo, closed-form, return-assumption comparison   | [packages/projection.md](packages/projection.md)           |
-| Scenarios       | Plan "what if" deltas: create, apply, compare scenarios  | [packages/scenarios.md](packages/scenarios.md)             |
-| Tax             | Federal income tax, capital gains, after-tax projections | [packages/tax.md](packages/tax.md)                         |
-| RMD             | Required Minimum Distributions, IRS tables, penalties    | [packages/rmd.md](packages/rmd.md)                         |
-| Accounts        | Account types, allocations, ownership, creation          | [packages/accounts.md](packages/accounts.md)               |
-| Portfolio       | Return assumptions, glide paths, characteristics         | [packages/portfolio.md](packages/portfolio.md)             |
-| Goals           | Financial goals, contribution calc, progress tracking    | [packages/goals.md](packages/goals.md)                     |
-| Social Security | Benefits, claiming strategies, spousal/survivor, PIA     | [packages/social-security.md](packages/social-security.md) |
-| Mortgage        | Monthly payments, amortization, P&I splits               | [packages/mortgage.md](packages/mortgage.md)               |
-| Liabilities     | Debt paydown trajectory + payoff date (cards, loans)     | [packages/liability.md](packages/liability.md)             |
-| Employer Match  | 401(k) matching formulas, vesting, calculations          | [packages/employer-match.md](packages/employer-match.md)   |
-| Charts          | Chart.js fan charts, account breakdowns, comparisons     | [packages/charts.md](packages/charts.md)                   |
-| File Tools      | File-based responses, `generate_data` parameter          | [packages/file-tools.md](packages/file-tools.md)           |
-| Profile & State | Person profiles, user state persistence                  | [packages/state.md](packages/state.md)                     |
-| Snapshots       | Build point-in-time facts records, diff two snapshots    | [packages/snapshot.md](packages/snapshot.md)               |
-| Tool Search     | Dynamic tool discovery, search across all tools          | [packages/tool-search.md](packages/tool-search.md)         |
-| Reference Data  | Static lookup tables: account types, enums, limits       | [packages/reference-data.md](packages/reference-data.md)   |
-| System          | Server ping, readiness check, auth verification          | [packages/system.md](packages/system.md)                   |
+| Category        | What it does                                            | Reference                                                  |
+| --------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| Projections     | Monte Carlo, closed-form, return-assumption comparison  | [packages/projection.md](packages/projection.md)           |
+| Scenarios       | Plan "what if" deltas: create, apply, compare scenarios | [packages/scenarios.md](packages/scenarios.md)             |
+| Tax             | Federal + 50-state/DC + local income tax, capital gains | [packages/tax.md](packages/tax.md)                         |
+| RMD             | Required Minimum Distributions, IRS tables, penalties   | [packages/rmd.md](packages/rmd.md)                         |
+| Accounts        | Account types, allocations, ownership, creation         | [packages/accounts.md](packages/accounts.md)               |
+| Portfolio       | Return assumptions, glide paths, characteristics        | [packages/portfolio.md](packages/portfolio.md)             |
+| Goals           | Financial goals, contribution calc, progress tracking   | [packages/goals.md](packages/goals.md)                     |
+| Social Security | Benefits, claiming strategies, spousal/survivor, PIA    | [packages/social-security.md](packages/social-security.md) |
+| Mortgage        | Monthly payments, amortization, P&I splits              | [packages/mortgage.md](packages/mortgage.md)               |
+| Liabilities     | Debt paydown trajectory + payoff date (cards, loans)    | [packages/liability.md](packages/liability.md)             |
+| Employer Match  | 401(k) matching formulas, vesting, calculations         | [packages/employer-match.md](packages/employer-match.md)   |
+| Charts          | Chart.js fan charts, account breakdowns, comparisons    | [packages/charts.md](packages/charts.md)                   |
+| File Tools      | File-based responses, `generate_data` parameter         | [packages/file-tools.md](packages/file-tools.md)           |
+| Profile & State | Person profiles, user state persistence                 | [packages/state.md](packages/state.md)                     |
+| Snapshots       | Build point-in-time facts records, diff two snapshots   | [packages/snapshot.md](packages/snapshot.md)               |
+| Tool Search     | Dynamic tool discovery, search across all tools         | [packages/tool-search.md](packages/tool-search.md)         |
+| Reference Data  | Static lookup tables: account types, enums, limits      | [packages/reference-data.md](packages/reference-data.md)   |
+| System          | Server ping, readiness check, auth verification         | [packages/system.md](packages/system.md)                   |
 
 ## State Persistence Guidelines
 
