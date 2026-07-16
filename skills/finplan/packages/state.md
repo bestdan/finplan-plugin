@@ -61,6 +61,10 @@ Return the JSON Schema for a `finplan_state` document. Fetch it **once** to auth
 
 Takes no parameters. Returns `{kind, schema_fingerprint, json_schema}`. The result is static for a given server version and safe to cache; `schema_fingerprint` identifies the schema version a document must match.
 
+### get_sample_profile
+
+Load the Larsons — a fictional demo household — without the state document entering context. Takes no parameters. Returns a `FileResponse`: the full `finplan_state` JSON at `urls.data`, a schema + jq examples at `urls.schema`, and a compact `summary` (household label, marital status, account/goal/income/expense counts, goal names). `note` flags the data as fictional and suggests follow-up calls (e.g. a Monte Carlo retirement projection for Mark at 62, federal + NY tax filing jointly, Social Security claiming ages 62/67/70, both 529 goals). Never merge this document into a real user's state.
+
 ### migrate_state
 
 Upgrade a state document to the current schema **once** and hand it back as a download. An unstamped or stale document makes every `build_snapshot` re-migrate it; this runs the shared ingest path (validate → migrate → stamp `kind` + `schema_fingerprint`), writes the upgraded document to file storage, and returns a download URL plus a compact summary — never the full document inline. Persist the downloaded document (e.g. via `/finplan:save-state`); subsequent `build_snapshot` calls then see a conformant document and report `migrated: false`, ending the re-migration loop.
