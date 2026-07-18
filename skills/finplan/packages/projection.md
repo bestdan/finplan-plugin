@@ -39,6 +39,7 @@ Unified projection tool supporting both constant-return and time-varying (glide 
 | `inflation`                    | float      | Annual inflation rate (0.03 = 3%, default: 0). Constant-return mode only.                                                                                                                                                                                                       |
 | `percentiles`                  | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]). Constant-return mode only.                                                                                                                                                                                              |
 | `adjust_timefactor`            | bool       | For `method="closed_form"` only (ignored otherwise). If True (default), volatility compounds cumulatively over time (scales with sqrt(T)), widening percentile spreads as the horizon grows. If False, uses average per-period volatility (legacy behavior, ~constant spreads). |
+| `summary_only`                 | bool       | When True, skip the per-month time-series data file and return only the inline summary (final_balance_percentiles + scalar metadata). Use for headline-only reads like per-account breakdown tables to avoid a file artifact per call. Default False keeps the full timeline.   |
 
 Provide **either** constant-return params **or** `return_distribution_timeline`, not both.
 
