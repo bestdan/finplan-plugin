@@ -51,35 +51,38 @@ Returns: `cashflow_cents`, `total_contributions_cents`, `projected_balance_witho
 
 Calculate current progress: percentage, remaining amount, completion status.
 
-| Parameter   | Type | Description             |
-| ----------- | ---- | ----------------------- |
-| `goal_json` | dict | Goal as JSON dictionary |
+| Parameter    | Type | Description                                                                                           |
+| ------------ | ---- | ----------------------------------------------------------------------------------------------------- |
+| `goal_json`  | dict | Goal as JSON dictionary                                                                               |
+| `state_json` | dict | Optional user state; derives the funded balance from accounts linked to the goal's id (default: none) |
 
-Returns: `progress_percentage`, `remaining_amount_cents`, `is_complete`.
+Returns: `progress_percentage`, `remaining_amount_cents`, `is_completed`.
 
 ### project_goal_progress
 
 Project goal progress forward with compound growth, including the goal's ongoing contributions and any scheduled payouts.
 
-| Parameter              | Type  | Description                                                                                |
-| ---------------------- | ----- | ------------------------------------------------------------------------------------------ |
-| `goal_json`            | dict  | Goal as JSON dictionary                                                                    |
-| `annual_return_rate`   | float | Expected annual return (default: 0.07)                                                     |
-| `annual_volatility`    | float | Return volatility; when > 0, output spreads into a p10/p25/p50/p75/p90 band (default: 0.0) |
-| `months_ahead`         | int   | Months to project forward; omit to project to the goal's own target_date (default: none)   |
-| `monthly_income_cents` | int   | Monthly income in cents; only used for percentage-income goals (default: 0)                |
-| `inflation`            | float | Annual inflation rate; inflates a real-terms target (default: 0.0)                         |
+| Parameter              | Type  | Description                                                                                   |
+| ---------------------- | ----- | --------------------------------------------------------------------------------------------- |
+| `goal_json`            | dict  | Goal as JSON dictionary                                                                       |
+| `state_json`           | dict  | Optional user state; derives the funded starting balance from linked accounts (default: none) |
+| `annual_return_rate`   | float | Expected annual return (default: 0.07)                                                        |
+| `annual_volatility`    | float | Return volatility; when > 0, output spreads into a p10/p25/p50/p75/p90 band (default: 0.0)    |
+| `months_ahead`         | int   | Months to project forward; omit to project to the goal's own target_date (default: none)      |
+| `monthly_income_cents` | int   | Monthly income in cents; only used for percentage-income goals (default: 0)                   |
+| `inflation`            | float | Annual inflation rate; inflates a real-terms target (default: 0.0)                            |
 
 ### project_goal_series
 
 Project a goal's balance and progress as a year-by-year (or N-month) series in one call — same projection as `project_goal_progress`, sampled from today through the horizon. Ideal for glide paths / drawdowns (e.g. a 529 across its tuition years) without one call per horizon.
 
-| Parameter              | Type  | Description                                                                                    |
-| ---------------------- | ----- | ---------------------------------------------------------------------------------------------- |
-| `goal_json`            | dict  | Goal as JSON dictionary; current_balance_cents must be the funded (linked-account) balance     |
-| `annual_return_rate`   | float | Expected annual return (default: 0.07)                                                         |
-| `annual_volatility`    | float | Return volatility; when > 0, each point spreads into a p10/p25/p50/p75/p90 band (default: 0.0) |
-| `months_ahead`         | int   | Horizon to project through; omit to run to the goal's own target_date (default: none)          |
-| `step_months`          | int   | Sampling cadence in months; 12 = annual, 1 = monthly (default: 12)                             |
-| `monthly_income_cents` | int   | Monthly income in cents; only used for percentage-income goals (default: 0)                    |
-| `inflation`            | float | Annual inflation rate; inflates a real-terms target (default: 0.0)                             |
+| Parameter              | Type  | Description                                                                                                                                     |
+| ---------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `goal_json`            | dict  | Goal as JSON dictionary; set current_balance_cents to the funded (linked-account) balance, or pass state_json to derive it from linked accounts |
+| `state_json`           | dict  | Optional user state; derives the funded starting balance from linked accounts (default: none)                                                   |
+| `annual_return_rate`   | float | Expected annual return (default: 0.07)                                                                                                          |
+| `annual_volatility`    | float | Return volatility; when > 0, each point spreads into a p10/p25/p50/p75/p90 band (default: 0.0)                                                  |
+| `months_ahead`         | int   | Horizon to project through; omit to run to the goal's own target_date (default: none)                                                           |
+| `step_months`          | int   | Sampling cadence in months; 12 = annual, 1 = monthly (default: 12)                                                                              |
+| `monthly_income_cents` | int   | Monthly income in cents; only used for percentage-income goals (default: 0)                                                                     |
+| `inflation`            | float | Annual inflation rate; inflates a real-terms target (default: 0.0)                                                                              |
