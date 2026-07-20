@@ -6,7 +6,7 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 
 - **Scenario**: a named, ordered list of typed overrides (a delta) applied against a base `UserState`. It stores only inputs; outcomes are always re-derived.
 - **Override**: one typed change, tagged by `kind`: `retirement_age`, `return_assumption`, `inflation`, `tax_rate` (at least one of `marginal_ordinary_rate` / `ltcg_rate`), `monthly_contribution`, `account_balance`, `income_change`, `expense_change`, `goal_target`. Amounts are in cents. E.g. `{"kind": "retirement_age", "age": 60}`.
-- **BaseRef**: identifies the base plan: `{"state_hash": "sha256:…"}` plus an optional `"state_ref": "st_…"` in-session accelerator. The canonical `state_hash` is derived server-side from the state you pass inline as `state_json` (echoed back as `base_state_hash`) — there is no separate "save" step. Supplying `state_json` inline always works and takes precedence; if you don't yet know the hash, pass `{"state_hash": "sha256:pending"}` and let the server resolve it from `state_json`.
+- **BaseRef**: identifies the base plan: `{"state_hash": "sha256:…"}` plus an optional `"state_ref": "st_…"` in-session accelerator. The canonical `state_hash` is derived server-side from the state you pass inline as `state_json` (echoed back as `base_state_hash`) — there is no separate "save" step. `create_scenario` returns `base_state_ref`; `compare_scenarios` returns it under `summary.inputs.base_state_ref`. Reuse that handle as `base.state_ref` instead of inlining state. Refs have an approximately 60-minute sliding TTL that refreshes on each use; on `state_ref_expired`, re-send the full `state_json` in that same call. Supplying `state_json` inline always works and takes precedence; if you don't yet know the hash, pass `{"state_hash": "sha256:pending"}` and let the server resolve it from `state_json`.
 - **Authority boundaries**: the `UserState` owns current facts (mutated only via `manage_state`); a Snapshot is an immutable point-in-time record; a Scenario owns hypothetical intent only. Computed outcomes live in none of them — always re-derived.
 - Distinct from `compare_return_assumptions`, which varies return assumptions on a single balance — these tools compare whole _plans_.
 
@@ -14,7 +14,7 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 
 ### create_scenario
 
-Create a plan scenario: a named, validated delta of typed overrides against a base plan. The response nests the scenario document under its `scenario` key — small, portable JSON the client owns. Store that document (not the whole response) and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
+Create a plan scenario: a named, validated delta of typed overrides against a base plan. The response nests the scenario document under its `scenario` key — small, portable JSON the client owns — and returns `base_state_ref` for reuse as `base.state_ref` while live. Store the scenario document (not the whole response) and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
 
 | Parameter     | Type       | Description                                                                                                    |
 | ------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
@@ -28,12 +28,12 @@ Create a plan scenario: a named, validated delta of typed overrides against a ba
 
 Resolve a scenario's state-shaped overrides against the base and return a `state_ref` to the resolved (hypothetical) UserState — plus the resolved `state_json` inline when `return_state_json=True` — for inspection or handing to other tools. The resolved state is ephemeral compute scratch (60-minute TTL) — it never becomes the base UserState. Projection-time overrides (`return_assumption`, `inflation`, account-scoped `monthly_contribution`) have no state slot and only take effect when the scenario is projected via `compare_scenarios`.
 
-| Parameter           | Type   | Description                                                                                                                                                                                                                      |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `base`              | object | BaseRef: `{"state_hash": …, "state_ref"?: …}`.                                                                                                                                                                                   |
-| `scenario`          | object | The scenario to apply: a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.                                                                                                                        |
-| `state_json`        | object | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given.                                                                                                                   |
-| `return_state_json` | bool   | When True, also return the resolved hypothetical UserState inline as `state_json`. Pass it to `project_plan` / `run_projection` (which take `state_json`, not `state_ref`) to drive the state-level drill-down off the scenario. |
+| Parameter           | Type   | Description                                                                                                                                                                           |
+| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`              | object | BaseRef: `{"state_hash": …, "state_ref"?: …}`.                                                                                                                                        |
+| `scenario`          | object | The scenario to apply: a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.                                                                             |
+| `state_json`        | object | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given.                                                                        |
+| `return_state_json` | bool   | When True, also return the resolved hypothetical UserState inline as `state_json`. Pass it to `project_plan` / `run_projection` to drive the state-level drill-down off the scenario. |
 
 ### compare_scenarios
 
@@ -57,16 +57,16 @@ Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 | `iterations`             | int        | Monte Carlo iterations (default: 1000, only used for `method="monte_carlo"`).                                                    |
 | `seed`                   | int        | Random seed (only used for `method="monte_carlo"`).                                                                              |
 
-**Response**: file URLs + compact inline summary (per-scenario input diff, final-balance percentiles and deltas vs base, warnings). The per-month timelines live in the data file only.
+**Response**: file URLs + compact inline summary (per-scenario input diff, final-balance percentiles and deltas vs base, warnings), including `summary.inputs.base_state_ref` for reuse as `base.state_ref` while live. The per-month timelines live in the data file only.
 
 **Warnings**: base drift (scenario authored against a different `state_hash`), dangling override targets (skipped for this run), and no-ops all surface as warnings — a scenario is never silently uncomparable. Global warnings are top-level; per-scenario warnings sit on each entry under `outputs.scenarios[].warnings`.
 
 ## Typical workflow
 
-1. Pass the full state inline as `state_json`; the server canonicalizes it and echoes back the resolved `base_state_hash`. Pin `base` to that hash (or pass `{"state_hash": "sha256:pending"}` and let the server resolve from `state_json`) — there is no separate "save" step.
+1. Pass the full state inline as `state_json`; the server canonicalizes it and returns the resolved `base_state_hash` plus reusable `base_state_ref`. Pin `base` to that hash (or pass `{"state_hash": "sha256:pending"}` and let the server resolve from `state_json`) — there is no separate "save" step.
 2. `create_scenario` with the BaseRef and overrides → store the scenario document from the response's `scenario` key client-side.
 3. `compare_scenarios` with the same BaseRef and the scenario document(s) → present the inline summary; pull timelines from the data file for charts.
-4. Optionally `apply_scenario` to get a `state_ref` for the hypothetical state, usable with other state-driven tools.
+4. Optionally `apply_scenario` to get a `state_ref` for the hypothetical state, usable with other state-driven tools including `project_plan`.
 
 ## Scenario view hierarchy (HTML pages)
 

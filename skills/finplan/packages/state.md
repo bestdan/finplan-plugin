@@ -6,6 +6,12 @@ Persistence (save/load) is handled client-side via slash commands (`/finplan:rea
 
 **Reading efficiently:** `/finplan:read-state` reads via targeted `jq` so the full document never enters context. Beyond single sections it supports **multi-section fetch** (`sections accounts,goals` → one object) and **derived rollups** — `balances-by-type`, `goals-by-status`, and `net-worth` (financial-assets / real-estate / liabilities). Prefer these over pulling whole `accounts`/`goals` arrays to compute a total by hand.
 
+**State-ref reuse:** A tool response may include a `state_ref` (`st_…`) for its canonical
+state document. Pass it back as `state_ref`, or as `base.state_ref` for scenario tools,
+instead of inlining the full state again. Refs have an approximately 60-minute sliding TTL
+that refreshes on each successful use. If a call returns `state_ref_expired`, re-send the
+full `state_json` in that same call.
+
 ## Tools
 
 ### manage_state
