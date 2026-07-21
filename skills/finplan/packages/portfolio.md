@@ -46,21 +46,27 @@ Batch/vectorized `calculate_portfolio_characteristics`: evaluate many allocation
 
 Transition between two allocations over time. Supports both linear and age-based modes.
 
-| Parameter               | Type | Description                                                                  |
-| ----------------------- | ---- | ---------------------------------------------------------------------------- |
-| `start_stocks_pct`      | int  | Starting stock allocation 0-100 (young allocation when age_based=True)       |
-| `start_bonds_pct`       | int  | Starting bond allocation 0-100 (young allocation when age_based=True)        |
-| `start_cash_pct`        | int  | Starting cash allocation 0-100 (young allocation when age_based=True)        |
-| `end_stocks_pct`        | int  | Ending stock allocation 0-100 (retirement allocation when age_based=True)    |
-| `end_bonds_pct`         | int  | Ending bond allocation 0-100 (retirement allocation when age_based=True)     |
-| `end_cash_pct`          | int  | Ending cash allocation 0-100 (retirement allocation when age_based=True)     |
-| `num_years`             | int  | Years for the glide path (default: 30, ignored when age_based=True)          |
-| `sample_interval_years` | int  | Show allocation every N years (default: 5)                                   |
-| `age_based`             | bool | If True, use age-based 3-phase glide path instead of linear (default: false) |
-| `current_age`           | int  | Person's current age (required if age_based=True)                            |
-| `death_age`             | int  | Assumed age at death (default: 95, used if age_based=True)                   |
-| `retirement_age`        | int  | Retirement age (default: 67, used if age_based=True)                         |
-| `glide_start_age`       | int  | Age when allocation starts shifting (default: 47, used if age_based=True)    |
+| Parameter               | Type | Description                                                                                |
+| ----------------------- | ---- | ------------------------------------------------------------------------------------------ |
+| `start_stocks_pct`      | int  | Starting stock allocation 0-100 (young allocation when age_based=True)                     |
+| `start_bonds_pct`       | int  | Starting bond allocation 0-100 (young allocation when age_based=True)                      |
+| `start_cash_pct`        | int  | Starting cash allocation 0-100 (young allocation when age_based=True)                      |
+| `end_stocks_pct`        | int  | Ending stock allocation 0-100 (retirement allocation when age_based=True)                  |
+| `end_bonds_pct`         | int  | Ending bond allocation 0-100 (retirement allocation when age_based=True)                   |
+| `end_cash_pct`          | int  | Ending cash allocation 0-100 (retirement allocation when age_based=True)                   |
+| `start_crypto_pct`      | int  | Starting crypto allocation 0-100, default 0 (young allocation when age_based=True)         |
+| `start_real_estate_pct` | int  | Starting real estate allocation 0-100, default 0 (young allocation when age_based=True)    |
+| `start_other_pct`       | int  | Starting other-asset allocation 0-100, default 0 (young allocation when age_based=True)    |
+| `end_crypto_pct`        | int  | Ending crypto allocation 0-100, default 0 (retirement allocation when age_based=True)      |
+| `end_real_estate_pct`   | int  | Ending real estate allocation 0-100, default 0 (retirement allocation when age_based=True) |
+| `end_other_pct`         | int  | Ending other-asset allocation 0-100, default 0 (retirement allocation when age_based=True) |
+| `num_years`             | int  | Years for the glide path (default: 30, ignored when age_based=True)                        |
+| `sample_interval_years` | int  | Show allocation every N years (default: 5)                                                 |
+| `age_based`             | bool | If True, use age-based 3-phase glide path instead of linear (default: false)               |
+| `current_age`           | int  | Person's current age (required if age_based=True)                                          |
+| `death_age`             | int  | Assumed age at death (default: 95, used if age_based=True)                                 |
+| `retirement_age`        | int  | Retirement age (default: 67, used if age_based=True)                                       |
+| `glide_start_age`       | int  | Age when allocation starts shifting (default: 47, used if age_based=True)                  |
 
 Start and end allocations must each sum to 100.
 
