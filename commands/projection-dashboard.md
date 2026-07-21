@@ -122,7 +122,7 @@ For each goal, generate the appropriate chart type:
 - Milestone markers for retirement age and SS start age
 - Use chained projections: accumulation phase (positive contributions) then retirement phase (negative contributions = withdrawals minus SS income)
 
-**Target-amount goals** (goal_type = "education", "emergency_fund", "home_purchase", "major_purchase"):
+**Target-amount goals** (goal_type = "education", "emergency_fund", "home_downpayment", "major_purchase"):
 
 - Fan chart of the linked account(s) balance over time
 - Horizontal dashed target line at the target_amount
