@@ -43,7 +43,9 @@ Estimate PIA in today's dollars from a year-by-year SSA earnings record. This to
 | `stop_work_year`               | int            | Last year worked, inclusive, at the full `future_annual_earnings_cents`. A partial final year goes in the record. |
 | `future_annual_earnings_cents` | int            | Earnings for each year after the last recorded one through `stop_work_year`, in today's dollars.                  |
 
-Returns: `pia_cents_today_dollars`, `if_worked_to_fra` (the work-to-FRA comparison, inline — no second call needed), `credits_earned`, `is_retirement_insured`, `top_35_years`, `eligibility_year`. Persists nothing.
+Returns: `pia_cents_today_dollars`, `if_worked_to_fra` (the work-to-FRA comparison, inline — no second call needed), `credits_earned`, `is_retirement_insured`, `top_35_years`, `eligibility_year`, `years_from_62`, `todays_dollars_note`. Persists nothing.
+
+**Accuracy far from 62 — surface `todays_dollars_note` to the user.** The PIA is in today's dollars, SSA's own statement basis: current earnings continue, no economy-wide wage growth. That basis is near-exact in the units the benefit formula is written in (wages) and drifts in the units a person spends (prices), and the drift grows with distance from age 62. Measured against historical cohorts, the figure typically lands about 7.5% below the true benefit in CPI-real purchasing-power terms at 10 years from 62, and about 16.8% below at 20 years — typically, though not in every historical window. The tool emits the quantified caveat itself once the caller is 10 or more years from 62, so pass `todays_dollars_note` through rather than paraphrasing it. **Do not compare `pia_cents_today_dollars` against a nominal, inflated projection elsewhere in a plan without accounting for this.** Derivation: `dev_docs/design/todays_dollars_backtest_results.md` in the FinPlan repository.
 
 ### estimate_social_security_pia_from_salary
 
