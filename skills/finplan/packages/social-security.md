@@ -21,6 +21,17 @@ Composite claiming-age analysis in a single call: per-age monthly and lifetime b
 
 Returns: `assumptions` (echoes every default applied — re-call with one changed parameter for follow-ups), `by_claiming_age`, `breakevens`, `life_expectancy_sensitivity`, `best_claiming_age_at_assumed_life_expectancy`.
 
+### calculate_social_security_pia_from_aime
+
+Apply the SSA bend-point formula to an AIME you already have — from an SSA statement, from another tool, or computed by hand.
+
+| Parameter    | Type | Description                                                                                          |
+| ------------ | ---- | ---------------------------------------------------------------------------------------------------- |
+| `aime_cents` | int  | Average Indexed Monthly Earnings in cents. An AIME, not an annual salary.                            |
+| `year`       | int  | Calendar year whose bend points apply. Required — there is no default, so it is never silently 2026. |
+
+Returns: `pia_cents`, `bend_points` (both bend points, so the three segments can be audited), `year`.
+
 ### estimate_social_security_pia_from_earnings_record
 
 Estimate PIA in today's dollars from a year-by-year SSA earnings record. This tool takes a stop-work year but no claiming age — claiming age is applied downstream when converting the PIA to a benefit — so the pipeline can answer "I stop working at 63 but claim at 67", which `estimate_social_security_pia_from_salary` cannot express.
