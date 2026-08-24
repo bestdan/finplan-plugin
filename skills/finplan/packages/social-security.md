@@ -21,6 +21,19 @@ Composite claiming-age analysis in a single call: per-age monthly and lifetime b
 
 Returns: `assumptions` (echoes every default applied — re-call with one changed parameter for follow-ups), `by_claiming_age`, `breakevens`, `life_expectancy_sensitivity`, `best_claiming_age_at_assumed_life_expectancy`.
 
+### estimate_social_security_pia_from_earnings_record
+
+Estimate PIA in today's dollars from a year-by-year SSA earnings record. This tool takes a stop-work year but no claiming age — claiming age is applied downstream when converting the PIA to a benefit — so the pipeline can answer "I stop working at 63 but claim at 67", which `estimate_social_security_pia_from_salary` cannot express.
+
+| Parameter                      | Type           | Description                                                                                                       |
+| ------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `earnings_by_year`             | dict[int, int] | Social Security taxable earnings by calendar year, in cents. Not the uncapped Medicare wages column.              |
+| `date_of_birth`                | str            | ISO date (YYYY-MM-DD). SSA deems attainment the day before the birthday, so a birth year cannot express it.       |
+| `stop_work_year`               | int            | Last year worked, inclusive, at the full `future_annual_earnings_cents`. A partial final year goes in the record. |
+| `future_annual_earnings_cents` | int            | Earnings for each year after the last recorded one through `stop_work_year`, in today's dollars.                  |
+
+Returns: `pia_cents_today_dollars`, `if_worked_to_fra` (the work-to-FRA comparison, inline — no second call needed), `credits_earned`, `is_retirement_insured`, `top_35_years`, `eligibility_year`. Persists nothing.
+
 ### estimate_social_security_pia_from_salary
 
 Estimate Primary Insurance Amount from salary history.
