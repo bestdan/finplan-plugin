@@ -193,6 +193,6 @@ state = apply_delta(state, delta)
 
 **Social Security analysis**:
 
-1. `estimate_social_security_pia_from_salary` to estimate PIA
+1. `estimate_social_security_pia_from_earnings_record` to get a PIA from an SSA earnings record — the only tool that can express a stop-work year. `calculate_social_security_pia_from_aime` if the caller already has an AIME; `estimate_social_security_pia_from_salary` only as a flat-career fallback when no earnings record is available.
 2. `compare_social_security_claiming_ages` for full claiming-age analysis (benefits, breakevens, life-expectancy sensitivity, household figures) in one call
 3. Single-purpose tools (`estimate_social_security_benefits_all_ages`, `estimate_social_security_breakeven_age`, `calculate_social_security_lifetime_benefits`) for month-precision ages or auditing individual figures

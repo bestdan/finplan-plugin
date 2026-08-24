@@ -47,7 +47,7 @@ Returns: `pia_cents_today_dollars`, `if_worked_to_fra` (the work-to-FRA comparis
 
 ### estimate_social_security_pia_from_salary
 
-Estimate Primary Insurance Amount from salary history.
+Estimate PIA from one flat career salary. **Fallback for when no earnings record is available.** It assumes the same salary every year and **cannot express a stop-work year** — use `estimate_social_security_pia_from_earnings_record` if the caller has a real earnings record.
 
 | Parameter             | Type | Description                                                                                            |
 | --------------------- | ---- | ------------------------------------------------------------------------------------------------------ |
@@ -147,6 +147,13 @@ Survivor benefit (up to 100% of worker's benefit at FRA, claimable from age 60).
 
 ## Typical workflow
 
-1. `estimate_social_security_pia_from_salary` to get PIA from salary
-2. `compare_social_security_claiming_ages` for full claiming-age analysis (benefits, breakevens, sensitivity, household figures) in one call
-3. Single-purpose tools (`estimate_social_security_benefits_all_ages`, `estimate_social_security_breakeven_age`, `calculate_social_security_lifetime_benefits`, `estimate_social_security_spousal_benefit`) for month-precision claiming ages or to audit individual figures
+**Step 1 — get a PIA.** Three entry points, in order of how much the caller has:
+
+1. `estimate_social_security_pia_from_earnings_record` — the default. Takes a year-by-year SSA earnings record and returns a PIA in today's dollars, plus the work-to-FRA comparison inline. This is the only tool that can express a stop-work year.
+2. `calculate_social_security_pia_from_aime` — when the caller already has an AIME (an SSA statement reports one) and needs only the bend-point formula applied.
+3. `estimate_social_security_pia_from_salary` — **fallback for when no earnings record is available.** It approximates a flat career at one salary and **cannot express a stop-work year**, so it cannot answer "what does stopping work at 63 cost me?". Prefer either tool above it whenever the caller has the inputs.
+
+**Step 2 — turn the PIA into a claiming decision.**
+
+4. `compare_social_security_claiming_ages` for full claiming-age analysis (benefits, breakevens, sensitivity, household figures) in one call
+5. Single-purpose tools (`estimate_social_security_benefits_all_ages`, `estimate_social_security_breakeven_age`, `calculate_social_security_lifetime_benefits`, `estimate_social_security_spousal_benefit`) for month-precision claiming ages or to audit individual figures

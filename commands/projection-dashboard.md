@@ -269,5 +269,5 @@ After writing the HTML file, open it in the user's browser with `open <filename>
 - All monetary values from the state file and MCP tools are in **cents** — divide by 100 for dollar values in charts
 - All projection math is handled by MCP tools; the HTML only renders pre-computed data
 - If no account carries a `goal_id` for a given goal (nothing earmarked to it), check if accounts can be inferred from goal_type (e.g., retirement goals link to 401k/IRA accounts, education goals link to 529s)
-- Retirement spending and Social Security amounts should be pulled from goal notes if available, or use reasonable defaults ($150k/yr spending, estimated SS from `estimate_social_security_pia_from_salary`)
+- Retirement spending and Social Security amounts should be pulled from goal notes if available, or use reasonable defaults ($150k/yr spending, estimated SS from `estimate_social_security_pia_from_earnings_record`, or `estimate_social_security_pia_from_salary` when no earnings record is on file)
 - The file must be completely self-contained — embed all fetched data inline as JS constants (no external data dependencies except Chart.js CDN)

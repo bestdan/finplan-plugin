@@ -53,7 +53,7 @@ If `$ARGUMENTS` is `add`, present the common goal types and walk the user throug
 2. **Retirement** (`retirement`) — Long-term retirement savings
    - Ask: target retirement age, desired annual spending in retirement
    - Suggest linking to: `traditional_401k`, `roth_401k`, `traditional_ira`, `roth_ira`
-   - Note: mention Social Security estimation is available via `estimate_social_security_pia_from_salary`
+   - Note: mention Social Security estimation is available via `estimate_social_security_pia_from_earnings_record` (or `estimate_social_security_pia_from_salary` when there is no earnings record)
 
 3. **Home Down Payment** (`home_downpayment`) — Save for a house purchase
    - Ask: target home price, down payment percentage (default: 20%), target purchase date
