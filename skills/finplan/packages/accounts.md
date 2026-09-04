@@ -40,7 +40,7 @@ No parameters.
 
 ### get_allowed_asset_classes_for_account
 
-Returns which asset classes (stocks/bonds/cash) an account type can hold.
+Returns which asset classes (stocks, bonds, cash, crypto, real estate, other) an account type can hold.
 
 | Parameter      | Type   | Description  |
 | -------------- | ------ | ------------ |

@@ -74,7 +74,7 @@ If `$ARGUMENTS` starts with `update`, extract the account ID and load that speci
 Display the current account details and ask what the user wants to update:
 
 - **Balance** — New current balance
-- **Allocation** — New stocks/bonds/cash split
+- **Allocation** — New asset-class split (stocks, bonds, cash, crypto, real estate, other)
 - **Name** — Rename the account
 - **Institution** — Update institution
 
