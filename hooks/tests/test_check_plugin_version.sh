@@ -30,6 +30,8 @@ case "$url" in
     ;;
   *raw.githubusercontent.com*)
     [ -n "${FAKE_REPO_FAIL:-}" ] && exit 1
+    # Record the requested URL so a test can assert the fetch is channel-scoped.
+    [ -n "${FAKE_URL_LOG:-}" ] && printf '%s\n' "$url" >> "$FAKE_URL_LOG"
     if [ -n "${FAKE_LATEST:-}" ]; then
       printf '{"version":"%s"}' "$FAKE_LATEST"
     else
@@ -43,11 +45,16 @@ chmod +x "$TMP/bin/curl"
 PASS=0
 FAIL=0
 
-# run_hook <installed_version> -> stdout of the hook (FAKE_* taken from env).
+# run_hook <installed_version> [installed_channel] -> stdout of the hook (FAKE_*
+# taken from env). An omitted channel writes no `channel` field, which is what a
+# source checkout or a --plugin-dir install looks like; the hook reads that as
+# "main".
 # TMPDIR points the hook's once-per-session marker into our scratch dir, so we
 # clean only our own markers (never the global /tmp ones of a live session).
 run_hook() {
-  printf '{"name":"finplan","version":"%s"}' "$1" > "$TMP/root/.claude-plugin/plugin.json"
+  local channel_field=""
+  [ -n "${2:-}" ] && channel_field=$(printf ',"channel":"%s"' "$2")
+  printf '{"name":"finplan","version":"%s"%s}' "$1" "$channel_field" > "$TMP/root/.claude-plugin/plugin.json"
   rm -f "$TMP"/.finplan-version-check-* 2>/dev/null
   CLAUDE_PLUGIN_ROOT="$TMP/root" TMPDIR="$TMP" PATH="$TMP/bin:$PATH" bash "$HOOK"
 }
@@ -88,6 +95,53 @@ ctx = json.load(sys.stdin)['hookSpecificOutput']['additionalContext']
 print('ok' if ('\n' in ctx and '\\\\n' not in ctx) else 'bad')
 " 2>/dev/null || echo "bad")
 [ "$nl_check" = "ok" ] && ok "message has real newlines, not literal \\n" || no "message newline escaping (got: $out)"
+
+# --- dev-channel cases -------------------------------------------------------
+# A dev sync stamps `channel` and embeds the source sha in the version string.
+# Semver can't order two -dev.<sha> builds, so on a dev channel the hook compares
+# the exact version string against the *same branch's* published plugin.json.
+
+# 7. dev channel, published dev version differs -> nudge naming the channel and
+#    both versions.
+out=$(FAKE_LATEST=1.5.0-dev.bbbbbbb run_hook 1.5.0-dev.aaaaaaa dev)
+if [[ "$out" == *"UPDATE AVAILABLE"* && "$out" == *"dev channel"* \
+  && "$out" == *"1.5.0-dev.aaaaaaa"* && "$out" == *"1.5.0-dev.bbbbbbb"* ]]; then
+  ok "dev channel, newer build published -> nudge naming channel and versions"
+else
+  no "dev channel, newer build published -> nudge (got: $out)"
+fi
+
+# 8. dev channel, same version string -> silent
+out=$(FAKE_LATEST=1.5.0-dev.aaaaaaa run_hook 1.5.0-dev.aaaaaaa dev)
+[ -z "$out" ] && ok "dev channel, up to date -> silent" || no "dev channel, up to date -> silent (got: $out)"
+
+# 9. dev version string but NO channel (a source checkout / --plugin-dir install)
+#    -> semver-only, and a -dev build is not < the stable base, so silent. This
+#    is the regression guard: comparing a dev build against stable main is what
+#    would nudge a developer who is *ahead* of main to "update" to an older
+#    build.
+out=$(FAKE_LATEST=1.5.0 run_hook 1.5.0-dev.aaaaaaa)
+[ -z "$out" ] && ok "dev version, no channel -> silent (never nudged toward stable)" || no "dev version, no channel -> silent (got: $out)"
+
+# 10. dev channel whose branch is gone -> the fetch 404s / returns no version ->
+#     silent, like any other fetch failure.
+out=$(FAKE_REPO_FAIL=1 run_hook 1.5.0-dev.aaaaaaa dev)
+[ -z "$out" ] && ok "dev channel, branch gone -> silent" || no "dev channel, branch gone -> silent (got: $out)"
+
+# 11. dev channel but below the server's hard floor -> UPDATE REQUIRED still wins.
+out=$(FAKE_MIN=2.0.0 FAKE_LATEST=1.5.0-dev.bbbbbbb run_hook 1.5.0-dev.aaaaaaa dev)
+case "$out" in *"UPDATE REQUIRED"*) ok "dev channel below min -> required wins" ;; *) no "dev channel below min -> required wins (got: $out)" ;; esac
+
+# 12. the published plugin.json is fetched from the install's own channel, not
+#     from main. Without this the whole dev comparison is against the wrong file.
+url_log="$TMP/urls.txt"
+: > "$url_log"
+FAKE_URL_LOG="$url_log" FAKE_LATEST=1.5.0-dev.bbbbbbb run_hook 1.5.0-dev.aaaaaaa my-feature > /dev/null
+if grep -q '/finplan-plugin/my-feature/.claude-plugin/plugin.json' "$url_log"; then
+  ok "published plugin.json is fetched from the install's channel"
+else
+  no "channel-scoped fetch URL (got: $(cat "$url_log"))"
+fi
 
 echo "---"
 echo "$PASS passed, $FAIL failed"
