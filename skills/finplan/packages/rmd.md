@@ -8,13 +8,16 @@ Required Minimum Distribution (RMD) calculations for retirement planning under S
 
 Calculate the Required Minimum Distribution for a retirement account using IRS life expectancy tables.
 
-| Parameter                  | Type   | Description                                               |
-| -------------------------- | ------ | --------------------------------------------------------- |
-| `prior_year_balance_cents` | int    | Account balance as of December 31 of prior year, in cents |
-| `age`                      | int    | Account owner's age at end of current year                |
-| `table_type`               | string | `"uniform_lifetime"` (default) or `"single_life"`         |
+| Parameter                  | Type   | Description                                                                                      |
+| -------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| `prior_year_balance_cents` | int    | Account balance as of December 31 of prior year, in cents                                        |
+| `age`                      | int    | Account owner's age at end of current year                                                       |
+| `table_type`               | string | `"uniform_lifetime"` (default), `"joint_life"`, or `"single_life"`                               |
+| `beneficiary_age`          | int    | Spouse beneficiary's age at end of current year. Required for `"joint_life"`, rejected otherwise |
 
-Returns: `rmd_amount_cents`, `rmd_amount_dollars`, `distribution_period`, `explanation`.
+Returns: `rmd_amount_cents`, `rmd_amount_dollars`, `distribution_period`, `beneficiary_age`, `explanation`.
+
+**Pick `"joint_life"` when the owner's sole beneficiary is a spouse more than 10 years younger.** The IRS Joint and Last Survivor Table then gives a longer distribution period — a smaller RMD — than the Uniform Lifetime Table. Owner 75 with a 60-year-old spouse divides by 28.3 instead of 24.6. A gap of 10 years or less is a validation error: the Uniform Lifetime Table already assumes a spouse exactly 10 years younger, so it is the right table there.
 
 ### check_rmd_required
 
@@ -69,7 +72,7 @@ Note: IRA RMDs can be aggregated; 401(k) RMDs cannot.
 ## Usage notes
 
 - All balances in **cents**. 50000000 = $500,000.
-- Uses IRS Uniform Lifetime Table for account owners, Single Life Table for beneficiaries.
+- Uses IRS Uniform Lifetime Table for account owners, the Joint and Last Survivor Table for an owner whose sole beneficiary is a spouse more than 10 years younger, and the Single Life Table for beneficiaries.
 - SECURE 2.0 penalty rate: 25% of shortfall (reduced to 10% if corrected within 2 years).
 - Roth 401(k) no longer requires RMDs as of 2024.
 - IRAs can be aggregated (take total RMD from any combination); 401(k)s cannot.
