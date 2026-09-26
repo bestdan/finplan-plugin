@@ -101,16 +101,16 @@ Returns: `agi_cents`/`_dollars`, `magi_niit_cents`/`_dollars`, `deduction_taken_
 
 Calculate the Alternative Minimum Tax (Form 6251): AMTI, the phased-out exemption, the 26%/28% tentative minimum tax, AMT owed, and the Form 8801 minimum-tax-credit carryforward. Preference items split into deferral items (e.g. the ISO exercise-and-hold spread), which generate a recoverable credit, and exclusion items (e.g. the SALT add-back), which do not.
 
-| Parameter                           | Type   | Description                                                                                         |
-| ----------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
-| `regular_taxable_income_cents`      | int    | Regular taxable income in cents                                                                     |
-| `regular_tax_cents`                 | int    | Regular federal income tax (the AMT comparison baseline) in cents                                   |
-| `filing_status`                     | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"` |
-| `iso_exercise_spread_cents`         | int    | ISO exercise-and-hold spread in cents (deferral preference, default `0`)                            |
-| `other_deferral_preferences_cents`  | int    | Other deferral (timing) preference items in cents (default `0`)                                     |
-| `salt_addback_cents`                | int    | State and local tax add-back in cents (exclusion preference, default `0`)                           |
-| `other_exclusion_preferences_cents` | int    | Other exclusion (permanent) preference items in cents (default `0`)                                 |
-| `tax_year`                          | int    | Tax year (default: `2026`)                                                                          |
+| Parameter                           | Type   | Description                                                                                                                                                               |
+| ----------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `regular_taxable_income_cents`      | int    | Regular taxable income in cents                                                                                                                                           |
+| `regular_tax_cents`                 | int    | Regular federal income tax (the AMT comparison baseline) in cents                                                                                                         |
+| `filing_status`                     | string | `"single"`, `"married_joint"`, `"married_separate"`, `"head_of_household"`, or `"qualifying_widow"`                                                                       |
+| `iso_exercise_spread_cents`         | int    | ISO exercise-and-hold spread in cents (deferral preference, default `0`)                                                                                                  |
+| `other_deferral_preferences_cents`  | int    | Other deferral (timing) preference items in cents (default `0`)                                                                                                           |
+| `salt_addback_cents`                | int    | State and local tax add-back in cents when itemizing (Form 6251 line 2a; exclusion preference, default `0`)                                                               |
+| `other_exclusion_preferences_cents` | int    | Other exclusion (permanent) preference items in cents (default `0`). A standard-deduction filer passes the standard deduction here: line 2a adds it back in place of SALT |
+| `tax_year`                          | int    | Tax year (default: `2026`)                                                                                                                                                |
 
 Returns: `amti_cents`, `exemption_cents`, `amt_base_cents`, `tentative_minimum_tax_cents`, `regular_tax_cents`, `amt_owed_cents`, `minimum_tax_credit_carryforward_cents`, `explanation`.
 
