@@ -41,21 +41,21 @@ The headline tool: compare plan scenarios against a base plan in one server-side
 
 Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 
-| Parameter                | Type       | Description                                                                                                                      |
-| ------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `base`                   | object     | BaseRef shared by the scenarios. Required with `scenarios`; ignored in favor of the set-level base when `scenario_set` is given. |
-| `scenarios`              | list[dict] | Scenarios to compare against the base: `create_scenario` documents or minimal `{"name": …, "overrides": […]}` sketches.          |
-| `scenario_set`           | object     | A portable `finplan_scenario_set` document (`{"base": BaseRef, "scenarios": […]}`); its set-level base is authoritative.         |
-| `state_json`             | object     | The base UserState document inline. Optional when the base's `state_ref` is still live; takes precedence when given.             |
-| `time_horizon_months`    | int        | Months to project (default: 360 = 30 years). Shared by the base and every scenario so outcomes land on one comparable grid.      |
-| `assumptions_preset`     | string     | Capital-market assumptions the scenarios vary from: `"standard"` (default), `"conservative"`, or `"optimistic"`.                 |
-| `inflation`              | float      | Baseline annual inflation rate as a decimal (default: 0.0). An inflation override in a scenario replaces it for that scenario.   |
-| `percentiles`            | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]).                                                                          |
-| `marginal_ordinary_rate` | float      | Household marginal ordinary income tax rate for after-tax values (default: 0.22).                                                |
-| `ltcg_rate`              | float      | Household long-term capital gains tax rate for after-tax values (default: 0.15).                                                 |
-| `method`                 | string     | `"closed_form"` (default), `"deterministic"`, `"monte_carlo"`.                                                                   |
-| `iterations`             | int        | Monte Carlo iterations (default: 1000, only used for `method="monte_carlo"`).                                                    |
-| `seed`                   | int        | Random seed (only used for `method="monte_carlo"`).                                                                              |
+| Parameter                | Type       | Description                                                                                                                                               |
+| ------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `base`                   | object     | BaseRef shared by the scenarios. Required with `scenarios`; ignored in favor of the set-level base when `scenario_set` is given.                          |
+| `scenarios`              | list[dict] | Scenarios to compare against the base: `create_scenario` documents or minimal `{"name": …, "overrides": […]}` sketches.                                   |
+| `scenario_set`           | object     | A portable `finplan_scenario_set` document (`{"base": BaseRef, "scenarios": […]}`); its set-level base is authoritative.                                  |
+| `state_json`             | object     | The base UserState document inline. Optional when the base's `state_ref` is still live; takes precedence when given.                                      |
+| `time_horizon_months`    | int        | Months to project (default: 360 = 30 years). Shared by the base and every scenario so outcomes land on one comparable grid.                               |
+| `assumptions_preset`     | string     | Capital-market assumptions the scenarios vary from: `"standard"` (default), `"conservative"`, or `"optimistic"`.                                          |
+| `inflation`              | float      | Baseline annual inflation rate as a decimal (default: 0.025; 0 gives nominal dollars). An inflation override in a scenario replaces it for that scenario. |
+| `percentiles`            | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]).                                                                                                   |
+| `marginal_ordinary_rate` | float      | Household marginal ordinary income tax rate for after-tax values (default: 0.22).                                                                         |
+| `ltcg_rate`              | float      | Household long-term capital gains tax rate for after-tax values (default: 0.15).                                                                          |
+| `method`                 | string     | `"closed_form"` (default), `"deterministic"`, `"monte_carlo"`.                                                                                            |
+| `iterations`             | int        | Monte Carlo iterations (default: 1000, only used for `method="monte_carlo"`).                                                                             |
+| `seed`                   | int        | Random seed (only used for `method="monte_carlo"`).                                                                                                       |
 
 **Response**: file URLs + compact inline summary (per-scenario input diff, final-balance percentiles and deltas vs base, warnings), including `summary.inputs.base_state_ref` for reuse as `base.state_ref` while live. The per-month timelines live in the data file only.
 
