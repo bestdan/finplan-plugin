@@ -77,11 +77,14 @@ This installs:
 - MCP server connection (auto-configured via `.mcp.json`)
 - A hook that prompts you to allowlist curl for the FinPlan file server (one-time)
 
-**Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts when tools download result files:
+**Recommended**: let FinPlan's tools, and `curl` against its file server, run without an approval prompt each time. Append these two entries to the `permissions.allow` array in `~/.claude/settings.json` (create the array if it isn't there). Don't replace the array: keep the entries already in it.
 
-```bash
-claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'
+```json
+"mcp__plugin_finplan_finplan",
+"Bash(curl*mcp.finplan.tools*)"
 ```
+
+The first rule lets FinPlan's tools run without a prompt each time; the second allows `curl` only against the FinPlan file server.
 
 To update later (restart Claude Code afterward to apply):
 

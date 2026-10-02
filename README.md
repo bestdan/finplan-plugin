@@ -37,11 +37,14 @@ The FinPlan server requires authentication. The first time you invoke a FinPlan 
 
 Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. for Claude Agent SDK, scripts, Cowork, or a shared project where the token must be pinned into `.mcp.json`. If you go that route, add `.mcp.json` to `.gitignore` so the token isn't committed.
 
-**Recommended**: Allowlist curl for the FinPlan file server to avoid repeated approval prompts:
+**Recommended**: let FinPlan's tools, and `curl` against its file server, run without an approval prompt each time. Append these two entries to the `permissions.allow` array in `~/.claude/settings.json` (create the array if it isn't there). Don't replace the array: keep the entries already in it.
 
-```bash
-claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'
+```json
+"mcp__plugin_finplan_finplan",
+"Bash(curl*mcp.finplan.tools*)"
 ```
+
+The first rule lets FinPlan's tools run without a prompt each time; the second allows `curl` only against the FinPlan file server.
 
 ## What you get
 

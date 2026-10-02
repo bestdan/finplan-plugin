@@ -3,7 +3,7 @@
 # allowlisted curl for the FinPlan file server. If not, suggest the one-liner.
 
 SETTINGS="$HOME/.claude/settings.json"
-MARKER="$HOME/.claude/.finplan-curl-hint-shown-finplan-tools"
+MARKER="$HOME/.claude/.finplan-curl-hint-shown-finplan-tools-v2"
 PATTERN="mcp.finplan.tools"
 
 # Only show once per install (marker file tracks this)
@@ -22,7 +22,7 @@ cat <<'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, run:\n\n  claude settings add allowedTools 'Bash(curl*mcp.finplan.tools*)'\n\nThis allowlists curl only for the FinPlan file server."
+    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, add \"Bash(curl*mcp.finplan.tools*)\" to the permissions.allow array in ~/.claude/settings.json (keep existing entries). It allowlists curl only for the FinPlan file server. Adding \"mcp__plugin_finplan_finplan\" there too stops the per-call prompt for FinPlan tools. Offer to make the edit; do not make it without the user's consent."
   }
 }
 EOF
