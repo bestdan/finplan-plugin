@@ -2,7 +2,7 @@
 
 ## Overview
 
-FinPlan exposes 30+ MCP tools across many financial domains (tax, projection, mortgage, social security, etc.). Loading all tool schemas into an LLM agent's context window upfront consumes significant tokens and degrades tool selection accuracy.
+FinPlan exposes 75+ MCP tools across many financial domains (tax, projection, mortgage, social security, etc.). Loading all tool schemas into an LLM agent's context window upfront consumes significant tokens and degrades tool selection accuracy.
 
 The `search_finplan_tools` meta-tool solves this by letting agents discover tools on-demand. Instead of reading all tool definitions, agents search with a natural-language query and receive only the relevant tools at the requested detail level.
 
@@ -119,8 +119,8 @@ The catalog metadata (descriptions, keywords, parameter summaries) requires huma
 
 | Approach             | Approximate Token Cost        |
 | -------------------- | ----------------------------- |
-| All 30+ tool schemas | ~10,000-20,000 tokens upfront |
+| All 75+ tool schemas | ~45,000 tokens upfront        |
 | search_finplan_tools | ~500 tokens (tool definition) |
 | Typical search call  | ~200 tokens (result)          |
 
-This represents an 85-95% reduction in tool-related token consumption per session.
+The full-schema figure was measured against the 77-tool catalog. Searching instead cuts tool-related token consumption per session by roughly 98%.

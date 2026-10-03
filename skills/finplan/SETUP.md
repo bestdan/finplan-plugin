@@ -229,7 +229,7 @@ The skill uses **progressive disclosure** — Claude doesn't load everything at 
 2. **Loaded when triggered** (<5k tokens): The main SKILL.md body with tool categories, conventions, and workflows.
 3. **Loaded on demand**: Individual package reference files. If you ask about Social Security, Claude reads `packages/social-security.md`. If you ask about projections, it reads `packages/projection.md`. The rest stay unloaded.
 
-This keeps the context window lean while giving Claude access to 60+ specialized financial tools.
+This keeps the context window lean while giving Claude access to 75+ specialized financial tools.
 
 ## Example prompts
 
