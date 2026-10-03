@@ -50,7 +50,7 @@ The first rule lets FinPlan's tools run without a prompt each time; the second a
 
 ### Skill
 
-Claude automatically discovers and uses FinPlan tools when you ask about financial planning. 14 tool categories covering projections, tax, accounts, goals, Social Security, mortgage, employer match, charts, and more.
+Claude automatically discovers and uses FinPlan tools when you ask about financial planning. Tool categories cover projections, tax, accounts, goals, Social Security, mortgage, employer match, charts, and more.
 
 ### Commands
 

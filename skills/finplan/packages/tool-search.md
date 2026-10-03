@@ -6,7 +6,7 @@ Discover FinPlan MCP tools relevant to your current task without loading all too
 
 ### search_finplan_tools
 
-Search for FinPlan tools by natural-language query. Call this FIRST to discover available tools before calling specific ones.
+Search for FinPlan tools by natural-language query. Use it when the tool you need isn't named in the reference pages.
 
 | Parameter       | Type   | Description                                                                                                              |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
@@ -29,7 +29,7 @@ Returns: `found`, `name`, `category`, `description`, `parameters` (list of `name
 
 ## Usage notes
 
-- Call `search_finplan_tools` **first** before calling any other FinPlan tool.
+- Call `ping()` to warm up the server, then find the tool you need in the reference pages linked from `SKILL.md`. Search only when the tool isn't there.
 - Use `"list_categories"` to see all tool categories with counts.
 - Use `"category:tax"` to browse all tools in a specific category.
 - Use `"all"` with `"names_only"` detail level for a compact overview.

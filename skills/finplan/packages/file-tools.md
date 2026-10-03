@@ -4,14 +4,21 @@ MCP tools that produce large datasets always write full results to a file server
 
 ## Tools with file-based responses
 
-| Tool                                      | Package    | Large data                |
-| ----------------------------------------- | ---------- | ------------------------- |
-| `run_projection`                          | projection | Timeline with percentiles |
-| `generate_mortgage_amortization_schedule` | mortgage   | Month-by-month schedule   |
-| `generate_projection_fan_chart`           | charts     | Chart.js chart spec       |
-| `generate_account_breakdown_chart`        | charts     | Chart.js chart spec       |
-| `generate_allocation_chart`               | charts     | Chart.js chart spec       |
-| `generate_projection_comparison_chart`    | charts     | Chart.js chart spec       |
+| Tool                                      | Package    | Large data                              |
+| ----------------------------------------- | ---------- | --------------------------------------- |
+| `run_projection`                          | projection | Timeline with percentiles               |
+| `run_projections`                         | projection | One `run_projection` response per entry |
+| `project_plan`                            | projection | Whole-plan timeline with percentiles    |
+| `compare_scenarios`                       | scenarios  | Side-by-side scenario projections       |
+| `generate_mortgage_amortization_schedule` | mortgage   | Month-by-month schedule                 |
+| `project_liability_payoff`                | liability  | Month-by-month paydown schedule         |
+| `generate_projection_fan_chart`           | charts     | Chart.js chart spec                     |
+| `generate_account_breakdown_chart`        | charts     | Chart.js chart spec                     |
+| `generate_allocation_chart`               | charts     | Chart.js chart spec                     |
+| `generate_projection_comparison_chart`    | charts     | Chart.js chart spec                     |
+| `build_snapshot`                          | snapshot   | Point-in-time facts record              |
+| `get_sample_profile`                      | state      | Complete sample state document          |
+| `migrate_state`                           | state      | Migrated state document                 |
 
 ## Response format
 

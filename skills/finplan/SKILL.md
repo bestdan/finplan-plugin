@@ -1,6 +1,6 @@
 ---
 name: finplan
-description: Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, tax calculations, retirement planning, Social Security benefits, account management, goal planning, portfolio analysis, or mortgage calculations. All capabilities are accessed through MCP tools at https://mcp.finplan.tools/mcp — never call Python or CLI directly.
+description: Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, what-if scenarios, tax calculations, retirement planning, required minimum distributions, Social Security benefits, account management, employer 401(k) match, goal planning, budgets and cashflow, portfolio analysis, mortgages and other debt payoff, charts, financial snapshots, or syncing accounts from an aggregator. All capabilities are accessed through MCP tools at https://mcp.finplan.tools/mcp — never call Python or CLI directly.
 ---
 
 # FinPlan — Personal Finance Projection Engine
@@ -75,7 +75,7 @@ All three do the same thing: push hundreds of KB of time-series data through the
 - **Use `jq`** for targeted queries when you need specific values from data files
 - **Use the placeholder/inject pattern** for any HTML that renders chart data (see [charts.md](packages/charts.md#html-rendering-workflow))
 
-**Tools with file-based responses**: `run_projection`, `generate_mortgage_amortization_schedule`, `project_liability_payoff`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_projection_comparison_chart`
+**Tools with file-based responses**: `run_projection`, `run_projections`, `project_plan`, `compare_scenarios`, `generate_mortgage_amortization_schedule`, `project_liability_payoff`, `generate_projection_fan_chart`, `generate_account_breakdown_chart`, `generate_allocation_chart`, `generate_projection_comparison_chart`, `build_snapshot`, `get_sample_profile`, `migrate_state`
 
 See [packages/file-tools.md](packages/file-tools.md) for full details and the HTML embedding workflow.
 
@@ -92,13 +92,14 @@ When working with a specific area, read its detailed reference for tool names, p
 | Accounts        | Account types, allocations, ownership, creation         | [packages/accounts.md](packages/accounts.md)               |
 | Portfolio       | Return assumptions, glide paths, characteristics        | [packages/portfolio.md](packages/portfolio.md)             |
 | Goals           | Financial goals, contribution calc, progress tracking   | [packages/goals.md](packages/goals.md)                     |
+| Budget          | Income streams, expenses, budget summary, cashflow      | [packages/budget.md](packages/budget.md)                   |
 | Social Security | Benefits, claiming strategies, spousal/survivor, PIA    | [packages/social-security.md](packages/social-security.md) |
 | Mortgage        | Monthly payments, amortization, P&I splits              | [packages/mortgage.md](packages/mortgage.md)               |
 | Liabilities     | Debt paydown trajectory + payoff date (cards, loans)    | [packages/liability.md](packages/liability.md)             |
 | Employer Match  | 401(k) matching formulas, vesting, calculations         | [packages/employer-match.md](packages/employer-match.md)   |
 | Charts          | Chart.js fan charts, account breakdowns, comparisons    | [packages/charts.md](packages/charts.md)                   |
-| File Tools      | File-based responses, `generate_data` parameter         | [packages/file-tools.md](packages/file-tools.md)           |
-| Profile & State | Person profiles, user state persistence                 | [packages/state.md](packages/state.md)                     |
+| File Tools      | File-based responses: `urls` + inline summary           | [packages/file-tools.md](packages/file-tools.md)           |
+| Profile & State | Person profiles, user state persistence, account sync   | [packages/state.md](packages/state.md)                     |
 | Snapshots       | Build point-in-time facts records, diff two snapshots   | [packages/snapshot.md](packages/snapshot.md)               |
 | Tool Search     | Dynamic tool discovery, search across all tools         | [packages/tool-search.md](packages/tool-search.md)         |
 | Reference Data  | Static lookup tables: account types, enums, limits      | [packages/reference-data.md](packages/reference-data.md)   |

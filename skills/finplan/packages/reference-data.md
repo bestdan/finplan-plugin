@@ -25,6 +25,11 @@ Static lookup data for FinPlan MCP tools. Embedded here to avoid unnecessary too
 | `crypto_exchange`           | Cryptocurrency exchange account                                       |
 | `mortgage`                  | Mortgage loan (liability account, tracks outstanding principal)       |
 | `real_estate`               | Real estate property (asset account, tracks property value)           |
+| `credit_card`               | Revolving credit-card debt (liability, tracks balance owed)           |
+| `student_loan`              | Student loan debt (liability, tracks balance owed)                    |
+| `auto_loan`                 | Auto loan debt (liability, tracks balance owed)                       |
+| `personal_loan`             | Personal/unsecured loan debt (liability, tracks balance owed)         |
+| `other_loan`                | Other non-mortgage loan debt (liability catch-all)                    |
 
 ## Property Types
 
@@ -45,11 +50,14 @@ Static lookup data for FinPlan MCP tools. Embedded here to avoid unnecessary too
 
 ## Asset Classes
 
-| Value    | Description                                       |
-| -------- | ------------------------------------------------- |
-| `stocks` | Equity investments (stocks, stock funds)          |
-| `bonds`  | Fixed income investments (bonds, bond funds)      |
-| `cash`   | Cash and cash equivalents (money market, savings) |
+| Value         | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `stocks`      | Equity investments (stocks, stock funds, ETFs)    |
+| `bonds`       | Fixed income investments (bonds, bond funds)      |
+| `cash`        | Cash and cash equivalents (money market, savings) |
+| `crypto`      | Cryptocurrencies and digital assets               |
+| `real_estate` | Real estate holdings (property, REITs)            |
+| `other`       | Other asset types (e.g., commodities)             |
 
 ## Account Tax Treatments
 
@@ -73,11 +81,13 @@ Use `closed_form` for most cases. Use `monte_carlo` only for complex scenarios o
 
 ## Portfolio Assumption Presets
 
-| Preset         | Description                                                        | Stocks        | Bonds       | Cash          |
-| -------------- | ------------------------------------------------------------------ | ------------- | ----------- | ------------- |
-| `standard`     | Default assumptions based on typical long-term historical averages | 7% / 16% vol  | 4% / 6% vol | 2% / 1% vol   |
-| `conservative` | Lower expected returns with higher volatility                      | 5% / 18% vol  | 3% / 7% vol | 1.5% / 1% vol |
-| `optimistic`   | Higher expected returns                                            | 10% / 14% vol | 5% / 5% vol | 3% / 0.5% vol |
+| Preset         | Description                                                        | Stocks        | Bonds       | Cash            |
+| -------------- | ------------------------------------------------------------------ | ------------- | ----------- | --------------- |
+| `standard`     | Default assumptions based on typical long-term historical averages | 7% / 15% vol  | 4% / 6% vol | 2% / 1% vol     |
+| `conservative` | Lower expected returns; higher stock and bond volatility           | 5% / 18% vol  | 3% / 7% vol | 1.5% / 0.5% vol |
+| `optimistic`   | Higher expected returns                                            | 10% / 15% vol | 5% / 5% vol | 3% / 1% vol     |
+
+Every preset uses the same values for the other three asset classes: `crypto` 2% / 18% vol, `real_estate` 2% / 6% vol, `other` 2% / 6% vol.
 
 ## Goal Types
 
@@ -109,11 +119,11 @@ Use `closed_form` for most cases. Use `monte_carlo` only for complex scenarios o
 
 ## SSA Limits by Year
 
-| Year | FRA Earnings Limit | Under FRA Earnings Limit | COLA | Max Taxable Earnings | Bend Point 1 | Bend Point 2 |
-| ---- | ------------------ | ------------------------ | ---- | -------------------- | ------------ | ------------ |
-| 2024 | $59,520            | $22,320                  | 3.2% | $168,600             | $1,174       | $7,078       |
-| 2025 | $62,160            | $23,400                  | 2.5% | $176,100             | $1,226       | $7,391       |
-| 2026 | $63,780            | $24,120                  | 2.5% | $181,200             | $1,253       | $7,553       |
+| Year | FRA Earnings Limit | Under FRA Earnings Limit | Max Taxable Earnings | Bend Point 1 | Bend Point 2 |
+| ---- | ------------------ | ------------------------ | -------------------- | ------------ | ------------ |
+| 2024 | $59,520            | $22,320                  | $168,600             | $1,174       | $7,078       |
+| 2025 | $62,160            | $23,400                  | $176,100             | $1,226       | $7,391       |
+| 2026 | $65,160            | $24,480                  | $184,500             | $1,286       | $7,749       |
 
 ## RMD Starting Ages (SECURE 2.0)
 
