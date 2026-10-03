@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "finplan": {
-      "type": "url",
+      "type": "http",
       "url": "https://mcp.finplan.tools/mcp"
     }
   }

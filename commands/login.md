@@ -58,7 +58,7 @@ Write it to `.mcp.json` in the current working directory. Use Edit if the file e
 {
   "mcpServers": {
     "finplan": {
-      "type": "url",
+      "type": "http",
       "url": "https://mcp.finplan.tools/mcp",
       "headers": {
         "Authorization": "Bearer {{BEARER_TOKEN}}"

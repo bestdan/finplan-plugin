@@ -124,7 +124,7 @@ This installs the commands globally (available in all projects). To install per-
 {
   "mcpServers": {
     "finplan": {
-      "type": "url",
+      "type": "http",
       "url": "https://mcp.finplan.tools/mcp"
     }
   }
