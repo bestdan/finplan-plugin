@@ -5,7 +5,7 @@ allowed-tools:
   - Bash(test *)
   - Bash(mkdir *)
   - Bash(ls *)
-  - mcp__finplan__get_checkin_template
+  - mcp__plugin_finplan_finplan
 argument-hint: [--force]
 ---
 

@@ -59,7 +59,7 @@ If the response includes `"status": "authenticated"`, the key is valid. If the c
 
 ### 4. Check MCP tools in session
 
-Use the `ToolSearch` tool to search for `mcp__claude_ai_FinPlan` (e.g., query `"+FinPlan_Prod ping"`). If any FinPlan tools appear in the results, the MCP connection is working. If no tools are found, the connection failed to establish during session startup.
+Use the `ToolSearch` tool to look for the FinPlan `ping` tool under any of its three prefixes: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (added by hand). For example, query `"finplan ping"`. Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` means the MCP connection is working. If no tools are found, the connection failed to establish during session startup.
 
 ### 5. Report results and provide guidance
 

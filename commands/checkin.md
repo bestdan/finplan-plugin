@@ -10,9 +10,7 @@ allowed-tools:
   - Skill(finplan:read-state)
   - Skill(finplan:read-snapshot)
   - Skill(finplan:save-snapshot)
-  - mcp__finplan__build_snapshot
-  - mcp__finplan__diff_snapshots
-  - mcp__finplan__get_checkin_template
+  - mcp__plugin_finplan_finplan
 argument-hint: [as_of] [--force]
 ---
 
