@@ -57,6 +57,7 @@ Claude automatically discovers and uses FinPlan tools when you ask about financi
 | Command                         | Description                                                               |
 | ------------------------------- | ------------------------------------------------------------------------- |
 | `/finplan:setup`                | Guided interview to set up your financial plan                            |
+| `/finplan:demo`                 | Load the Larson family sample profile to try FinPlan with zero real data  |
 | `/finplan:login`                | Set up API key authentication                                             |
 | `/finplan:diagnose`             | Diagnose MCP connection issues                                            |
 | `/finplan:read-state`           | Read financial state from local JSON file                                 |
