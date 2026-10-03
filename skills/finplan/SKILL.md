@@ -111,7 +111,7 @@ When working with a specific area, read its detailed reference for tool names, p
 
 ### Client-side commands
 
-These commands are bundled with the FinPlan plugin and available automatically after installation. See [SETUP.md](SETUP.md) for installation instructions.
+These commands are bundled with the FinPlan plugin and available automatically after installation. For setup on other platforms, see https://docs.finplan.tools/setup/.
 
 - **`/read-state`** — Read state from local JSON file using targeted `jq` queries (minimal token usage). Supports: `/read-state`, `/read-state person`, `/read-state accounts`, `/read-state goals`, `/read-state account <id>`, `/read-state goal <id>`.
 - **`/save-state`** — Write the current state JSON to the local file system. Call after every state mutation.

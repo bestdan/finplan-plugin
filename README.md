@@ -190,7 +190,7 @@ This should generate a self-contained HTML file and open it in the browser.
 
 ## Other platforms
 
-Claude Desktop and Claude.ai users: see [SETUP.md](skills/finplan/SETUP.md) for ZIP-upload instructions. Those platforms don't support plugins — use the skill upload flow instead.
+Claude Desktop and Claude.ai users: see the [Claude Desktop](https://docs.finplan.tools/setup/claude-desktop/) and [Claude Web](https://docs.finplan.tools/setup/claude-web/) setup guides for ZIP-upload instructions. Those platforms don't support plugins — use the skill upload flow instead.
 
 ## License
 
