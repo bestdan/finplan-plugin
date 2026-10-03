@@ -28,24 +28,22 @@ Month-by-month schedule showing P&I split and declining balance.
 | `monthly_payment_cents`    | int   | Fixed monthly P&I payment in cents                    |
 | `max_months`               | int   | Limit months generated (optional, default: full term) |
 
-Returns file URLs + compact inline summary. The inline summary contains total principal/interest and final balance. Full month-by-month schedule is in the data file.
+Returns file URLs + compact inline summary.
 
-## File-based responses
+## Example
 
-```
-result = generate_mortgage_amortization_schedule(
-    original_principal_cents=400_000_00,
-    annual_interest_rate=0.0675,
-    term_months=360,
-    monthly_payment_cents=2_594_02,
-)
+A $400,000, 30-year loan at 6.75% — `generate_mortgage_amortization_schedule` with these arguments, taking `monthly_payment_cents` from `calculate_mortgage_monthly_payment`:
 
-# result["urls"]["data"] -> full schedule (month-by-month entries)
-# result["urls"]["schema"] -> data structure description with jq examples
-# result["summary"] -> total principal/interest, final balance
+```json
+{
+  "original_principal_cents": 40000000,
+  "annual_interest_rate": 0.0675,
+  "term_months": 360,
+  "monthly_payment_cents": 259439
+}
 ```
 
-See [file-tools.md](file-tools.md) for details on file-based responses.
+`summary` carries total principal, total interest, and the final balance; `urls.data` holds the month-by-month schedule and `urls.schema` its jq examples. See [file-tools.md](file-tools.md) for working with file-based responses.
 
 ## Notes
 

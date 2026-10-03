@@ -24,7 +24,7 @@ Build an immutable snapshot from a `finplan_state` document: net worth, category
 | `cash_volatility`   | float  | Override cash volatility (optional)                                                                                                                                                                                                                            |
 | `inflation`         | float  | Annual inflation rate (e.g. 0.025 = 2.5%) used to inflate real-terms goal targets to nominal before computing each goal's projected progress. Defaults to the engine's canonical rate (2.5%); pass 0 to disable. Recorded in the snapshot's assumptions stamp. |
 
-Rejects a document whose `kind` is not `finplan_state`. The generation time is stamped (UTC) in the snapshot's provenance; custom assumptions are labeled `"custom"`. Returns: `snapshot_ref` and `urls` — the full `finplan_snapshot` document stays in the file store and must not be loaded into context — plus the compact `derived` and `provenance` blocks inline. `derived` carries the rollups for the check-in narrative; pass `snapshot_ref` to `diff_snapshots` or the check-in template when the full document is needed.
+Rejects a document whose `kind` is not `finplan_state`. The generation time is stamped (UTC) in the snapshot's provenance; custom assumptions are labeled `"custom"`. Returns: `snapshot_ref` and `urls` — the full `finplan_snapshot` document stays in the file store ([don't load it into context](../SKILL.md#data-files-stay-out-of-context)) — plus the compact `derived` and `provenance` blocks inline. `derived` carries the rollups for the check-in narrative; pass `snapshot_ref` to `diff_snapshots` or the check-in template when the full document is needed.
 
 ### diff_snapshots
 

@@ -155,13 +155,9 @@ Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_inp
 ## Typical workflow
 
 1. `/finplan:read-state` to load existing state from local file (or skip if starting fresh)
-2. `manage_state(action="create", person_json={...})` to set up profile
-3. `/finplan:save-state` to persist locally
-4. `create_account(...)` then `manage_state(action="update_account", ...)` then `/finplan:save-state` (repeat for each account)
-5. `create_goal(...)` then `manage_state(action="update_goal", ...)` then `/finplan:save-state` (repeat for each goal)
-6. `create_income_stream(...)` then `manage_state(action="update_income_stream", ...)` then `/finplan:save-state` (repeat for each income source)
-7. `create_expense(...)` then `manage_state(action="update_expense", ...)` then `/finplan:save-state` (repeat for each expense)
-8. `/finplan:read-state` to resume in future sessions
+2. `manage_state` with `action: "create"` and `person_json` to set up the profile, then `/finplan:save-state`
+3. Integrate each account, goal, income stream, and expense with the [mutation sequence](#how-to-integrate-accounts-and-goals) below
+4. `/finplan:read-state` to resume in future sessions
 
 ## State Persistence Rules
 
@@ -182,34 +178,29 @@ Call `/finplan:save-state` immediately after:
 
 ### How to integrate accounts and goals
 
-Use the `update_*` actions to integrate created objects:
+Every object a `create_*` tool returns is lost until it is integrated into state. For each one:
 
-Each `update_*` returns a delta; apply it to the state you passed in (or let `/finplan:save-state` do it) to keep your full document current.
+1. **Create** — call the `create_*` tool.
+2. **Integrate** — call `manage_state` with the matching `update_*` action, your current full state as `state_json`, and the created object under its key:
 
-```
-# Create and integrate an account
-account_result = create_account(...)
-delta = manage_state(action="update_account", state_json=state, account_json=account_result["account"])
-state = apply_delta(state, delta)   # update-or-append changed.item into changed.section
-/finplan:save-state
+   | Create with            | `action`                 | Pass the created object as                       |
+   | ---------------------- | ------------------------ | ------------------------------------------------ |
+   | `create_account`       | `"update_account"`       | `account_json` ← its `account` field             |
+   | `create_goal`          | `"update_goal"`          | `goal_json` ← its `goal` field                   |
+   | `create_income_stream` | `"update_income_stream"` | `income_stream_json` ← its `income_stream` field |
+   | `create_expense`       | `"update_expense"`       | `expense_json` ← its `expense` field             |
 
-# Create and integrate a goal
-goal_result = create_goal(...)
-delta = manage_state(action="update_goal", state_json=state, goal_json=goal_result["goal"])
-state = apply_delta(state, delta)
-/finplan:save-state
+3. **Rebuild full state** — the response is normally a delta (see [manage_state](#manage_state)): apply `changed.item` to the section named in `changed.section`. It is the full document instead when you passed `return_full_state=true`, when the input was migrated, or when `update_goal` auto-created a provisional account — then use it directly. `/finplan:save-state` handles either shape for you.
+4. **Save** — call `/finplan:save-state`, then continue from the rebuilt state for the next object.
 
-# Create and integrate an income stream
-income_result = create_income_stream(...)
-delta = manage_state(action="update_income_stream", state_json=state, income_stream_json=income_result["income_stream"])
-state = apply_delta(state, delta)
-/finplan:save-state
+For example, integrating a new account — `manage_state` with these arguments:
 
-# Create and integrate an expense
-expense_result = create_expense(...)
-delta = manage_state(action="update_expense", state_json=state, expense_json=expense_result["expense"])
-state = apply_delta(state, delta)
-/finplan:save-state
+```json
+{
+  "action": "update_account",
+  "state_json": { "...": "your current full state" },
+  "account_json": { "...": "the account field from create_account" }
+}
 ```
 
 ### Common mistakes

@@ -36,16 +36,18 @@ MCP tools that produce large datasets always write full results to a file server
 }
 ```
 
-- **`urls.data`**: Full JSON dataset — **NEVER load into context** (see [charts.md — data handling rules](charts.md#data-handling-rules))
+- **`urls.data`**: Full JSON dataset — query it with `jq` or inject it into HTML
 - **`urls.schema`**: Data dictionary describing field types, structure, and jq paths — read if needed
 - **`summary`**: Key statistics extracted from the data (enough for most decisions)
+
+Don't load data files into context — see [SKILL.md](../SKILL.md#data-files-stay-out-of-context).
 
 ## Workflow
 
 1. Call the tool — response always includes URLs + compact summary
 2. Use the inline **summary** for immediate insights/decisions
 3. If you need to understand the data structure, read `urls.schema` or refer to inline schemas in [charts.md](charts.md) and [projection.md](projection.md)
-4. If querying specific values, download `urls.data` to a local file and query it with `jq` — do NOT load the full data file into context
+4. If querying specific values, download `urls.data` to a local file and query it with `jq`
 5. For **embedding data into HTML**, use the placeholder/inject pattern (see below and [charts.md](charts.md#html-rendering-workflow))
 
 ```bash
@@ -53,7 +55,7 @@ MCP tools that produce large datasets always write full results to a file server
 mkdir -p "${TMPDIR:-/tmp}/finplan"
 curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/data.json"
 
-# Use jq to extract specific values (do NOT cat or Read the whole data file)
+# Extract specific values
 jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/data.json"
 
 # Get a range of months
@@ -63,15 +65,13 @@ jq '.percentile_timelines.p50[0:12]' "${TMPDIR:-/tmp}/finplan/data.json"
 jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "${TMPDIR:-/tmp}/finplan/data.json"
 ```
 
-**CRITICAL**: NEVER load data files into context. Use `jq` for targeted queries, or use inline summaries from tool responses.
-
 ## Embedding data in self-contained HTML files
 
-When building HTML files, embed data via the placeholder/inject pattern — **never read data files into context or hardcode arrays as JS literals**:
+When building HTML files, embed data via the placeholder/inject pattern rather than writing arrays as JS literals:
 
 1. **Write the HTML** with placeholder tokens where data should go (e.g., `__DATA_TOTAL_PORTFOLIO__`)
 2. **Download each `urls.data` file** into one scratch directory, `${TMPDIR:-/tmp}/finplan/`, never the user's working directory: `mkdir -p "${TMPDIR:-/tmp}/finplan" && curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/<file>"`.
-3. **Run a bash command** to replace each placeholder with the downloaded file contents:
+3. **Run the inject script** to replace each placeholder with its downloaded file. Pass the HTML file, then one placeholder/file pair per token:
 
 ```bash
 python3 -c "

@@ -17,25 +17,23 @@ Project a liability's month-by-month balance and find its payoff date. Each mont
 | `extra_payment_cents`   | int   | Optional extra principal paid each month, in cents (default 0) — pays the debt off sooner |
 | `term_months`           | int   | Optional revolving-vs-installment label; echoed back, does not affect the payoff math     |
 
-Returns file URLs + compact inline summary. The inline summary contains the payoff month, payoff years, start/end balances, and the payment breakdown. The full month-by-month trajectory is in the data file.
+Returns file URLs + compact inline summary.
 
-## File-based responses
+## Example
 
-```
-result = project_liability_payoff(
-    balance_cents=2_340_99,
-    annual_interest_rate=0.2499,
-    monthly_payment_cents=75_00,
-    months=120,
-    extra_payment_cents=50_00,
-)
+A $2,340.99 card balance at 24.99% APR, paying $75/month plus $50 extra — `project_liability_payoff` with these arguments:
 
-# result["urls"]["data"] -> full month-by-month balance trajectory
-# result["urls"]["schema"] -> data structure description with jq examples
-# result["summary"] -> payoff_month, payoff_years, start/end balance, payment breakdown
+```json
+{
+  "balance_cents": 234099,
+  "annual_interest_rate": 0.2499,
+  "monthly_payment_cents": 7500,
+  "months": 120,
+  "extra_payment_cents": 5000
+}
 ```
 
-See [file-tools.md](file-tools.md) for details on file-based responses.
+`summary` carries `payoff_month`, `payoff_years`, start/end balance, and the payment breakdown; `urls.data` holds the month-by-month trajectory and `urls.schema` its jq examples. See [file-tools.md](file-tools.md) for working with file-based responses.
 
 ## Notes
 

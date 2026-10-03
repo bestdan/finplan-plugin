@@ -97,23 +97,9 @@ An account contribution pin (a current-employer 401(k)'s employee deferral) is h
 
 ## Working with file-based responses
 
-The response always includes URLs + compact inline summary. The inline summary contains key statistics for immediate use. Full time series data is in the data file.
+Unless you pass `summary_only=true`, the response includes URLs + compact inline summary: `summary` (final balance percentiles, inputs, method info), `urls.schema` (data dictionary), `urls.data` (full time series), and `projection_ref` (a handle to pass to [after-tax projections](#after-tax-projections)). With `summary_only=true` only `summary` comes back. Use `summary` for statistics and `jq` for targeted queries. Don't load data files into context — see [SKILL.md](../SKILL.md#data-files-stay-out-of-context).
 
-```
-result = run_projection(
-    initial_balance_cents=500_000_00,
-    expected_annual_return=0.07,
-    annual_volatility=0.15,
-    time_horizon_months=360,
-    monthly_contribution_cents=200_000,
-)
-
-# result["urls"]["data"] -> full time series JSON — NEVER read into context
-# result["urls"]["schema"] -> data dictionary — read if you need to confirm field names
-# result["summary"] -> final balance percentiles, inputs, method info
-```
-
-**CRITICAL**: NEVER load data files into context. See [charts.md — data handling rules](charts.md#data-handling-rules) for the full policy. Use `summary` for statistics, `jq` for targeted queries. The data file schema is:
+The data file schema is:
 
 ```json
 {
@@ -135,7 +121,7 @@ result = run_projection(
 ```
 
 ```bash
-# Download urls.data once, then query the local copy with jq (NEVER Read the data file)
+# Download urls.data once, then query the local copy with jq
 mkdir -p "${TMPDIR:-/tmp}/finplan"
 curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/projection_data.json"
 jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/projection_data.json"
@@ -147,52 +133,62 @@ For embedding data in HTML dashboards, use bash to inject file contents directly
 
 ## Withdrawals (Retirement Phase)
 
-**Negative contributions work as withdrawals.** To model a pure spending phase (drawing down from day one), use a negative `monthly_contribution_cents`. To model saving _then_ spending in one call, use `retirement_month` (see below):
+**Negative contributions work as withdrawals.** To model a pure spending phase (drawing down from day one), use a negative `monthly_contribution_cents`. To model saving _then_ spending in one call, use `retirement_month` (see below).
 
-```
-run_projection(
-    initial_balance_cents=500_000_00,      # $500k retirement savings
-    monthly_contribution_cents=-4_000_00,  # $4,000/month withdrawal
-    expected_annual_return=0.05,
-    annual_volatility=0.10,
-    time_horizon_months=360                # 30-year retirement
-)
+A 30-year retirement drawing $4,000/month from $500k — `run_projection` with these arguments:
+
+```json
+{
+  "initial_balance_cents": 50000000,
+  "monthly_contribution_cents": -400000,
+  "expected_annual_return": 0.05,
+  "annual_volatility": 0.10,
+  "time_horizon_months": 360
+}
 ```
 
 ### Multi-phase planning (accumulation -> retirement)
 
-Use `retirement_month` to model saving up to retirement and drawing down after it in a **single call**. Months before it contribute `monthly_contribution_cents`; from it onward the monthly cashflow is `retirement_income_cents - retirement_withdrawal_cents`:
+Use `retirement_month` to model saving up to retirement and drawing down after it in a **single call**. Months before it contribute `monthly_contribution_cents`; from it onward the monthly cashflow is `retirement_income_cents - retirement_withdrawal_cents`.
 
-```
-run_projection(
-    initial_balance_cents=100_000_00,
-    monthly_contribution_cents=2_000_00,    # Save $2k/month until retirement
-    retirement_month=241,                   # Retire after 20 years
-    retirement_withdrawal_cents=5_000_00,   # Then withdraw $5k/month
-    retirement_income_cents=2_000_00,       # Offset by $2k/month Social Security
-    expected_annual_return=0.06,
-    annual_volatility=0.12,
-    time_horizon_months=600                 # 20 accumulating + 30 in retirement
-)
+Saving $2k/month for 20 years from $100k, then withdrawing $5k/month offset by $2k/month of Social Security for 30 years — `run_projection` with these arguments (month 241 is the first month of retirement; 600 months = 20 accumulating + 30 in retirement):
+
+```json
+{
+  "initial_balance_cents": 10000000,
+  "monthly_contribution_cents": 200000,
+  "retirement_month": 241,
+  "retirement_withdrawal_cents": 500000,
+  "retirement_income_cents": 200000,
+  "expected_annual_return": 0.06,
+  "annual_volatility": 0.12,
+  "time_horizon_months": 600
+}
 ```
 
 Don't chain two calls (feeding one projection's p50 into the next as the starting balance): it understates uncertainty by collapsing the first phase to a single percentile.
 
 ### Time-varying contributions
 
-When saving or spending changes month to month (a raise, a sabbatical, a lumpy expense), pass `contribution_timeline` instead of a scalar — one entry per month of the horizon:
+When saving or spending changes month to month (a raise, a sabbatical, a lumpy expense), pass `contribution_timeline` instead of a scalar — one entry per month of the horizon, written out in full.
 
-```
-run_projection(
-    initial_balance_cents=100_000_00,
-    contribution_timeline=[
-        {"month": m, "contribution_cents": 2_000_00 if m <= 12 else 3_000_00}
-        for m in range(1, 25)
-    ],
-    expected_annual_return=0.07,
-    annual_volatility=0.15,
-    time_horizon_months=24
-)
+Saving $2k/month for three months, then $3k/month after a raise — `run_projection` with these arguments:
+
+```json
+{
+  "initial_balance_cents": 10000000,
+  "contribution_timeline": [
+    { "month": 1, "contribution_cents": 200000 },
+    { "month": 2, "contribution_cents": 200000 },
+    { "month": 3, "contribution_cents": 200000 },
+    { "month": 4, "contribution_cents": 300000 },
+    { "month": 5, "contribution_cents": 300000 },
+    { "month": 6, "contribution_cents": 300000 }
+  ],
+  "expected_annual_return": 0.07,
+  "annual_volatility": 0.15,
+  "time_horizon_months": 6
+}
 ```
 
 ## After-tax projections

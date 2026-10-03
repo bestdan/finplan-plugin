@@ -48,19 +48,21 @@ FinPlan tools carry one of three prefixes, depending on how the server was conne
 
 Tools that produce large datasets always write full results to a file server and return URLs + compact inline summary. This keeps large arrays (timeseries, Chart.js specs, amortization schedules) out of the LLM context window.
 
+For example, a 30-year projection — `run_projection` with these arguments:
+
+```json
+{
+  "initial_balance_cents": 50000000,
+  "expected_annual_return": 0.07,
+  "annual_volatility": 0.15,
+  "time_horizon_months": 360,
+  "monthly_contribution_cents": 200000
+}
 ```
-# Example: 30-year projection
-result = run_projection(
-    initial_balance_cents=500_000_00,
-    expected_annual_return=0.07,
-    annual_volatility=0.15,
-    time_horizon_months=360,
-    monthly_contribution_cents=200_000,
-)
-# result["urls"]["data"] -> full time series JSON — NEVER read into context
-# result["urls"]["schema"] -> data dictionary — read if you need to understand data structure
-# result["summary"] -> key statistics (final balance percentiles) for immediate use
-```
+
+It returns `summary` (final balance percentiles and inputs — use these directly), `urls.schema` (the data dictionary — read it if you need the data structure), and `urls.data` (the full time series — see below).
+
+### Data files stay out of context
 
 **CRITICAL**: NEVER load data files into context. This means:
 
@@ -122,55 +124,13 @@ These commands are bundled with the FinPlan plugin and available automatically a
 - **`/setup`** — Guided interview to create a complete financial profile, accounts, and goals from scratch.
 - **`/checkup`** — Review an existing plan for life changes, update profile/accounts/goals, and identify gaps or new goals.
 
-### When to save state
-
-Call `/finplan:save-state` immediately after ANY of these events:
-
-- Creating a new user state
-- Adding a new account to the state
-- Adding a new goal to the state
-- Updating person information (income, employment status, etc.)
-- Modifying any account or goal details
-- Any time the user provides new financial information
-
 ### How to maintain state
 
-1. **Load state at session start** — Use `/finplan:read-state` to load existing state from local file
-2. **Use state integration tools** — Use `manage_state(action="update_account")` and `manage_state(action="update_goal")` to integrate created objects
-3. **Save after every change** — Call `/finplan:save-state` immediately after each modification. Don't batch saves.
-4. **Use a consistent file path** — Default: `./finplan_state.json`
+1. **Load state at session start** — Use `/finplan:read-state` to load existing state from the local file (default: `./finplan_state.json`).
+2. **Integrate every object you create** — An account, goal, income stream, or expense made with a `create_*` tool is lost until you add it to state with the matching `manage_state` `update_*` action.
+3. **Save after every change** — Call `/finplan:save-state` immediately after each state mutation, and whenever the user gives new financial information. Don't batch saves.
 
-### Common mistake to avoid
-
-❌ **Wrong**: Create accounts and goals but never add them to state or save
-
-```
-state = manage_state(action="create", ...)   # Creates state
-create_account(...)         # Creates account but it's lost!
-create_goal(...)            # Creates goal but it's lost!
-# User's accounts and goals are never persisted
-```
-
-✅ **Correct**: Use integration tools and save after each change
-
-```
-state = manage_state(action="create", ...)   # returns the full document
-/finplan:save-state
-
-account = create_account(...)
-# update_* returns a compact delta by default, NOT the full document:
-#   {success, message, changed: {section, item}, state_hash, last_updated}
-delta = manage_state(action="update_account", state_json=state, account_json=account["account"])
-state = apply_delta(state, delta)             # update-or-append changed.item into changed.section
-/finplan:save-state
-
-goal = create_goal(...)
-delta = manage_state(action="update_goal", state_json=state, goal_json=goal["goal"])
-state = apply_delta(state, delta)
-/finplan:save-state
-```
-
-> **Mutation responses are deltas by default.** `update_*` actions return only the changed section plus a `state_hash`, instead of echoing the whole 5–10 KB document back through context on every edit. You already hold the full state (you passed it in as `state_json`), so apply `changed.item` to the section named in `changed.section` to rebuild it — `/finplan:save-state` does this for you. Pass `return_full_state=true` if you need the complete document returned inline.
+`update_*` actions normally return a compact delta rather than the full document (the full document comes back with `return_full_state=true`, on a migrated input, or when `update_goal` auto-creates a provisional account); `/finplan:save-state` handles either shape. The full create → integrate → apply delta → save sequence, and the list of events that require a save, are in [state.md](packages/state.md#state-persistence-rules).
 
 ## Recommended workflows
 

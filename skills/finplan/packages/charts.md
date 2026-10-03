@@ -4,12 +4,7 @@ Chart.js chart generation for financial visualizations. All charts return Chart.
 
 ## Data handling rules
 
-These rules apply to ALL chart and projection work — dashboards, ad-hoc charts, one-off visualizations, everything.
-
-1. **NEVER read data files into context.** No `Read` tool, no `WebFetch`, no `fetch()` on `urls.data` URLs. These files are hundreds of KB and reading them wastes tokens.
-2. **NEVER hardcode data arrays in HTML/JS.** Do not extract time-series values from tool responses and write them as JavaScript literals (e.g., `const p50 = [100.00, 101.47, ...]`). This is the same problem as reading the file — the data passes through your context.
-3. **DO use `summary`** from tool responses for text, statistics, and summary cards (small scalar values).
-4. **DO use the placeholder/inject pattern** for any HTML that renders chart data. Write HTML with placeholder tokens, then use a bash/python script to inject the data file contents. See [HTML rendering workflow](#html-rendering-workflow) below.
+Don't load data files into context or hardcode their arrays in HTML/JS — see [SKILL.md](../SKILL.md#data-files-stay-out-of-context). Render chart data with the [HTML rendering workflow](#html-rendering-workflow) below.
 
 ## Tools
 
@@ -64,22 +59,20 @@ Line chart comparing projections under different return assumptions at a specifi
 
 ## File-based responses
 
-All chart tools return file URLs + compact inline summary. The full Chart.js spec is in the data file, while the inline summary contains chart metadata and key statistics.
+All chart tools return file URLs + compact inline summary. For example, `generate_projection_fan_chart` with these arguments:
 
+```json
+{
+  "initial_balance_cents": 50000000,
+  "expected_annual_return": 0.07,
+  "time_horizon_months": 360
+}
 ```
-result = generate_projection_fan_chart(
-    initial_balance_cents=500_000_00,
-    expected_annual_return=0.07,
-    time_horizon_months=360,
-)
 
-# result["urls"]["data"] -> full Chart.js spec JSON — NEVER read into context
-# result["urls"]["schema"] -> data structure description — read if you need to confirm field names
-# result["summary"] -> chart metadata and key statistics (use this for decisions)
-```
+returns:
 
 - **`summary`** — chart metadata and final balance statistics (use for summary cards and text)
-- **`urls.data`** — full Chart.js chart spec (**NEVER load into context** — see [data handling rules](#data-handling-rules) above)
+- **`urls.data`** — full Chart.js chart spec (inject it; don't load it — see [data handling rules](#data-handling-rules))
 - **`urls.schema`** — data dictionary with field types and jq paths (read if needed)
 
 ## Data schema (inline reference)
@@ -134,8 +127,8 @@ Follow these steps to generate any chart — ad-hoc, dashboard, or one-off visua
 Call `run_projection(...)`. The response includes:
 
 - **`summary`** — scalar statistics (final balance percentiles, inputs). Use these for text, cards, and labels.
-- **`urls.data`** — HTTPS URL to the full time-series JSON. Do NOT read this URL.
-- **`urls.schema`** — HTTPS URL to the data dictionary. You CAN read this.
+- **`urls.data`** — HTTPS URL to the full time-series JSON. You download it in step 2 and inject it in step 5.
+- **`urls.schema`** — HTTPS URL to the data dictionary. You can read this.
 
 ### Step 2: Save the data and schema files locally
 
@@ -269,23 +262,7 @@ Write the HTML file using the Write tool. Use a **placeholder token** where the 
 
 ### Step 5: Inject the data file into the HTML
 
-Replace the placeholder token with the actual data file contents using a bash script:
-
-```bash
-python3 -c "
-import sys
-html_path = sys.argv[1]
-with open(html_path) as f:
-    html = f.read()
-replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-for placeholder, data_path in replacements.items():
-    with open(data_path) as f:
-        html = html.replace(placeholder, f.read())
-with open(html_path, 'w') as f:
-    f.write(html)
-" output.html \
-  "__DATA_PROJECTION__" "${TMPDIR:-/tmp}/finplan/projection_data.json"
-```
+Run the [inject script](file-tools.md#embedding-data-in-self-contained-html-files) with `output.html` as the HTML file and one placeholder/file pair: `"__DATA_PROJECTION__" "${TMPDIR:-/tmp}/finplan/projection_data.json"`.
 
 ### Step 6: Open
 
@@ -304,7 +281,7 @@ Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/np
   <script>__CHARTJS__</script>
   ```
 
-  Then add the vendored path to the same `python3` injection call:
+  Then add the vendored path as one more pair on the [inject script](file-tools.md#embedding-data-in-self-contained-html-files) call:
 
   ```bash
   python3 -c "..." output.html \
