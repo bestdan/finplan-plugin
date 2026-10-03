@@ -199,25 +199,25 @@ run_projection(
 
 To compute after-tax spendable values from a projection, use `apply_after_tax_to_projection_result` (in the [Tax tools](tax.md)):
 
-1. Run `run_projection` to get pre-tax results
-2. Pass the result to `apply_after_tax_to_projection_result` with the account's tax treatment and the user's tax rates
+1. Run `run_projection` (without `summary_only`) to get pre-tax results. Its response carries a `projection_ref`, a handle to the full projection in the server's file store.
+2. Pass that `projection_ref` to `apply_after_tax_to_projection_result` with the account's tax treatment and the user's tax rates. The server loads the time series itself, so nothing is fetched into context.
 
-```
-projection = run_projection(
-    initial_balance_cents=500_000_00,
-    expected_annual_return=0.07,
-    annual_volatility=0.15,
-    time_horizon_months=360
-)
+Don't pass `summary.projection_result` from the inline response: its percentiles are stripped, and the tool rejects it.
 
-after_tax = apply_after_tax_to_projection_result(
-    projection_result_json=projection,
-    account_tax_treatment="pre_tax",       # Traditional 401k/IRA
-    marginal_ordinary_rate=0.22,
-    ltcg_rate=0.15
-)
-# after_tax["adjusted_result"]["after_tax_percentiles"] has spendable values
+For a Traditional 401(k) at a 22% marginal rate, `apply_after_tax_to_projection_result` takes these arguments, with `projection_ref` copied from step 1:
+
+```json
+{
+  "projection_ref": "<projection_ref from run_projection>",
+  "account_tax_treatment": "pre_tax",
+  "marginal_ordinary_rate": 0.22,
+  "ltcg_rate": 0.15
+}
 ```
+
+The final-month spendable values come back inline in `final_balance_percentiles` (`pre_tax_cents` and `after_tax_cents` per percentile), with a pre-tax → after-tax line per percentile in `summary`. The full monthly `after_tax_percentiles` series is in the data file at `urls.data`. Query it with `jq` like any other data file.
+
+The ref lasts as long as the projection's data file (about an hour). If it has expired, re-run `run_projection` and use the new ref.
 
 ## Usage notes
 
@@ -226,4 +226,4 @@ after_tax = apply_after_tax_to_projection_result(
 - Returns in **float decimals**. 0.07 = 7%.
 - **Negative contributions = withdrawals**. No separate withdrawal parameter needed.
 - **File-based responses**: All projections return URLs + compact inline summary. Use `jq` to query the data file for specific values.
-- **After-tax projections**: Chain `run_projection` → `apply_after_tax_to_projection_result` to get spendable values.
+- **After-tax projections**: Chain `run_projection` → `apply_after_tax_to_projection_result`, passing `projection_ref`, to get spendable values.

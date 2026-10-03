@@ -193,16 +193,17 @@ Returns: `salt_cap_cents`/`_dollars`, `salt_phaseout_threshold_cents`/`_dollars`
 
 ### apply_after_tax_to_projection_result
 
-Apply withdrawal taxes to a projection result, computing after-tax spendable values by account type. Takes the output from `run_projection` and adjusts the `after_tax_percentiles` based on account-specific withdrawal tax rules.
+Apply withdrawal taxes to a projection result, computing after-tax spendable values by account type. Takes a `run_projection` result, by `projection_ref`, and computes `after_tax_percentiles` from account-specific withdrawal tax rules. The working chain is in [After-tax projections](projection.md#after-tax-projections).
 
-| Parameter                  | Type   | Description                                                                                                    |
-| -------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `projection_result_json`   | dict   | ProjectionResult JSON from `run_projection`. Must contain `percentiles` dict.                                  |
-| `account_tax_treatment`    | string | `"pre_tax"`, `"post_tax_deferred"`, `"taxable"`, or `"tax_advantaged"`                                         |
-| `marginal_ordinary_rate`   | float  | Marginal ordinary income tax rate (0.22 = 22%)                                                                 |
-| `ltcg_rate`                | float  | Long-term capital gains tax rate (0.15 = 15%)                                                                  |
-| `taxable_income_type`      | string | `"none"` (default), `"ordinary_income"`, or `"investment_income"`                                              |
-| `initial_cost_basis_cents` | int    | For taxable brokerage: original invested amount in cents. Cost basis is fixed; gain fraction grows. (optional) |
+| Parameter                  | Type   | Description                                                                                                                             |
+| -------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `projection_ref`           | string | `projection_ref` from `run_projection`. The server loads the full projection, percentiles included. Preferred.                          |
+| `projection_result_json`   | dict   | A complete ProjectionResult passed inline. Must contain a non-empty `percentiles` dict. Use instead of `projection_ref`, never with it. |
+| `account_tax_treatment`    | string | `"pre_tax"`, `"post_tax_deferred"`, `"taxable"`, or `"tax_advantaged"`                                                                  |
+| `marginal_ordinary_rate`   | float  | Marginal ordinary income tax rate (0.22 = 22%)                                                                                          |
+| `ltcg_rate`                | float  | Long-term capital gains tax rate (0.15 = 15%)                                                                                           |
+| `taxable_income_type`      | string | `"none"` (default), `"ordinary_income"`, or `"investment_income"`                                                                       |
+| `initial_cost_basis_cents` | int    | For taxable brokerage: original invested amount in cents. Cost basis is fixed; gain fraction grows. (optional)                          |
 
 **Key behaviors by account type:**
 
@@ -212,7 +213,7 @@ Apply withdrawal taxes to a projection result, computing after-tax spendable val
 - **taxable** cash (savings, checking): spendable = balance (no withdrawal tax)
 - **taxable** brokerage: spendable = balance − (gains × ltcg_rate)
 
-Returns: `adjusted_result` (full ProjectionResult with corrected `after_tax_percentiles`), `summary`.
+Returns: `final_balance_percentiles` (final-month `pre_tax_cents` / `after_tax_cents` per percentile), `summary`, and `urls` (the full adjusted ProjectionResult, with monthly `after_tax_percentiles`, at `urls.data`). A projection with no percentiles is an error, not an empty result.
 
 ### analyze_roth_conversion
 
@@ -278,4 +279,4 @@ Returns: `assumptions` (echo of inputs, resolved `conversion_amount`, `conversio
 
 - All income in **cents**. 10000000 = $100,000.
 - Filing status uses short strings: `"married_joint"` not `"married_filing_jointly"`.
-- For after-tax projections: first run `run_projection`, then pass the result to `apply_after_tax_to_projection_result`.
+- For after-tax projections: first run `run_projection`, then pass its `projection_ref` to `apply_after_tax_to_projection_result`.
