@@ -18,7 +18,7 @@ full `state_json` in that same call.
 
 State management tool for creating and modifying user state.
 
-**Response shape:** `action="create"` returns the full UserState JSON (plus `success`, `message`, `state_hash`). The `update_*` actions return a **compact delta by default** — only the changed section plus a verification hash — instead of echoing the whole document back on every edit (see PRE-134):
+**Response shape:** `action="create"` returns the full UserState JSON (plus `success`, `message`, `state_hash`). The `update_*` actions return a **compact delta by default** — only the changed section plus a verification hash — instead of echoing the whole document back on every edit:
 
 ```json
 {
@@ -91,8 +91,8 @@ Persist external-sync crosswalk links onto FinPlan accounts so a Monarch↔FinPl
 | Parameter    | Type   | Description                                                                                                                   |
 | ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `links`      | list   | Links to persist, each `{finplan_account_id, external_ids}` (external_ids is a list of source ids mapping onto that account). |
-| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).                                    |
-| `state_path` | string | Path to a state file on disk, stdio only (one-of).                                                                            |
+| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                                                |
+| `state_path` | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)                                   |
 | `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                                                        |
 | `system`     | string | The external source system being linked (default: monarch).                                                                   |
 
@@ -100,14 +100,14 @@ Persist external-sync crosswalk links onto FinPlan accounts so a Monarch↔FinPl
 
 Remove some or all external-sync crosswalk links from a FinPlan account. With `external_ids`, only those ids are removed; omitting them clears the account's link entirely. Scoped to one `system`; a no-op (wrong system, or ids not present) succeeds without churning state. Returns the remaining link state, a `changed` flag, and a `state_ref`.
 
-| Parameter            | Type   | Description                                                                                |
-| -------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `finplan_account_id` | string | The FinPlan account to unlink.                                                             |
-| `state_json`         | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref). |
-| `state_path`         | string | Path to a state file on disk, stdio only (one-of).                                         |
-| `state_ref`          | string | Handle to an already-uploaded state document (one-of).                                     |
-| `external_ids`       | list   | Source ids to remove; omit to clear the account's crosswalk entirely (default: none).      |
-| `system`             | string | The external source system to unlink (default: monarch).                                   |
+| Parameter            | Type   | Description                                                                                 |
+| -------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `finplan_account_id` | string | The FinPlan account to unlink.                                                              |
+| `state_json`         | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).              |
+| `state_path`         | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`) |
+| `state_ref`          | string | Handle to an already-uploaded state document (one-of).                                      |
+| `external_ids`       | list   | Source ids to remove; omit to clear the account's crosswalk entirely (default: none).       |
+| `system`             | string | The external source system to unlink (default: monarch).                                    |
 
 ### reconcile_with_monarch
 
@@ -116,8 +116,8 @@ Reconcile a Monarch account pull against FinPlan state. Translates and gates eac
 | Parameter               | Type   | Description                                                                                          |
 | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
 | `monarch_accounts_json` | list   | Raw Monarch GetAccounts items (each `{id, type, balance, name?}`) to reconcile against the state.    |
-| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).           |
-| `state_path`            | string | Path to a state file on disk, stdio only (one-of).                                                   |
+| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                       |
+| `state_path`            | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)          |
 | `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
 | `confirm`               | bool   | False (default) = dry-run diff + apply_preview, no writes; True = apply per sync_policy and persist. |
 | `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto each refreshed account's source.last_synced; defaults to today.  |
@@ -126,17 +126,17 @@ Reconcile a Monarch account pull against FinPlan state. Translates and gates eac
 
 Record external accounts as knowingly excluded from the modeled state (batch). Use it when an `only_in_monarch` (or held-back) account is one the user deliberately won't model — a mortgage, a spouse's account, an extra card. Each exclusion is written onto `UserState.excluded_external_accounts` keyed on `(system, external_id)`, so every snapshot/check-in surfaces "seen in Monarch, not modeled" and a later `reconcile_with_monarch` stops re-proposing it as an add or held-back item. Idempotent: re-excluding the same key refreshes its record. Returns the recorded exclusions and a new `state_ref`.
 
-| Parameter    | Type   | Description                                                                                |
-| ------------ | ------ | ------------------------------------------------------------------------------------------ |
-| `exclusions` | list   | Accounts to exclude, each `{external_id, label, reason, last_seen_balance_cents?}`.        |
-| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref). |
-| `state_path` | string | Path to a state file on disk, stdio only (one-of).                                         |
-| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                     |
-| `system`     | string | The external source system the exclusions belong to (default: monarch).                    |
+| Parameter    | Type   | Description                                                                                 |
+| ------------ | ------ | ------------------------------------------------------------------------------------------- |
+| `exclusions` | list   | Accounts to exclude, each `{external_id, label, reason, last_seen_balance_cents?}`.         |
+| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).              |
+| `state_path` | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`) |
+| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                      |
+| `system`     | string | The external source system the exclusions belong to (default: monarch).                     |
 
 ### complete_synced_account
 
-Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_input` in `reconcile_with_monarch`'s `held_back` bucket) with the loan terms / property details the source can't supply, plus the ownership it omits, then write it. The candidate is re-identified from the fresh `monarch_accounts_json` by `external_id` (never a stale copy), so balance/name/type stay current; the account is built via the same validated builder as `create_account` and written carrying its `source` provenance (stamped `last_synced`), so a later `reconcile_with_monarch` matches it. It's a no-op (writes nothing) when the id is already linked, knowingly excluded, not in the latest pull, or no longer held back; a mortgage missing `mortgage_terms_json` (or real estate missing `property_details_json`) is reported pending, never partially written. With `confirm=False` (default) it returns an `account_preview`; with `confirm=True` it appends the account and persists a new `state_ref`.
+Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_input` in `reconcile_with_monarch`'s `held_back` bucket) with the loan terms / property details the source can't supply, plus the ownership it omits, then write it. The candidate is re-identified from the fresh `monarch_accounts_json` by `external_id` (never a stale copy), so balance/name/type stay current; the account is validated like `create_account` and written carrying its `source` provenance (stamped `last_synced`), so a later `reconcile_with_monarch` matches it. It's a no-op (writes nothing) when the id is already linked, knowingly excluded, not in the latest pull, or not held back anymore; a mortgage missing `mortgage_terms_json` (or real estate missing `property_details_json`) is reported pending, never partially written. With `confirm=False` (default) it returns an `account_preview`; with `confirm=True` it appends the account and persists a new `state_ref`.
 
 | Parameter               | Type   | Description                                                                                          |
 | ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
@@ -145,8 +145,8 @@ Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_inp
 | `ownership_json`        | dict   | Account ownership (required — the source omits it): `{ownership_type, owner_ids, beneficiary_id?}`.  |
 | `mortgage_terms_json`   | dict   | Mortgage loan terms (required for a `mortgage`; same shape as `create_account`).                     |
 | `property_details_json` | dict   | Property details (required for a `real_estate` account; same shape as `create_account`).             |
-| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_path, state_ref).           |
-| `state_path`            | string | Path to a state file on disk, stdio only (one-of).                                                   |
+| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                       |
+| `state_path`            | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)          |
 | `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
 | `system`                | string | The external source system the external_id belongs to (default: monarch).                            |
 | `confirm`               | bool   | False (default) = validate + return account_preview, no writes; True = append the account + persist. |

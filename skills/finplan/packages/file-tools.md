@@ -45,18 +45,22 @@ MCP tools that produce large datasets always write full results to a file server
 1. Call the tool — response always includes URLs + compact summary
 2. Use the inline **summary** for immediate insights/decisions
 3. If you need to understand the data structure, read `urls.schema` or refer to inline schemas in [charts.md](charts.md) and [projection.md](projection.md)
-4. If querying specific values, use `jq` — do NOT load the full data file into context
+4. If querying specific values, download `urls.data` to a local file and query it with `jq` — do NOT load the full data file into context
 5. For **embedding data into HTML**, use the placeholder/inject pattern (see below and [charts.md](charts.md#html-rendering-workflow))
 
 ```bash
+# Download the data file once (use the actual urls.data from the response)
+mkdir -p "${TMPDIR:-/tmp}/finplan"
+curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/data.json"
+
 # Use jq to extract specific values (do NOT cat or Read the whole data file)
-jq '.percentile_timelines.p50[-1].total_value_cents' /tmp/finplan/{uid}_data.json
+jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/data.json"
 
 # Get a range of months
-jq '.percentile_timelines.p50[0:12]' /tmp/finplan/{uid}_data.json
+jq '.percentile_timelines.p50[0:12]' "${TMPDIR:-/tmp}/finplan/data.json"
 
 # Get p10 vs p90 range at final month
-jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' /tmp/finplan/{uid}_data.json
+jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "${TMPDIR:-/tmp}/finplan/data.json"
 ```
 
 **CRITICAL**: NEVER load data files into context. Use `jq` for targeted queries, or use inline summaries from tool responses.
@@ -66,7 +70,8 @@ jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_time
 When building HTML files, embed data via the placeholder/inject pattern — **never read data files into context or hardcode arrays as JS literals**:
 
 1. **Write the HTML** with placeholder tokens where data should go (e.g., `__DATA_TOTAL_PORTFOLIO__`)
-2. **Run a bash command** to replace each placeholder with the actual file contents:
+2. **Download each `urls.data` file** into one scratch directory, `${TMPDIR:-/tmp}/finplan/`, never the user's working directory: `mkdir -p "${TMPDIR:-/tmp}/finplan" && curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/<file>"`.
+3. **Run a bash command** to replace each placeholder with the downloaded file contents:
 
 ```bash
 python3 -c "
@@ -76,14 +81,13 @@ with open(html_path) as f:
     html = f.read()
 replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
 for placeholder, data_path in replacements.items():
-    path = data_path.replace('file://', '') if data_path.startswith('file://') else data_path
-    with open(path) as f:
+    with open(data_path) as f:
         html = html.replace(placeholder, f.read())
 with open(html_path, 'w') as f:
     f.write(html)
 " dashboard.html \
-  "__DATA_PLACEHOLDER_1__" "/tmp/finplan/{uid1}_data.json" \
-  "__DATA_PLACEHOLDER_2__" "/tmp/finplan/{uid2}_data.json"
+  "__DATA_PLACEHOLDER_1__" "${TMPDIR:-/tmp}/finplan/scenario1_data.json" \
+  "__DATA_PLACEHOLDER_2__" "${TMPDIR:-/tmp}/finplan/scenario2_data.json"
 ```
 
 This keeps the data out of your context window entirely. You already know the data shapes from the inline schemas — use them to write correct JavaScript rendering code.

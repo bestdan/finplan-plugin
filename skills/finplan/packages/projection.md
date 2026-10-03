@@ -6,7 +6,7 @@ Project investment growth with uncertainty using analytical or Monte Carlo metho
 
 - **Constant-return mode**: Input mode where you provide fixed `expected_annual_return` and `annual_volatility`
 - **Timeline mode**: Input mode where you provide time-varying returns via `return_distribution_timeline` (glide paths)
-- **Projection methods**: Computation approaches (`closed_form` = Kan & Zhou analytical, `monte_carlo` = simulation, `deterministic` = no uncertainty, `auto` = automatically select)
+- **Projection methods**: Computation approaches (`closed_form` = analytical, `monte_carlo` = simulation, `deterministic` = no uncertainty, `auto` = automatically select)
 
 ## Tools
 
@@ -16,7 +16,7 @@ Unified projection tool supporting both constant-return and time-varying (glide 
 
 **Two input modes:**
 
-1. **Constant returns** — provide `expected_annual_return`, `annual_volatility`, and `time_horizon_months`. Supports `fees`, `inflation`, and custom `percentiles`. Uses Kan & Zhou analytical methodology.
+1. **Constant returns** — provide `expected_annual_return`, `annual_volatility`, and `time_horizon_months`. Supports `fees`, `inflation`, and custom `percentiles`.
 
 2. **Time-varying returns** — provide `return_distribution_timeline` with monthly entries for glide paths. The time horizon is derived from the timeline length.
 
@@ -38,7 +38,7 @@ Unified projection tool supporting both constant-return and time-varying (glide 
 | `fees`                         | list[dict] | Optional list of fee specs, e.g. `[{"type": "flat_percent", "annual_rate": 0.005}]` (percent of AUM) or `[{"type": "flat_dollar", "annual_amount_cents": 500000}]` (fixed dollars/year). Stackable. A `flat_dollar` fee also takes `price_level`: `"nominal"` (default) is an unindexed contract amount, so its real cost falls as prices rise; `"real"` is a today's-dollars amount that tracks inflation and holds its purchasing power. Two `flat_dollar` fees in different price levels are rejected — they sum into one rail, which carries one frame. |
 | `inflation`                    | float      | Annual inflation rate (0.03 = 3%, default: 0.025). 0 gives nominal dollars. Constant-return mode only.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `percentiles`                  | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]). Constant-return mode only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `cumulative_volatility`        | bool       | For `method="closed_form"` only (ignored otherwise). If True (default), volatility compounds cumulatively over time (scales with sqrt(T)), widening percentile spreads as the horizon grows. If False, uses average per-period volatility (legacy behavior, ~constant spreads) and keeps a projection with cashflows on the analytic form, which is less accurate in the tails.                                                                                                                                                                             |
+| `cumulative_volatility`        | bool       | For `method="closed_form"` only (ignored otherwise). If True (default), volatility compounds cumulatively over time (scales with sqrt(T)), widening percentile spreads as the horizon grows. If False, uses average per-period volatility (~constant spreads) and keeps a projection with cashflows on the analytic form, which is less accurate in the tails.                                                                                                                                                                                              |
 | `summary_only`                 | bool       | When True, skip the per-month time-series data file and return only the inline summary (final_balance_percentiles + scalar metadata). Use for headline-only reads like per-account breakdown tables to avoid a file artifact per call. Default False keeps the full timeline.                                                                                                                                                                                                                                                                               |
 
 Provide **either** constant-return params **or** `return_distribution_timeline`, not both.
@@ -135,10 +135,12 @@ result = run_projection(
 ```
 
 ```bash
-# Use jq to extract specific values (NEVER Read the data file)
-jq '.percentile_timelines.p50[-1].total_value_cents' /tmp/finplan/{uid}_data.json
-jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' /tmp/finplan/{uid}_data.json
-jq '.net_deposits[12].net_deposits_cents' /tmp/finplan/{uid}_data.json
+# Download urls.data once, then query the local copy with jq (NEVER Read the data file)
+mkdir -p "${TMPDIR:-/tmp}/finplan"
+curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/projection_data.json"
+jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/projection_data.json"
+jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "${TMPDIR:-/tmp}/finplan/projection_data.json"
+jq '.net_deposits[12].net_deposits_cents' "${TMPDIR:-/tmp}/finplan/projection_data.json"
 ```
 
 For embedding data in HTML dashboards, use bash to inject file contents directly — see [file-tools.md](file-tools.md).
@@ -174,7 +176,7 @@ run_projection(
 )
 ```
 
-Chaining two calls (feeding one projection's p50 into the next as the starting balance) is no longer necessary, and understates uncertainty by collapsing the first phase to a single percentile.
+Don't chain two calls (feeding one projection's p50 into the next as the starting balance): it understates uncertainty by collapsing the first phase to a single percentile.
 
 ### Time-varying contributions
 

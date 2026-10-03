@@ -28,4 +28,4 @@ Returns: `success` (bool) and `guide` (the markdown document).
 
 - Call `ping()` before any real tool calls if the server may be cold (first use in a session, or after long inactivity).
 - If `authenticated` is `false` and the user expects to be authenticated, troubleshoot the API key configuration before proceeding.
-- The `/finplan:setup` flow calls `ping()` automatically in step 0c.
+- The `/finplan:setup` command calls `ping()` for you.

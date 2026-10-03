@@ -142,8 +142,9 @@ Call `run_projection(...)`. The response includes:
 Download the files so the injection script can read them:
 
 ```bash
-curl -s "https://mcp.finplan.tools/files/{uid}_data.json" -o /tmp/finplan_projection_data.json
-curl -s "https://mcp.finplan.tools/files/{uid}_schema.json" -o /tmp/finplan_projection_schema.json
+mkdir -p "${TMPDIR:-/tmp}/finplan"
+curl -s "https://mcp.finplan.tools/files/{uid}_data.json" -o "${TMPDIR:-/tmp}/finplan/projection_data.json"
+curl -s "https://mcp.finplan.tools/files/{uid}_schema.json" -o "${TMPDIR:-/tmp}/finplan/projection_schema.json"
 ```
 
 Use the actual URLs from `urls.data` and `urls.schema` in the tool response.
@@ -153,7 +154,7 @@ Use the actual URLs from `urls.data` and `urls.schema` in the tool response.
 Read the schema file (it's small) to confirm the field names and types you'll reference in your JS code:
 
 ```bash
-cat /tmp/finplan_projection_schema.json | jq '.structure.fields | keys'
+jq '.structure.fields | keys' "${TMPDIR:-/tmp}/finplan/projection_schema.json"
 ```
 
 The schema tells you exactly what's in the data file without reading it. For `run_projection`, the key fields are:
@@ -283,14 +284,12 @@ for placeholder, data_path in replacements.items():
 with open(html_path, 'w') as f:
     f.write(html)
 " output.html \
-  "__DATA_PROJECTION__" "/tmp/finplan_projection_data.json"
+  "__DATA_PROJECTION__" "${TMPDIR:-/tmp}/finplan/projection_data.json"
 ```
 
 ### Step 6: Open
 
-```bash
-open output.html
-```
+Open `output.html` in a browser.
 
 The result is a self-contained HTML file with all data embedded inline. No runtime fetches needed (except Chart.js CDN).
 
@@ -298,7 +297,7 @@ The result is a self-contained HTML file with all data embedded inline. No runti
 
 Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/npm/chart.js@4">`), which is fine when the page will be opened online. Some commands require a page that renders with **no external requests at all** (e.g. `/finplan:compare-scenarios`) — a CDN `<script src>` breaks that. For those, inline the vendored copy of Chart.js instead of linking it.
 
-- The plugin ships a pinned Chart.js UMD bundle at `${CLAUDE_PLUGIN_ROOT}/assets/chart.umd.min.js` (Chart.js v4.4.6). Treat it as read-only; to upgrade, re-vendor the same `dist/chart.umd.min.js` from the matching `chart.js@<version>` release and bump the note here.
+- The plugin ships a pinned Chart.js UMD bundle at `${CLAUDE_PLUGIN_ROOT}/assets/chart.umd.min.js` (Chart.js v4.4.6). Treat it as read-only.
 - Inline it with the **same placeholder/inject mechanism as the data files** — it is just another token → file replacement. In the `<head>`, write an empty script the injector fills:
 
   ```html
@@ -310,8 +309,8 @@ Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/np
   ```bash
   python3 -c "..." output.html \
     "__CHARTJS__"          "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
-    "__DATA_BASE__"        "/tmp/finplan/base_data.json" \
-    "__DATA_SCENARIO_1__"  "/tmp/finplan/scn1_data.json"
+    "__DATA_BASE__"        "${TMPDIR:-/tmp}/finplan/base_data.json" \
+    "__DATA_SCENARIO_1__"  "${TMPDIR:-/tmp}/finplan/scn1_data.json"
   ```
 
   The vendored bundle contains no `</script>` sequence, so it is safe to inline between script tags. Keeping Chart.js on the same inject pass means it never enters your context either.
@@ -319,7 +318,7 @@ Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/np
 
 ## Chart styling
 
-Use these conventions for consistent styling across all charts. These match the theme defined in `finplan_core.plotting.theme`.
+Use these conventions for consistent styling across all charts.
 
 ### Chart.js options
 

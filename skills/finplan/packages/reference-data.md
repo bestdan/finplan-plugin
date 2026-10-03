@@ -70,12 +70,12 @@ Static lookup data for FinPlan MCP tools. Embedded here to avoid unnecessary too
 
 ## Projection Methods
 
-| Value           | Description                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------ |
-| `closed_form`   | Analytical Kan & Zhou projection with direct percentile computation (default, recommended) |
-| `auto`          | Automatically select deterministic or Monte Carlo based on volatility                      |
-| `deterministic` | Force deterministic projection (requires zero volatility)                                  |
-| `monte_carlo`   | Force Monte Carlo simulation (works with any volatility)                                   |
+| Value           | Description                                                                     |
+| --------------- | ------------------------------------------------------------------------------- |
+| `closed_form`   | Analytical projection with direct percentile computation (default, recommended) |
+| `auto`          | Automatically select deterministic or Monte Carlo based on volatility           |
+| `deterministic` | Force deterministic projection (requires zero volatility)                       |
+| `monte_carlo`   | Force Monte Carlo simulation (works with any volatility)                        |
 
 Use `closed_form` for most cases. Use `monte_carlo` only for complex scenarios or to validate closed-form results.
 
