@@ -42,7 +42,7 @@ https://mcp.finplan.tools/mcp
 
 ## If MCP tools aren't available
 
-FinPlan tools carry one of three prefixes, depending on how the server was connected: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (added by hand with `claude mcp add`). Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` is a FinPlan tool. If no such tool appears in the tools or deferred tools list, the MCP connection failed to establish. Do NOT try to call MCP tools or curl the server directly — run `/finplan:diagnose` instead. It tests server reachability, authentication, and tool availability client-side and provides specific remediation steps.
+FinPlan tools carry one of three prefixes, depending on how the server was connected: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (a `finplan` entry in a project `.mcp.json`, or added with `claude mcp add`). Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` is a FinPlan tool. If no such tool appears in the tools or deferred tools list, the MCP connection failed to establish. Do NOT try to call MCP tools or curl the server directly — run `/finplan:diagnose` instead. It tests server reachability, authentication, and tool availability client-side and provides specific remediation steps.
 
 ## File-Based Responses
 

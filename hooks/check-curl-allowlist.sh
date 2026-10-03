@@ -22,7 +22,7 @@ cat <<'EOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, add \"Bash(curl*mcp.finplan.tools*)\" to the permissions.allow array in ~/.claude/settings.json (keep existing entries). It allowlists curl only for the FinPlan file server. Adding \"mcp__plugin_finplan_finplan\" there too stops the per-call prompt for FinPlan tools. Offer to make the edit; do not make it without the user's consent."
+    "additionalContext": "TIP: FinPlan tools download result files via curl. To avoid repeated approval prompts, add \"Bash(curl*mcp.finplan.tools*)\" to the permissions.allow array in ~/.claude/settings.json (keep existing entries). It allowlists curl only for the FinPlan file server. Adding \"mcp__plugin_finplan_finplan\" there too stops the per-call prompt for FinPlan tools. If the project's own .mcp.json defines a finplan server, its tools are named mcp__finplan__*, so add \"mcp__finplan\" as well (keep the plugin rule; ~/.claude/settings.json applies to every project). Offer to make the edit; do not make it without the user's consent."
   }
 }
 EOF

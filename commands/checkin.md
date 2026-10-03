@@ -11,6 +11,7 @@ allowed-tools:
   - Skill(finplan:read-snapshot)
   - Skill(finplan:save-snapshot)
   - mcp__plugin_finplan_finplan
+  - mcp__finplan
 argument-hint: [as_of] [--force]
 ---
 

@@ -59,7 +59,7 @@ If the response includes `"status": "authenticated"`, the key is valid. If the c
 
 ### 4. Check MCP tools in session
 
-Use the `ToolSearch` tool to look for the FinPlan `ping` tool under any of its three prefixes: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (added by hand). For example, query `"finplan ping"`. Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` means the MCP connection is working. If no tools are found, the connection failed to establish during session startup.
+Use the `ToolSearch` tool to look for the FinPlan `ping` tool under any of its three prefixes: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (a `finplan` entry in a project `.mcp.json`, or added with `claude mcp add`). For example, query `"finplan ping"`. Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` means the MCP connection is working. If no tools are found, the connection failed to establish during session startup.
 
 ### 5. Report results and provide guidance
 
@@ -77,7 +77,7 @@ Based on the results above, report what you found and give the user one of these
 If the automated steps above don't resolve the problem, check for these common issues:
 
 - **Plugin MCP not enabled**: After installing the plugin, the MCP server must be enabled. Go to `/plugins` → Installed → finplan and make sure MCP is toggled on. Restart the session afterward.
-- **Wrong `type` in `.mcp.json`**: The MCP server type must be `"type": "url"`, not `"type": "http"`. If your `.mcp.json` has `"http"`, change it to `"url"` and restart.
+- **Wrong `url` or `type` in `.mcp.json`**: The server URL must be `https://mcp.finplan.tools/mcp` and `type` must be `"http"`. A server declared with `"type": "url"` is skipped silently, with no error, so it never appears in `claude mcp list`.
 - **Project `.mcp.json` overrides plugin**: If there's a `.mcp.json` in the project directory defining `mcpServers.finplan`, it completely overrides the plugin's MCP config. Make sure the project-level config is valid — check the `type` and `url` fields.
 - **Key saved but not active**: `.mcp.json` is read at session startup. If you just ran `/finplan:login` and saved a key, you must restart Claude Code for the MCP server to connect with the new credentials.
 - **OAuth token expired mid-session**: OAuth-issued tokens last 3 days. If tool calls start failing with 401 after working earlier, Claude Code should re-open the browser on the next call. If it doesn't, restart the session to force a fresh OAuth handshake.
