@@ -120,7 +120,9 @@ Key fields:
 
 ## HTML rendering workflow
 
-Follow these steps to generate any chart — ad-hoc, dashboard, or one-off visualization.
+**Choose the path before Step 1.** For a standard fan chart from simple inputs (initial balance, return, volatility, horizon, monthly contribution, inflation), call [`generate_projection_fan_chart`](#generate_projection_fan_chart) instead of running Steps 1–4: its data file carries a ready `chartjs` config with the p10–p90 and p25–p75 bands, the median line and, unless `show_deposits_line` is false, the net-deposits line. Download that file, write a page whose script is `const DATA = __DATA_CHART__;` followed by `new Chart(ctx, DATA.chartjs)`, and inject the file as in Step 5.
+
+Follow Steps 1–6 when the chart must reflect `run_projection`'s richer inputs, or needs a layout that tool can't produce.
 
 ### Step 1: Run the projection
 
@@ -158,7 +160,7 @@ The schema tells you exactly what's in the data file without reading it. For `ru
 
 ### Step 4: Write the HTML with placeholder tokens
 
-Write the HTML file using the Write tool. Use a **placeholder token** where the data should go. Write JS that references the data structure you confirmed in step 3:
+Write the HTML file using the Write tool. Put a **placeholder token** where the data should go, and write JS that reads the fields you confirmed in step 3:
 
 ```html
 <!DOCTYPE html>
@@ -169,92 +171,9 @@ Write the HTML file using the Write tool. Use a **placeholder token** where the 
 <body>
   <canvas id="chart"></canvas>
   <script>
-    // Placeholder — will be replaced with actual JSON in step 5
-    const DATA = __DATA_PROJECTION__;
-
-    // Extract time series from the injected data
+    const DATA = __DATA_PROJECTION__; // replaced with the JSON file in step 5
     const p50 = DATA.percentile_timelines.p50;
-    const p10 = DATA.percentile_timelines.p10;
-    const p90 = DATA.percentile_timelines.p90;
-    const p25 = DATA.percentile_timelines.p25;
-    const p75 = DATA.percentile_timelines.p75;
-    const deposits = DATA.net_deposits;
-
-    const labels = p50.map(s => (s.month / 12).toFixed(1));
-
-    new Chart(document.getElementById('chart').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [
-          // Outer band upper boundary (invisible line)
-          {
-            label: 'p90',
-            data: p90.map(s => s.total_value_cents / 100),
-            borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
-            fill: false
-          },
-          // Outer band lower boundary (fills up to p90)
-          {
-            label: '10th–90th Percentile',
-            data: p10.map(s => s.total_value_cents / 100),
-            borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
-            fill: '-1', backgroundColor: 'rgba(59, 130, 246, 0.1)'
-          },
-          // Inner band upper boundary (invisible line)
-          {
-            label: 'p75',
-            data: p75.map(s => s.total_value_cents / 100),
-            borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
-            fill: false
-          },
-          // Inner band lower boundary (fills up to p75)
-          {
-            label: '25th–75th Percentile',
-            data: p25.map(s => s.total_value_cents / 100),
-            borderColor: 'transparent', borderWidth: 0, pointRadius: 0,
-            fill: '-1', backgroundColor: 'rgba(59, 130, 246, 0.2)'
-          },
-          // Median line
-          {
-            label: 'Median (50th)',
-            data: p50.map(s => s.total_value_cents / 100),
-            borderColor: '#3b82f6', borderWidth: 2.5, pointRadius: 0,
-            fill: false
-          },
-          // Net deposits reference line
-          {
-            label: 'Net Deposits',
-            data: deposits.map(d => d.net_deposits_cents / 100),
-            borderColor: '#8b5cf6', borderWidth: 2, borderDash: [5, 5],
-            pointRadius: 0, fill: false
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          tooltip: {
-            mode: 'index', intersect: false,
-            itemSort: (a, b) => b.raw - a.raw
-          },
-          legend: { position: 'top', labels: { usePointStyle: true } }
-        },
-        scales: {
-          x: { title: { display: true, text: 'Years' } },
-          y: {
-            title: { display: true, text: 'Portfolio Value' },
-            beginAtZero: true,
-            ticks: {
-              callback: v => v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
-                : v >= 1e3 ? '$' + (v/1e3).toFixed(0) + 'k' : '$' + v
-            }
-          }
-        }
-      }
-    });
+    // build datasets from p10..p90 and DATA.net_deposits, then: new Chart(ctx, config)
   </script>
 </body>
 </html>
@@ -270,111 +189,8 @@ Open `output.html` in a browser.
 
 The result is a self-contained HTML file with all data embedded inline. No runtime fetches needed (except Chart.js CDN).
 
-### Fully offline pages (vendored Chart.js)
+## Styling
 
-Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/npm/chart.js@4">`), which is fine when the page will be opened online. Some commands require a page that renders with **no external requests at all** (e.g. `/finplan:compare-scenarios`) — a CDN `<script src>` breaks that. For those, inline the vendored copy of Chart.js instead of linking it.
-
-- The plugin ships a pinned Chart.js UMD bundle at `${CLAUDE_PLUGIN_ROOT}/assets/chart.umd.min.js` (Chart.js v4.4.6). Treat it as read-only.
-- Inline it with the **same placeholder/inject mechanism as the data files** — it is just another token → file replacement. In the `<head>`, write an empty script the injector fills:
-
-  ```html
-  <script>__CHARTJS__</script>
-  ```
-
-  Then add the vendored path as one more pair on the [inject script](file-tools.md#embedding-data-in-self-contained-html-files) call:
-
-  ```bash
-  python3 -c "..." output.html \
-    "__CHARTJS__"          "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
-    "__DATA_BASE__"        "${TMPDIR:-/tmp}/finplan/base_data.json" \
-    "__DATA_SCENARIO_1__"  "${TMPDIR:-/tmp}/finplan/scn1_data.json"
-  ```
-
-  The vendored bundle contains no `</script>` sequence, so it is safe to inline between script tags. Keeping Chart.js on the same inject pass means it never enters your context either.
-- **Vertical milestone lines** (e.g. a dashed line at the retirement age) — draw them with a tiny inline `afterDraw` Chart.js plugin that strokes the canvas, rather than vendoring `chartjs-plugin-annotation`. Keeping one vendored asset keeps the offline story simple.
-
-## Chart styling
-
-Use these conventions for consistent styling across all charts.
-
-### Chart.js options
-
-```javascript
-{
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: { mode: 'index', intersect: false },
-  plugins: {
-    legend: { position: 'top', labels: { usePointStyle: true } },
-    tooltip: {
-      mode: 'index',
-      intersect: false,
-      // Sort tooltip items highest-to-lowest value
-      itemSort: (a, b) => b.raw - a.raw
-    }
-  }
-}
-```
-
-### Font stack
-
-```
-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
-```
-
-### Grid and axes
-
-- Grid color: `#e5e7eb`
-- Y-axis currency formatting: custom tick callback with `$` prefix and SI suffixes (`$100k`, `$1.2M`)
-- X-axis: years (months / 12) for projections
-
-### Fan chart bands
-
-- Outer band (p10-p90): `rgba(59, 130, 246, 0.1)` — fill between p90 (upper boundary) and p10 with `fill: '-1'`
-- Inner band (p25-p75): `rgba(59, 130, 246, 0.2)` — fill between p75 (upper boundary) and p25 with `fill: '-1'`
-- Median (p50): `#3b82f6`, `borderWidth: 2.5`, solid line
-- Net deposits: `#8b5cf6` (purple), `borderWidth: 2`, dashed (`borderDash: [5, 5]`)
-- All band boundary lines: `pointRadius: 0`, `borderColor: 'transparent'`
-
-### Percentile colors (when shown individually)
-
-| Percentile | Color      | Hex       |
-| ---------- | ---------- | --------- |
-| p90        | Emerald    | `#10b981` |
-| p75        | Lt Emerald | `#34d399` |
-| p50        | Blue       | `#3b82f6` |
-| p25        | Orange     | `#f97316` |
-| p10        | Red        | `#ef4444` |
-
-### Account type colors (for stacked/breakdown charts)
-
-| Account type         | Color  | Hex       |
-| -------------------- | ------ | --------- |
-| Traditional 401k/IRA | Blue   | `#3b82f6` |
-| Roth accounts        | Green  | `#10b981` |
-| Taxable brokerage    | Amber  | `#f59e0b` |
-| HSA                  | Pink   | `#ec4899` |
-| 529 Education        | Purple | `#8b5cf6` |
-| Real estate          | Indigo | `#6366f1` |
-| Cash/savings         | Gray   | `#6b7280` |
-
-### Goal-specific fan chart colors
-
-| Goal type       | Base color                   |
-| --------------- | ---------------------------- |
-| Retirement      | Green — `rgba(16, 185, 129)` |
-| Education       | Amber — `rgba(245, 158, 11)` |
-| Total portfolio | Blue — `rgba(59, 130, 246)`  |
-
-### Multi-account palette (for ad-hoc charts with multiple series)
-
-`#0ea5e9` (sky), `#8b5cf6` (purple), `#ec4899` (pink), `#f59e0b` (amber), `#10b981` (emerald), `#ef4444` (red), `#6366f1` (indigo)
-
-### Page design (for full-page HTML output)
-
-- Background: `#f0f2f5`
-- Cards: white, `border-radius: 12px`, `box-shadow: 0 2px 8px rgba(0,0,0,0.08)`
-- Responsive grid layout using CSS grid
-- Mobile-friendly with `@media` breakpoints
+Chart colors, palettes and page design for the plugin's dashboard and scenario pages are defined with the commands that build those pages, not here.
 
 See [file-tools.md](file-tools.md) for more on file-based responses and the injection workflow.

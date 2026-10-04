@@ -125,18 +125,18 @@ base hash no longer matches the state.
 ## Step 5: Render the fully offline comparison page
 
 Write `scenarios/scenario_comparison.html` — a single self-contained file that makes **no
-external requests**. Build it from the chart conventions in
-[charts.md](../skills/finplan/packages/charts.md) — the **data-handling rules**, the
-**placeholder/inject** workflow, **[Fully offline pages (vendored Chart.js)](../skills/finplan/packages/charts.md#fully-offline-pages-vendored-chartjs)**,
-and the fixed hues / band opacities / `afterDraw` marker pattern. **charts.md is the single
-reference to read** — the exact hues you need are also listed below, so you don't need to
+external requests**. Build it from the page conventions in
+[html-pages.md](../references/html-pages.md) — the **placeholder/inject** workflow,
+**[Fully offline pages (vendored Chart.js)](../references/html-pages.md#fully-offline-pages-vendored-chartjs)**,
+and the band opacities / `afterDraw` marker pattern. **html-pages.md is the single
+reference to read** — the exact column hues you need are listed below, so you don't need to
 open the `dataviz` skill's palette file. Treat `dataviz` only as the **light + dark
 validation standard** the finished palette must pass, not a from-scratch design read.
 
 > **This is a local file on the user's disk, not a claude.ai Artifact.** Produce it with
 > the `Write` tool and open it with `open` — do **not** use the Artifact tool or the
 > `artifact-design` flow. An Artifact is hosted remotely and would break the offline,
-> file-next-to-your-state contract this command exists to provide. `charts.md` is the
+> file-next-to-your-state contract this command exists to provide. `html-pages.md` is the
 > design reference to pull in here.
 
 > **Offline requirement (this is the point of this command).** Do **not** use the Chart.js
@@ -156,7 +156,7 @@ validation standard** the finished palette must pass, not a from-scratch design 
      this page) — clicking a column opens the page scoped to just that scenario. If that
      page hasn't been generated yet the link 404s locally; note in your reply that
      `/finplan:scenario <slug>` builds it. This is the **next level down** the hierarchy
-     (see [scenarios.md](../skills/finplan/packages/scenarios.md#scenario-view-hierarchy-html-pages)).
+     (see [scenario.md](scenario.md#scenario-view-hierarchy-html-pages)).
    - Stat tiles: median (p50) after-tax wealth at the horizon; p10 ("if markets
      disappoint"); each goal's success probability. Every **non-base** column shows a
      **delta chip vs base** (e.g. `−$412k`, `−9 pts`) — always with **sign + label** and a
@@ -171,7 +171,7 @@ validation standard** the finished palette must pass, not a from-scratch design 
      scenario slots `#f59e0b`, `#10b981`, `#8b5cf6`, `#ec4899` (one per possible column up to
      the 4-scenario cap) — never re-colored as columns change. Share one y-axis max across
      all columns so the heights compare directly. X-axis in ages; mark the retirement age
-     with a dashed vertical line (a small inline `afterDraw` plugin, per charts.md — not a
+     with a dashed vertical line (a small inline `afterDraw` plugin, per html-pages.md — not a
      vendored annotation plugin).
 3. **Footer** — assumptions line (horizon, inflation, method) and a generation timestamp.
 

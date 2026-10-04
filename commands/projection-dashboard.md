@@ -167,7 +167,7 @@ For each goal, generate the appropriate chart type:
 
 #### CRITICAL: Do NOT read or inline data
 
-**NEVER load data files into context** — no `Read` tool, no `WebFetch`, no hardcoded JS arrays. See [charts.md — data handling rules](../skills/finplan/packages/charts.md#data-handling-rules) for the full policy.
+**NEVER load data files into context** — no `Read` tool, no `WebFetch`, no hardcoded JS arrays. See [SKILL.md — data files stay out of context](../skills/finplan/SKILL.md#data-files-stay-out-of-context) for the full policy.
 
 - **Summary cards**: Use `summary` from each MCP tool response (small scalar values, safe to use directly)
 - **Chart rendering**: Use the inline schemas below or read `urls.schema` to confirm field names
@@ -254,7 +254,7 @@ Use the actual `urls.data` paths returned by each MCP tool call (strip the `file
 
 ### Chart styling
 
-Follow the chart styling conventions in [charts.md](../skills/finplan/packages/charts.md#chart-styling) — colors, fonts, fan chart bands, account colors, goal colors, and page design are all defined there.
+Follow the chart styling conventions in [html-pages.md](../references/html-pages.md#chart-styling) — colors, fonts, fan chart bands, account colors, goal colors, and page design are all defined there.
 
 Dashboard-specific additions:
 

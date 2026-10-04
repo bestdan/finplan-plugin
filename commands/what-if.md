@@ -116,9 +116,9 @@ longer matches the state.
 ## Step 5: Render the comparison page
 
 Write `scenarios/what_if_comparison.html` — a single self-contained file. Follow the
-chart conventions in [charts.md](../skills/finplan/packages/charts.md) (especially the
-**data-handling rules** and the **placeholder/inject** workflow — the timelines must
-never pass through your context). Chart.js from the CDN
+page conventions in [html-pages.md](../references/html-pages.md), the
+[data-handling rules](../skills/finplan/SKILL.md#data-files-stay-out-of-context) and the
+**placeholder/inject** workflow — the timelines must never pass through your context. Chart.js from the CDN
 (`https://cdn.jsdelivr.net/npm/chart.js@4`); everything else inline.
 
 > This is the built-in DIY comparison view. The dedicated scenario-management surface —
@@ -152,11 +152,11 @@ Page structure:
 `compare_scenarios` returns a **single** data file holding every column's timelines
 keyed by `scenario_id` (the base included) — so inject it **once**: write one
 `__DATA_COMPARISON__` token, replace it with the on-disk JSON via the `python3`
-one-liner (see charts.md), then index each column's timeline off that one object by
+one-liner (the [inject script](../skills/finplan/packages/file-tools.md#embedding-data-in-self-contained-html-files)), then index each column's timeline off that one object by
 `scenario_id`/slug in the chart JS. Do not emit a token per scenario — that would
 copy the whole dataset into the page N times. Keep it readable: axis labels ≥ 12px,
-tooltips on hover, both light and dark themes via `prefers-color-scheme`, both
-validated.
+tooltips on hover, both light and dark themes via `prefers-color-scheme` (dark values
+from the `dataviz` skill's validated palettes), both validated.
 
 ## Step 6: Open and report
 

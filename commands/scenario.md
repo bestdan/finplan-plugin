@@ -23,8 +23,7 @@ outcomes — and any **ad-hoc analyses** you attach, which live _inside_ this sc
 its children (never promoted to peer level with the other scenarios).
 
 The scenario is one of the `scenarios/<slug>.json` files that `/finplan:what-if` writes
-next to your state file. See the three-level hierarchy in
-[scenarios.md](../skills/finplan/packages/scenarios.md#scenario-view-hierarchy-html-pages):
+next to your state file. The pages form the three-level hierarchy below:
 **comparison (all scenarios) → this single-scenario page → ad-hoc visuals within it.**
 
 Arguments (`$ARGUMENTS`):
@@ -36,6 +35,35 @@ Arguments (`$ARGUMENTS`):
 All money is in **integer cents** (`$500.00` = `50000`); rates are decimals (`0.07` = 7%).
 All projection and tax math is done server-side by the MCP tools — never do the arithmetic
 yourself.
+
+## Scenario view hierarchy (HTML pages)
+
+The plugin renders scenarios as **offline, self-contained HTML** at three nested levels. Each
+level is one step more focused than the one above it, and the files live in a matching
+directory shape next to the user's state file:
+
+| Level               | Scope                                                                                 | Page                                                                        | Command                                   |
+| ------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| **Comparison**      | base vs **all** scenarios, side-by-side as peers                                      | `scenarios/scenario_comparison.html`                                        | `/finplan:compare-scenarios`              |
+| **Single scenario** | **one** scenario's overrides, projection detail, goal outcomes                        | `scenarios/<slug>/scenario.html`                                            | `/finplan:scenario <slug>`                |
+| **Ad-hoc visual**   | an on-demand analysis **within** one scenario (e.g. a year-by-year tax/college table) | `scenarios/<slug>/adhoc/<analysis>.json` → rendered on that scenario's page | `/finplan:scenario <slug> --analysis "…"` |
+
+```
+scenarios/
+  scenario_comparison.html      # comparison level — all scenarios
+  <slug>.json                   # the scenario record (/finplan:what-if writes this)
+  <slug>/
+    scenario.html               # single-scenario drill-down page
+    adhoc/
+      <analysis>.json           # ad-hoc analysis, a child of this scenario
+```
+
+**Drill direction:** a scenario column in the comparison page links down to that scenario's
+`<slug>/scenario.html`; the single-scenario page links back up to
+`../scenario_comparison.html`. **Ad-hocs are children of their scenario**: they render on
+`<slug>/scenario.html` and are stored under `scenarios/<slug>/adhoc/`, never promoted to a
+peer scenario at the comparison level. Both HTML levels use the vendored-Chart.js offline
+convention in [html-pages.md](../references/html-pages.md#fully-offline-pages-vendored-chartjs).
 
 ## Step 1: Resolve the scenario and pin the base
 
@@ -102,9 +130,9 @@ funded-balance note in Step 4).
 
 Write `scenarios/<slug>/scenario.html` (create the `scenarios/<slug>/` directory first) — a
 single, fully **offline** self-contained file that makes **no external requests**. Follow
-the `dataviz` skill and the chart conventions in
-[charts.md](../skills/finplan/packages/charts.md) — the **data-handling rules**, the
-**placeholder/inject** workflow, and **[Fully offline pages (vendored Chart.js)](../skills/finplan/packages/charts.md#fully-offline-pages-vendored-chartjs)**.
+the `dataviz` skill and the page conventions in
+[html-pages.md](../references/html-pages.md) — the **placeholder/inject** workflow, the chart
+styling, and **[Fully offline pages (vendored Chart.js)](../references/html-pages.md#fully-offline-pages-vendored-chartjs)**.
 
 > **Offline requirement.** Do **not** use the Chart.js CDN. Put an empty
 > `<script>__CHARTJS__</script>` in the `<head>` and inject the vendored bundle at
@@ -128,7 +156,7 @@ the `dataviz` skill and the chart conventions in
    `#f59e0b`, `#10b981`, `#8b5cf6` in column order (if this scenario falls outside the newest 4,
    use the next hue and say so). Stat tiles: median (p50) and p10 after-tax wealth
    at the horizon, each with a **delta chip vs base** (sign + label + status color). Milestone
-   lines (e.g. retirement age) via a tiny inline `afterDraw` plugin, per charts.md.
+   lines (e.g. retirement age) via a tiny inline `afterDraw` plugin, per html-pages.md.
 4. **Goal outcomes** — per-goal success probability under this scenario, each with its
    **delta vs base** (censoring-aware: show a bound when the band is censored).
 5. **Ad-hoc analyses** — a section that renders every ad-hoc attached to this scenario (see

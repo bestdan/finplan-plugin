@@ -92,7 +92,7 @@ with open(html_path, 'w') as f:
 
 This keeps the data out of your context window entirely. You already know the data shapes from the inline schemas — use them to write correct JavaScript rendering code.
 
-For chart styling, colors, and the full HTML rendering workflow, see [charts.md](charts.md#html-rendering-workflow).
+For the full HTML rendering workflow, see [charts.md](charts.md#html-rendering-workflow).
 
 ## Schema File Format
 
