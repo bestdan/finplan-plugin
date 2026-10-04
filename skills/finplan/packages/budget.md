@@ -20,7 +20,8 @@ Income streams, expenses, and budget summary calculations.
 
 ### create_income_stream
 
-- `is_pretax` (default true) marks gross income.
+- `is_pretax` (default true) marks gross income. Only pre-tax streams are taxed when `project_plan` computes income tax; a false one is cash that is never taxed.
+- `earner_person_id` names the person who earns the stream, for computed tax (payroll tax is per earner). Omitted, it is the stream's activation person, else the primary person.
 - `start_date` / `end_date`: omitted start means already active, omitted end means indefinite.
 - `price_level` is `"real"` (default; today's dollars, grown by inflation in `project_cashflow`) or `"nominal"` (future face value, for contractually fixed amounts like non-COLA pensions).
 - On a `"real"` item, `annual_growth_rate` (decimal, e.g. 0.03; default 0.0) is growth above inflation.
@@ -28,6 +29,7 @@ Income streams, expenses, and budget summary calculations.
 ### create_expense
 
 - `is_essential` (default true) marks a non-discretionary expense.
+- `deductible_as` (`"property_tax"`, `"charitable_cash"` or `"medical"`) marks which itemized deduction the expense feeds when `project_plan` computes income tax; omitted means not deductible. The category is unchanged, so property tax stays `housing`. A `taxes`-category expense is replaced by the computed tax — see [projection.md](projection.md#project_plan).
 - `start_date` / `end_date`: omitted start means already active, omitted end means indefinite.
 - `price_level` is `"real"` (default; today's dollars, grown by inflation in `project_cashflow`) or `"nominal"` (future face value, for contractually fixed amounts like fixed-rate mortgage/loan payments).
 - On a `"real"` item, `annual_growth_rate` (decimal, e.g. 0.03; default 0.0) is growth above inflation. Do not set it to CPI just to keep up; `"real"` already does that.
