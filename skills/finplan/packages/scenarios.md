@@ -56,7 +56,7 @@ Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 - `inflation` is a decimal (default 0.025; 0 gives nominal dollars). An inflation override in a scenario replaces it for that scenario.
 - `percentiles` defaults to [10, 25, 50, 75, 90].
 - `marginal_ordinary_rate` (default 0.22) and `ltcg_rate` (default 0.15) are household rates for after-tax values.
-- `method` defaults to `"closed_form"`. `iterations` (default 1000) and `seed` apply only to `method="monte_carlo"`.
+- `method` defaults to `"closed_form"`. `iterations` (default 1000) and `seed` apply only to `method="monte_carlo"`; `seed` pins the draw, and omitting it uses a fixed default.
 
 The response is file URLs plus a compact inline summary, including `summary.inputs.base_state_ref` for reuse as `base.state_ref` while live. The per-month timelines live in the data file only.
 
