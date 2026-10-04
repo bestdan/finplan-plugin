@@ -2,6 +2,19 @@
 
 Capital market assumptions, portfolio characteristics, and glide path generation.
 
+<!-- BEGIN GENERATED: tool-index portfolio -->
+
+## Tool index
+
+| Tool                                        | Description                                                                                                 | Parameters                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `calculate_portfolio_characteristics`       | Calculate expected return and volatility for a portfolio allocation.                                        | stocks_pct, bonds_pct, cash_pct, assumption_preset?                  |
+| `calculate_portfolio_characteristics_batch` | Batch calculate_portfolio_characteristics: expected return and volatility for many allocations in one call. | allocations[{stocks_pct, bonds_pct, cash_pct, ...}]                  |
+| `create_portfolio_assumptions`              | Create capital market assumptions (returns + volatility per asset class) from a preset.                     | preset?, stocks_return?, bonds_return?, cash_return?                 |
+| `generate_glide_path`                       | Generate a glide path transitioning between two allocations over time.                                      | start_stocks_pct, start_bonds_pct, start_cash_pct, end_*, num_years? |
+
+<!-- END GENERATED: tool-index portfolio -->
+
 ## Tools
 
 ### calculate_portfolio_characteristics

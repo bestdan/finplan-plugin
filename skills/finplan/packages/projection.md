@@ -8,6 +8,19 @@ Project investment growth with uncertainty using analytical or Monte Carlo metho
 - **Timeline mode**: Input mode where you provide time-varying returns via `return_distribution_timeline` (glide paths)
 - **Projection methods**: Computation approaches (`closed_form` = analytical, `monte_carlo` = simulation, `deterministic` = no uncertainty, `auto` = automatically select)
 
+<!-- BEGIN GENERATED: tool-index projection -->
+
+## Tool index
+
+| Tool                         | Description                                                                                                             | Parameters                                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `compare_return_assumptions` | Compare market outcomes under conservative, moderate, and aggressive return assumptions (not plan scenarios).           | initial_balance_cents, years?, num_simulations?                                                        |
+| `project_plan`               | Project a whole household plan from UserState: per-account projections aggregated into one after-tax outcome.           | state_json, time_horizon_months?, assumptions_preset?, inflation?, marginal_ordinary_rate?, ltcg_rate? |
+| `run_projection`             | Run a financial projection (closed-form or Monte Carlo) with constant or time-varying returns.                          | initial_balance_cents, expected_annual_return?, annual_volatility?, time_horizon_months?               |
+| `run_projections`            | Batch run_projection: run many independent projections in parallel in one call (per-account or per-allocation fan-out). | projections[{initial_balance_cents, expected_annual_return?, ...}]                                     |
+
+<!-- END GENERATED: tool-index projection -->
+
 ## Tools
 
 ### run_projection

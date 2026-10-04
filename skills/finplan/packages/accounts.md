@@ -2,6 +2,19 @@
 
 Financial account types, allocations, ownership, and creation.
 
+<!-- BEGIN GENERATED: tool-index accounts -->
+
+## Tool index
+
+| Tool                                    | Description                                                                                                  | Parameters                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `create_account`                        | Create a financial account with balance, ownership, and allocation.                                          | account_type, balance_cents, ownership_json, allocation_json?, tax_treatment? |
+| `get_account_limits`                    | Get default limits and restrictions for an account type (FDIC, RMD, etc.).                                   | account_type, birth_year?                                                     |
+| `get_allowed_asset_classes_for_account` | Get the asset classes (stocks, bonds, cash, crypto, real estate, other) allowed for a specific account type. | account_type                                                                  |
+| `list_account_types`                    | List all valid account_type string values with short descriptions.                                           | (no parameters)                                                               |
+
+<!-- END GENERATED: tool-index accounts -->
+
 ## Tools
 
 ### create_account

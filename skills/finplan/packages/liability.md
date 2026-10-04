@@ -2,6 +2,16 @@
 
 Debt paydown projection for non-mortgage liabilities (credit cards, student / auto / personal / other loans). For mortgages, use [mortgage.md](mortgage.md).
 
+<!-- BEGIN GENERATED: tool-index liability -->
+
+## Tool index
+
+| Tool                       | Description                                                                | Parameters                                                                                             |
+| -------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `project_liability_payoff` | Project a non-mortgage liability's month-by-month balance and payoff date. | balance_cents, annual_interest_rate, monthly_payment_cents, months, extra_payment_cents?, term_months? |
+
+<!-- END GENERATED: tool-index liability -->
+
 ## Tools
 
 ### project_liability_payoff

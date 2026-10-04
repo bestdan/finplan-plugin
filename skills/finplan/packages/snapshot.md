@@ -2,6 +2,19 @@
 
 Build immutable, point-in-time facts records (snapshots) from planning state, and diff two of them. Snapshots are how recurring check-ins capture "what was true on date X" — frozen, versioned, and diffable.
 
+<!-- BEGIN GENERATED: tool-index snapshot -->
+
+## Tool index
+
+| Tool                    | Description                                                                                                                                     | Parameters                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `build_snapshot`        | Build an immutable, versioned point-in-time snapshot from a planning-state document.                                                            | state_json, as_of, assumption_preset?, stocks_return?, ... |
+| `diff_snapshots`        | Compute structured, signed deltas between two snapshots (net worth, allocation, goals).                                                         | old_snapshot_json, new_snapshot_json                       |
+| `fill_checkin_template` | Fill a check-in template's ${dotted.path} markers from a snapshot (cents rendered as dollars; ${narrative:*} and unresolvable paths preserved). | snapshot_json, template?                                   |
+| `get_checkin_template`  | Return the canonical check-in narrative template (markdown with ${dotted.path} markers).                                                        | (no parameters)                                            |
+
+<!-- END GENERATED: tool-index snapshot -->
+
 ## Tools
 
 ### build_snapshot

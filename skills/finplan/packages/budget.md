@@ -2,6 +2,19 @@
 
 Income streams, expenses, and budget summary calculations.
 
+<!-- BEGIN GENERATED: tool-index budget -->
+
+## Tool index
+
+| Tool                   | Description                                                                                     | Parameters                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `create_expense`       | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate. | name, category, amount_cents, frequency, is_essential?, annual_growth_rate? |
+| `create_income_stream` | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.  | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate? |
+| `get_budget_summary`   | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate.          | income_streams_json?, expenses_json?, as_of_date?                           |
+| `project_cashflow`     | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).          | horizon_years, income_streams_json?, expenses_json?, start_date?            |
+
+<!-- END GENERATED: tool-index budget -->
+
 ## Tools
 
 ### create_income_stream

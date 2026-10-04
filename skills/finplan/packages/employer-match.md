@@ -2,6 +2,18 @@
 
 401(k) employer matching formulas, vesting schedules, and match calculations.
 
+<!-- BEGIN GENERATED: tool-index employer_match -->
+
+## Tool index
+
+| Tool                            | Description                                                                       | Parameters                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `calculate_401k_employer_match` | Calculate the employer match amount for a given employee contribution.            | employer_match_json, employee_contribution_cents, annual_compensation_cents |
+| `calculate_401k_vested_amount`  | Calculate the vested portion of employer contributions based on years of service. | employer_match_json, total_employer_contributions_cents, years_of_service   |
+| `create_employer_match`         | Create an employer matching configuration for a 401(k) plan.                      | formula_type, tiers?, vesting_type?, annual_match_cap_cents?                |
+
+<!-- END GENERATED: tool-index employer_match -->
+
 ## Tools
 
 ### create_employer_match

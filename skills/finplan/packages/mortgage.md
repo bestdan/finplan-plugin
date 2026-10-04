@@ -2,6 +2,17 @@
 
 Mortgage payment calculations and amortization schedules.
 
+<!-- BEGIN GENERATED: tool-index mortgage -->
+
+## Tool index
+
+| Tool                                      | Description                                                              | Parameters                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `calculate_mortgage_monthly_payment`      | Calculate the fixed monthly principal + interest payment for a mortgage. | principal_cents, annual_interest_rate, term_months                                 |
+| `generate_mortgage_amortization_schedule` | Generate a month-by-month amortization schedule for a mortgage.          | original_principal_cents, annual_interest_rate, term_months, monthly_payment_cents |
+
+<!-- END GENERATED: tool-index mortgage -->
+
 ## Tools
 
 ### calculate_mortgage_monthly_payment

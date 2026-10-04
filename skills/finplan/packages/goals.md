@@ -2,6 +2,20 @@
 
 Financial goal definitions, progress tracking, and contribution calculations.
 
+<!-- BEGIN GENERATED: tool-index goals -->
+
+## Tool index
+
+| Tool                        | Description                                                                                                                                                                                                                                                                                                                                                                                          | Parameters                                                                            |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `create_goal`               | Create a financial goal with specified targets.                                                                                                                                                                                                                                                                                                                                                      | name, goal_type, importance, target_amount_cents?                                     |
+| `get_goal_progress`         | Calculate current progress toward a financial goal.                                                                                                                                                                                                                                                                                                                                                  | goal_json                                                                             |
+| `project_goal_progress`     | Project goal progress forward with compound growth, including the goal's ongoing contributions and scheduled payouts. With annual_volatility > 0 it returns a percentile band (p10/p25/p50/p75/p90) of balance and progress so return uncertainty is visible.                                                                                                                                        | goal_json, annual_return_rate?, annual_volatility?, months_ahead?                     |
+| `project_goal_series`       | Project a goal's balance and progress as a year-by-year (or N-month) series in one call — same projection as project_goal_progress, sampled from today through the horizon. Ideal for glide paths / drawdowns (e.g. a 529 across tuition years) without one call per horizon. Each point carries the median plus the percentile band; scheduled payouts and contributions are applied along the way. | goal_json, annual_return_rate?, annual_volatility?, months_ahead?, step_months?       |
+| `required_monthly_cashflow` | Calculate the monthly contribution needed to reach a financial goal.                                                                                                                                                                                                                                                                                                                                 | target_amount_cents, time_horizon_months, initial_balance_cents?, annual_return_rate? |
+
+<!-- END GENERATED: tool-index goals -->
+
 ## Tools
 
 ### create_goal

@@ -2,6 +2,17 @@
 
 Server status and connectivity checks.
 
+<!-- BEGIN GENERATED: tool-index system -->
+
+## Tool index
+
+| Tool              | Description                                                                                                                                                                                                          | Parameters      |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| `get_usage_guide` | Return the full FinPlan usage guide (markdown): money-in-cents convention, tool-search workflow, worked examples, chart rendering, and the file-response schema. For plugin-less clients that never loaded SKILL.md. | (no parameters) |
+| `ping`            | Check that the MCP server is reachable and ready. Returns status, version, and auth state.                                                                                                                           | (no parameters) |
+
+<!-- END GENERATED: tool-index system -->
+
 ## Tools
 
 ### ping

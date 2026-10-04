@@ -2,6 +2,19 @@
 
 Chart.js chart generation for financial visualizations. All charts return Chart.js JSON configs for client-side rendering.
 
+<!-- BEGIN GENERATED: tool-index charts -->
+
+## Tool index
+
+| Tool                                   | Description                                                                                                       | Parameters                                                         |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `generate_account_breakdown_chart`     | Generate a stacked area chart showing each account's contribution to total portfolio over time.                   | initial_balances, expected_annual_return, time_horizon_months      |
+| `generate_allocation_chart`            | Generate a stacked area chart of asset allocation (stocks/bonds/cash) over time.                                  | allocations, months                                                |
+| `generate_projection_comparison_chart` | Generate a line chart comparing projections under different return assumptions side by side (not plan scenarios). | scenarios, time_horizon_months, percentile?                        |
+| `generate_projection_fan_chart`        | Generate a fan chart with percentile bands (p10/p25/p50/p75/p90) for projection results.                          | initial_balance_cents, expected_annual_return, time_horizon_months |
+
+<!-- END GENERATED: tool-index charts -->
+
 ## Data handling rules
 
 Don't load data files into context or hardcode their arrays in HTML/JS — see [SKILL.md](../SKILL.md#data-files-stay-out-of-context). Render chart data with the [HTML rendering workflow](#html-rendering-workflow) below.

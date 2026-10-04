@@ -10,6 +10,18 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 - **Authority boundaries**: the `UserState` owns current facts (mutated only via `manage_state`); a Snapshot is an immutable point-in-time record; a Scenario owns hypothetical intent only. Computed outcomes live in none of them — always re-derived.
 - Distinct from `compare_return_assumptions`, which varies return assumptions on a single balance — these tools compare whole _plans_.
 
+<!-- BEGIN GENERATED: tool-index scenario -->
+
+## Tool index
+
+| Tool                | Description                                                                                                                             | Parameters                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `apply_scenario`    | Resolve a scenario's overrides against the base plan and return a state_ref to the hypothetical state for inspection.                   | base (BaseRef), scenario, state_json?                                                              |
+| `compare_scenarios` | Compare plan scenarios against a base plan: project each scenario's whole plan server-side and diff inputs and outcomes.                | base\|scenario_set, scenarios?, state_json?, time_horizon_months?, assumptions_preset?, inflation? |
+| `create_scenario`   | Create a plan scenario: a named, validated delta of typed overrides (retire earlier, save more, different returns) against a base plan. | base (BaseRef), name, overrides, description?, state_json?                                         |
+
+<!-- END GENERATED: tool-index scenario -->
+
 ## Tools
 
 ### create_scenario

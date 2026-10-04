@@ -2,6 +2,20 @@
 
 Required Minimum Distribution (RMD) calculations for retirement planning under SECURE 2.0 rules.
 
+<!-- BEGIN GENERATED: tool-index rmd -->
+
+## Tool index
+
+| Tool                                      | Description                                                                           | Parameters                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `calculate_aggregated_ira_rmds`           | Calculate RMDs for multiple IRAs with aggregation (take from any one or combination). | ira_balances, age                                                                       |
+| `calculate_required_minimum_distribution` | Calculate the Required Minimum Distribution for a single retirement account.          | prior_year_balance_cents, age, table_type?, beneficiary_age?                            |
+| `calculate_rmd_shortfall_penalty`         | Calculate the penalty for failing to take the full RMD (25% or 10% if corrected).     | required_rmd_cents, actual_withdrawn_cents, corrected_within_two_years?                 |
+| `check_rmd_required`                      | Check if RMDs are required for a specific tax year based on birth year.               | birth_year, tax_year                                                                    |
+| `project_rmd_schedule`                    | Project future RMD requirements over multiple years with estimated account growth.    | birth_year, current_year, current_balance_cents, years_to_project?, annual_growth_rate? |
+
+<!-- END GENERATED: tool-index rmd -->
+
 ## Tools
 
 ### calculate_required_minimum_distribution
