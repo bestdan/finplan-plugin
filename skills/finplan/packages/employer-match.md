@@ -6,11 +6,12 @@
 
 ## Tool index
 
-| Tool                            | Description                                                                       | Parameters                                                                  |
-| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `calculate_401k_employer_match` | Calculate the employer match amount for a given employee contribution.            | employer_match_json, employee_contribution_cents, annual_compensation_cents |
-| `calculate_401k_vested_amount`  | Calculate the vested portion of employer contributions based on years of service. | employer_match_json, total_employer_contributions_cents, years_of_service   |
-| `create_employer_match`         | Create an employer matching configuration for a 401(k) plan.                      | formula_type, tiers?, vesting_type?, annual_match_cap_cents?                |
+| Tool                            | Description                                                                                                                     | Parameters                                                                                                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `calculate_401k_employer_match` | Calculate the employer match amount for a given employee contribution.                                                          | employer_match_json, employee_contribution_cents, annual_compensation_cents                                                                                                                           |
+| `calculate_401k_vested_amount`  | Calculate the vested portion of employer contributions based on years of service.                                               | employer_match_json, total_employer_contributions_cents, years_of_service                                                                                                                             |
+| `create_employer_match`         | Create an employer matching configuration for a 401(k) plan.                                                                    | formula_type, tiers?, vesting_type?, annual_match_cap_cents?                                                                                                                                          |
+| `plan_401k_deferral`            | Plan the per-paycheck 401(k) deferral that reaches the year's limit, with catch-up, match captured, and early cap-out warnings. | tax_year, ytd_deferral_cents, remaining_pay_periods, per_period_gross_cents, employer_match_json?, birth_year?, age?, election_type?, proposed_election_cents?, proposed_election_pct?, account_type? |
 
 <!-- END GENERATED: tool-index employer_match -->
 
