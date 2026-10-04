@@ -33,7 +33,7 @@ After installing, go to `/plugins` → Installed → finplan and make sure MCP i
 
 ### Authentication
 
-The FinPlan server requires authentication. The first time you invoke a FinPlan tool in a session, Claude Code opens your browser to sign in (Google, GitHub, or email magic link) and captures the token automatically — no manual config. OAuth-issued tokens last 3 days and renew silently via the same flow on expiry.
+The FinPlan server requires authentication. The first time you invoke a FinPlan tool in a session, Claude Code opens your browser to sign in (Google, GitHub, or email magic link) and captures the token automatically — no manual config. OAuth-issued tokens last 30 days; when one expires, Claude Code asks you to run `/mcp`, which signs you in again in your browser.
 
 Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. for Claude Agent SDK, scripts, Cowork, or a shared project where the token must be pinned into `.mcp.json`. If you go that route, add `.mcp.json` to `.gitignore` so the token isn't committed.
 

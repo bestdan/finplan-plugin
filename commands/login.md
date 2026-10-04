@@ -16,7 +16,7 @@ The FinPlan MCP server requires authentication. In most cases you don't need thi
 
 ### Default path — browser OAuth (no action needed)
 
-When you invoke any FinPlan tool, the server replies with `401 + WWW-Authenticate`. Claude Code sees this, opens your browser to `https://mcp.finplan.tools/auth/signup` (or login), and captures the returned token automatically. The token is stored by Claude Code internally — it is **not** written to `.mcp.json`. OAuth-issued tokens last 3 days and renew silently via the same flow on expiry.
+When you invoke any FinPlan tool, the server replies with `401 + WWW-Authenticate`. Claude Code sees this, opens your browser to `https://mcp.finplan.tools/auth/signup` (or login), and captures the returned token automatically. The token is stored by Claude Code internally — it is **not** written to `.mcp.json`. OAuth-issued tokens last 30 days; when one expires, Claude Code asks you to run `/mcp`, which signs you in again in your browser.
 
 If a FinPlan tool call opened a browser tab and you signed in, you're done. Close this command.
 
@@ -88,7 +88,7 @@ Tell the user: "Restart Claude Code so the MCP server reconnects with your new k
 
 ## Manual key vs OAuth — which expires when
 
-| Source                   | TTL     | Renewal                        |
-| ------------------------ | ------- | ------------------------------ |
-| OAuth (auto, in browser) | 3 days  | Silent re-auth via Claude Code |
-| Manual key (this flow)   | 90 days | Re-run `/finplan:login`        |
+| Source                   | TTL     | Renewal                 |
+| ------------------------ | ------- | ----------------------- |
+| OAuth (auto, in browser) | 30 days | Browser sign-in again   |
+| Manual key (this flow)   | 90 days | Re-run `/finplan:login` |
