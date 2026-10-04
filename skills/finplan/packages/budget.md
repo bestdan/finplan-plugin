@@ -6,12 +6,12 @@ Income streams, expenses, and budget summary calculations.
 
 ## Tool index
 
-| Tool                   | Description                                                                                     | Parameters                                                                  |
-| ---------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `create_expense`       | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate. | name, category, amount_cents, frequency, is_essential?, annual_growth_rate? |
-| `create_income_stream` | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.  | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate? |
-| `get_budget_summary`   | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate.          | income_streams_json?, expenses_json?, as_of_date?                           |
-| `project_cashflow`     | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).          | horizon_years, income_streams_json?, expenses_json?, start_date?            |
+| Tool                   | Description                                                                                                                                                                       | Parameters                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create_expense`       | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate.                                                                                   | name, category, amount_cents, frequency, is_essential?, annual_growth_rate?                                                                       |
+| `create_income_stream` | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.                                                                                    | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate?                                                                       |
+| `get_budget_summary`   | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate. Takes the lines explicitly or straight from a state, and can diff two states line by line. | income_streams_json?, expenses_json?, as_of_date?, state_json\|state_path\|state_ref?, compare_state_json\|compare_state_path\|compare_state_ref? |
+| `project_cashflow`     | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).                                                                                            | horizon_years, income_streams_json?, expenses_json?, start_date?                                                                                  |
 
 <!-- END GENERATED: tool-index budget -->
 
@@ -36,6 +36,10 @@ Income streams, expenses, and budget summary calculations.
 `as_of_date` defaults to today.
 
 **Single-date snapshot, not a forecast.** Totals are as-authored amounts filtered to items active on `as_of_date`; `annual_growth_rate` is not applied and income is not stopped at retirement beyond its own `end_date`. Every figure is today's-dollars. For a growth-applied, retirement-aware year-by-year series use `project_cashflow`.
+
+**Summarize a state directly.** Pass one of `state_json`, `state_path` or `state_ref` (the same inputs `build_snapshot` takes) instead of copying the state's `income_streams` and `expenses` into `income_streams_json` / `expenses_json`. The result is identical; mixing the two is rejected.
+
+**Before and after.** Add a second state through one of `compare_state_json`, `compare_state_path` or `compare_state_ref`. The result carries `base_summary`, `compare_summary`, and a `diff`: income and expense lines `added`, `removed` and `changed` (matched by line `id`, with `changed_fields` and the monthly amount change), each list's `unchanged_count`, and `monthly_surplus_change_cents`. Line amounts in the diff are as-authored; the surplus change counts only lines active on `as_of_date`.
 
 ### project_cashflow
 
