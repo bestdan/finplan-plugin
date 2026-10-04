@@ -8,8 +8,8 @@ Income streams, expenses, and budget summary calculations.
 
 | Tool                              | Description                                                                                                                                                                                               | Parameters                                                                                                                                        |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `create_expense`                  | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate.                                                                                                           | name, category, amount_cents, frequency, is_essential?, annual_growth_rate?                                                                       |
-| `create_income_stream`            | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.                                                                                                            | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate?                                                                       |
+| `create_expense`                  | Create an expense (rent, utilities, insurance, etc.) with category, frequency, growth rate, and optional dated amount changes (amount_steps).                                                             | name, category, amount_cents, frequency, is_essential?, annual_growth_rate?, amount_steps?                                                        |
+| `create_income_stream`            | Create an income stream (salary, pension, rental, etc.) with type, frequency, growth rate, and optional dated amount changes (amount_steps).                                                              | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate?, amount_steps?                                                        |
 | `get_budget_summary`              | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate. Takes the lines explicitly or straight from a state, and can diff two states line by line.                         | income_streams_json?, expenses_json?, as_of_date?, state_json\|state_path\|state_ref?, compare_state_json\|compare_state_path\|compare_state_ref? |
 | `project_cashflow`                | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).                                                                                                                    | horizon_years, income_streams_json?, expenses_json?, start_date?                                                                                  |
 | `reconcile_expenses_with_actuals` | Propose expense-line changes from categorized actual spending: a catch-all run-rate, missing lines and drifted amounts, each with its evidence, plus the surplus before and after. Never edits the state. | actuals_json, state_json\|state_path\|state_ref, window?, catch_all_line?, tolerance?, one_off_threshold_cents?, as_of_date?                      |
@@ -32,15 +32,23 @@ Income streams, expenses, and budget summary calculations.
 - `price_level` is `"real"` (default; today's dollars, grown by inflation in `project_cashflow`) or `"nominal"` (future face value, for contractually fixed amounts like fixed-rate mortgage/loan payments).
 - On a `"real"` item, `annual_growth_rate` (decimal, e.g. 0.03; default 0.0) is growth above inflation. Do not set it to CPI just to keep up; `"real"` already does that.
 
+### Dated amount changes (`amount_steps`)
+
+Both create tools, and the items `manage_state` stores, take `amount_steps`: `[{"effective_date": "YYYY-MM-DD", "amount_cents": int}]`, sorted with no two on one date, each inside `[start_date, end_date]`. From its date a step replaces `amount_cents` (per occurrence, same frequency), and `annual_growth_rate` compounds from there. Use it for a known raise or an expense that steps down; don't split the item in two, which changes its `id`.
+
+- **Frame.** A step is in its item's `price_level`. On a `"real"` item it is today's dollars and is inflated like the base, so enter a future face-value raise on a `"nominal"` item, or convert it to today's dollars first.
+- A step dated before today is the amount in force now. A `one_time` item cannot step.
+- `manage_state` replaces the whole item, so carry `amount_steps` forward when editing a saved one.
+
 ### get_budget_summary
 
 `as_of_date` defaults to today.
 
-**Single-date snapshot, not a forecast.** Totals are as-authored amounts filtered to items active on `as_of_date`; `annual_growth_rate` is not applied and income is not stopped at retirement beyond its own `end_date`. Every figure is today's-dollars. For a growth-applied, retirement-aware year-by-year series use `project_cashflow`.
+**Single-date snapshot, not a forecast.** Totals are each item's amount in force on `as_of_date` (its latest `amount_steps` entry on or before it, else `amount_cents`), filtered to items active on that date; `annual_growth_rate` is not applied and income is not stopped at retirement beyond its own `end_date`. Every figure is today's-dollars. For a growth-applied, retirement-aware year-by-year series use `project_cashflow`.
 
 **Summarize a state directly.** Pass one of `state_json`, `state_path` or `state_ref` (the same inputs `build_snapshot` takes) instead of copying the state's `income_streams` and `expenses` into `income_streams_json` / `expenses_json`. The result is identical; mixing the two is rejected.
 
-**Before and after.** Add a second state through one of `compare_state_json`, `compare_state_path` or `compare_state_ref`. The result carries `base_summary`, `compare_summary`, and a `diff`: income and expense lines `added`, `removed` and `changed` (matched by line `id`, with `changed_fields` and the monthly amount change), each list's `unchanged_count`, and `monthly_surplus_change_cents`. Line amounts in the diff are as-authored; the surplus change counts only lines active on `as_of_date`.
+**Before and after.** Add a second state through one of `compare_state_json`, `compare_state_path` or `compare_state_ref`. The result carries `base_summary`, `compare_summary`, and a `diff`: income and expense lines `added`, `removed` and `changed` (matched by line `id`, with `changed_fields` and the monthly amount change), each list's `unchanged_count`, and `monthly_surplus_change_cents`. Line amounts in the diff are those in force on `as_of_date`, so a step dated later changes `changed_fields` but not the amount; the surplus change counts only lines active on `as_of_date`.
 
 ### reconcile_expenses_with_actuals
 
