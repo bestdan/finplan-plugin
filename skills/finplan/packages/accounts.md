@@ -55,9 +55,13 @@ Returns which asset classes (stocks, bonds, cash, crypto, real estate, other) an
 
 ### get_account_limits
 
-Returns non-tax limits: FDIC insurance, RMD requirements, purchase limits, early withdrawal penalties.
+Returns FDIC insurance, RMD requirements, purchase limits and early withdrawal penalties under `limits`, and the annual contribution limit under `contribution_limit` for a 401(k), IRA, Roth IRA, HSA, SEP-IRA or SIMPLE IRA: base limit, catch-up tier and amount for the owner's age, total, and `is_projected` for a year past the published IRS table. `contribution_limit` is null for other types. A 529 returns `plan_529_gift_tax` instead: the per-donor annual gift-tax exclusion and the five-year superfunding election.
 
-| Parameter      | Type   | Description                                                                                                                                                     |
-| -------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `account_type` | string | Account type                                                                                                                                                    |
-| `birth_year`   | int    | Optional owner birth year; corrects RMD start age per SECURE 2.0 (72 if born before 1951, 73 for 1951-1959, 75 for 1960 or later). Omit for the default age 73. |
+| Parameter               | Type   | Description                                                                                                                                                                                                      |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `account_type`          | string | Account type                                                                                                                                                                                                     |
+| `birth_year`            | int    | Optional owner birth year; corrects RMD start age per SECURE 2.0 (72 if born before 1951, 73 for 1951-1959, 75 for 1960 or later), and sets the catch-up age when `age` is omitted. Omit for the default age 73. |
+| `year`                  | int    | Optional tax year for the contribution limit, 2024 or later. Defaults to the current year.                                                                                                                       |
+| `age`                   | int    | Optional owner's age at December 31 of `year`; sets the catch-up tier. Omit both `age` and `birth_year` for the limit without catch-up.                                                                          |
+| `hsa_coverage`          | string | HSA only: `self_only` or `family` (default `family`).                                                                                                                                                            |
+| `simple_small_employer` | bool   | SIMPLE IRA only: true for an employer with 25 or fewer employees (or 26-100 electing the higher contribution), which raises the limit. Omitted: the higher total.                                                |
