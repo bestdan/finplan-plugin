@@ -6,12 +6,13 @@ Income streams, expenses, and budget summary calculations.
 
 ## Tool index
 
-| Tool                   | Description                                                                                                                                                                       | Parameters                                                                                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `create_expense`       | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate.                                                                                   | name, category, amount_cents, frequency, is_essential?, annual_growth_rate?                                                                       |
-| `create_income_stream` | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.                                                                                    | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate?                                                                       |
-| `get_budget_summary`   | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate. Takes the lines explicitly or straight from a state, and can diff two states line by line. | income_streams_json?, expenses_json?, as_of_date?, state_json\|state_path\|state_ref?, compare_state_json\|compare_state_path\|compare_state_ref? |
-| `project_cashflow`     | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).                                                                                            | horizon_years, income_streams_json?, expenses_json?, start_date?                                                                                  |
+| Tool                              | Description                                                                                                                                                                                               | Parameters                                                                                                                                        |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create_expense`                  | Create an expense (rent, utilities, insurance, etc.) with category, frequency, and growth rate.                                                                                                           | name, category, amount_cents, frequency, is_essential?, annual_growth_rate?                                                                       |
+| `create_income_stream`            | Create an income stream (salary, pension, rental, etc.) with type, frequency, and growth rate.                                                                                                            | name, income_type, amount_cents, frequency, is_pretax?, annual_growth_rate?                                                                       |
+| `get_budget_summary`              | Calculate a budget summary: total income, expenses, surplus/deficit, and savings rate. Takes the lines explicitly or straight from a state, and can diff two states line by line.                         | income_streams_json?, expenses_json?, as_of_date?, state_json\|state_path\|state_ref?, compare_state_json\|compare_state_path\|compare_state_ref? |
+| `project_cashflow`                | Project income, expenses, and surplus year by year (growth-applied, retirement-aware).                                                                                                                    | horizon_years, income_streams_json?, expenses_json?, start_date?                                                                                  |
+| `reconcile_expenses_with_actuals` | Propose expense-line changes from categorized actual spending: a catch-all run-rate, missing lines and drifted amounts, each with its evidence, plus the surplus before and after. Never edits the state. | actuals_json, state_json\|state_path\|state_ref, window?, catch_all_line?, tolerance?, one_off_threshold_cents?, as_of_date?                      |
 
 <!-- END GENERATED: tool-index budget -->
 
@@ -40,6 +41,29 @@ Income streams, expenses, and budget summary calculations.
 **Summarize a state directly.** Pass one of `state_json`, `state_path` or `state_ref` (the same inputs `build_snapshot` takes) instead of copying the state's `income_streams` and `expenses` into `income_streams_json` / `expenses_json`. The result is identical; mixing the two is rejected.
 
 **Before and after.** Add a second state through one of `compare_state_json`, `compare_state_path` or `compare_state_ref`. The result carries `base_summary`, `compare_summary`, and a `diff`: income and expense lines `added`, `removed` and `changed` (matched by line `id`, with `changed_fields` and the monthly amount change), each list's `unchanged_count`, and `monthly_surplus_change_cents`. Line amounts in the diff are as-authored; the surplus change counts only lines active on `as_of_date`.
+
+### reconcile_expenses_with_actuals
+
+Compares a state's expense lines with what the household actually spent, and returns **proposed** changes. It never writes the state; apply a proposal with `manage_state` action `update_expense`.
+
+**The actuals shape.** `actuals_json` is a categorized spending export over a window (barclay's `transactions spend --format json`, or any source that writes the same fields):
+
+- `window`: `{start, end}`, inclusive ISO dates. Or pass `window` as `START:END`; if both are given they must agree.
+- `categories`: `{category, total_cents, transaction_count?, line?}`, one per category. `line` is the id or name of the expense line that carries the whole category.
+- `recurring`: `{name, category, amount_cents, frequency, count, total_cents?, first_date?, last_date?, line?}`. `frequency` uses the expense frequencies, and `one_time` is rejected.
+- `one_offs`: `{name, category, amount_cents, charge_date?}`.
+
+Series and one-offs itemize their category's total. A series or one-off naming an unlisted category, or a category whose items sum past its total, is rejected.
+
+**Which line carries what.** A recurring series goes to its own `line`, else to its category's `line`, else to the line with the same name (case-insensitive). If none of those applies, it is a missing line. A category with no `line` feeds `catch_all_line` when one is named, and is reported as `unassigned_monthly_cents` when none is. A series is measured at amount × frequency, so an annual fee seen once is not read as a monthly charge.
+
+**Proposals,** each with `evidence` (the window, plus the series or category totals it was measured from):
+
+- `catch_all`: the catch-all line's run-rate. It is its categories' totals over the window's months, less series that other lines carry and less one-offs at or above `one_off_threshold_cents` (default `50000`). Excluded one-offs are listed in `excluded_one_offs`.
+- `missing_lines`: a `proposed_expense` for each series no line carries.
+- `drift`: lines whose observed monthly amount is more than `tolerance` (default `0.05`) away from the recorded one. `proposed_amount_cents` is at the line's own frequency.
+
+Lines inside tolerance are in `within_tolerance`, and lines nothing fed are in `unobserved_line_ids`. `surplus` gives the `get_budget_summary` monthly surplus before and after applying every proposal.
 
 ### project_cashflow
 

@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "finplan",
-      "description": "Personal finance projection engine \u2014 Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards. Powered by 75+ MCP tools.",
-      "version": "1.5.75",
+      "description": "Personal finance projection engine \u2014 Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards. Powered by 80+ MCP tools.",
+      "version": "1.5.76",
       "source": {
         "source": "url",
         "url": "https://github.com/bestdan/finplan-plugin.git"

@@ -1,6 +1,6 @@
 # FinPlan — Claude Code Plugin
 
-Personal finance projection engine powered by 75+ MCP tools. Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards.
+Personal finance projection engine powered by 80+ MCP tools. Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards.
 
 ## Install
 
