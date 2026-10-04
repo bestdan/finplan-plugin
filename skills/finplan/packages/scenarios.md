@@ -26,50 +26,39 @@ Create, apply, and compare plan scenarios — "what if" deltas (retire at 60, sa
 
 ### create_scenario
 
-Create a plan scenario: a named, validated delta of typed overrides against a base plan. The response nests the scenario document under its `scenario` key — small, portable JSON the client owns — and returns `base_state_ref` for reuse as `base.state_ref` while live. Store the scenario document (not the whole response) and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
+The response nests the scenario document under its `scenario` key — small, portable JSON the client owns — and returns `base_state_ref` for reuse as `base.state_ref` while live. Store the scenario document (not the whole response) and pass it to `compare_scenarios` (or `apply_scenario`). Overrides are validated against the base: dangling target ids and no-ops surface as warnings, never silent drops.
 
-| Parameter     | Type       | Description                                                                                                    |
-| ------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
-| `base`        | object     | BaseRef the scenario is authored against: `{"state_hash": …, "state_ref"?: …}`.                                |
-| `name`        | string     | Human label, e.g. `"Retire at 60"`.                                                                            |
-| `overrides`   | list[dict] | Ordered, typed overrides (the delta), each tagged by `kind`. Amounts in cents.                                 |
-| `description` | string     | What question this scenario explores. Defaults to a generated summary of the overrides.                        |
-| `state_json`  | object     | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given. |
+- `base` is `{"state_hash": …, "state_ref"?: …}`.
+- `overrides` are ordered, typed, each tagged by `kind`; amounts in cents.
+- `description` defaults to a generated summary of the overrides.
+- `state_json` is optional when `base.state_ref` is still live; it takes precedence when given.
 
 ### apply_scenario
 
-Resolve a scenario's state-shaped overrides against the base and return a `state_ref` to the resolved (hypothetical) UserState — plus the resolved `state_json` inline when `return_state_json=True` — for inspection or handing to other tools. The resolved state is ephemeral compute scratch (60-minute TTL) — it never becomes the base UserState. Projection-time overrides (`return_assumption`, `inflation`, account-scoped `monthly_contribution`) have no state slot and only take effect when the scenario is projected via `compare_scenarios`.
+The resolved state is ephemeral compute scratch (60-minute TTL) — it never becomes the base UserState. Projection-time overrides (`return_assumption`, `inflation`, account-scoped `monthly_contribution`) have no state slot and only take effect when the scenario is projected via `compare_scenarios`.
 
-| Parameter           | Type   | Description                                                                                                                                                                           |
-| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `base`              | object | BaseRef: `{"state_hash": …, "state_ref"?: …}`.                                                                                                                                        |
-| `scenario`          | object | The scenario to apply: a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.                                                                             |
-| `state_json`        | object | The base UserState document inline. Optional when `base.state_ref` is still live; takes precedence when given.                                                                        |
-| `return_state_json` | bool   | When True, also return the resolved hypothetical UserState inline as `state_json`. Pass it to `project_plan` / `run_projection` to drive the state-level drill-down off the scenario. |
+- `scenario` is a `create_scenario` document, or a minimal `{"name": …, "overrides": […]}` sketch.
+- `state_json` is optional when `base.state_ref` is still live; it takes precedence when given.
+- `return_state_json=True` also returns the resolved hypothetical UserState inline as `state_json`; pass it to `project_plan` / `run_projection` to drive the state-level drill-down off the scenario.
 
 ### compare_scenarios
 
-The headline tool: compare plan scenarios against a base plan in one server-side operation. Each scenario's whole plan is projected (per-account allocations, household surplus split, after-tax treatment) and diffed against the base by `scenario_id`. Returns the input diff (what each scenario changes), the outcome diff (household final-balance percentiles and deltas vs base), and per-goal deltas (success-probability changes, `meets_importance` flips) inline, with full per-scenario percentile timelines and goal-delta records in the data file. Goal success probabilities are censored to [0.10, 0.90]: a censored side reports the delta as a bound (`>=`/`<=`), not a point estimate. Goal deltas are a separate lens — goal bands use a blended return and are **not** numerically consistent with the portfolio percentile timelines; cite them side by side, never reconcile them. A goal a scenario's overrides drop out of evaluation surfaces as a per-scenario warning.
+Goal success probabilities are censored to [0.10, 0.90]: a censored side reports the delta as a bound (`>=`/`<=`), not a point estimate. Goal deltas are a separate lens — goal bands use a blended return and are **not** numerically consistent with the portfolio percentile timelines; cite them side by side, never reconcile them. A goal a scenario's overrides drop out of evaluation surfaces as a per-scenario warning.
 
 Provide **either** `base` + `scenarios` **or** a `scenario_set`, not both.
 
-| Parameter                | Type       | Description                                                                                                                                               |
-| ------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `base`                   | object     | BaseRef shared by the scenarios. Required with `scenarios`; ignored in favor of the set-level base when `scenario_set` is given.                          |
-| `scenarios`              | list[dict] | Scenarios to compare against the base: `create_scenario` documents or minimal `{"name": …, "overrides": […]}` sketches.                                   |
-| `scenario_set`           | object     | A portable `finplan_scenario_set` document (`{"base": BaseRef, "scenarios": […]}`); its set-level base is authoritative.                                  |
-| `state_json`             | object     | The base UserState document inline. Optional when the base's `state_ref` is still live; takes precedence when given.                                      |
-| `time_horizon_months`    | int        | Months to project (default: 360 = 30 years). Shared by the base and every scenario so outcomes land on one comparable grid.                               |
-| `assumptions_preset`     | string     | Capital-market assumptions the scenarios vary from: `"standard"` (default), `"conservative"`, or `"optimistic"`.                                          |
-| `inflation`              | float      | Baseline annual inflation rate as a decimal (default: 0.025; 0 gives nominal dollars). An inflation override in a scenario replaces it for that scenario. |
-| `percentiles`            | list[int]  | Percentiles to compute (default: [10, 25, 50, 75, 90]).                                                                                                   |
-| `marginal_ordinary_rate` | float      | Household marginal ordinary income tax rate for after-tax values (default: 0.22).                                                                         |
-| `ltcg_rate`              | float      | Household long-term capital gains tax rate for after-tax values (default: 0.15).                                                                          |
-| `method`                 | string     | `"closed_form"` (default), `"deterministic"`, `"monte_carlo"`.                                                                                            |
-| `iterations`             | int        | Monte Carlo iterations (default: 1000, only used for `method="monte_carlo"`).                                                                             |
-| `seed`                   | int        | Random seed (only used for `method="monte_carlo"`).                                                                                                       |
+- `base` is required with `scenarios`; it is ignored in favor of the set-level base when `scenario_set` is given.
+- `scenarios` are `create_scenario` documents or minimal `{"name": …, "overrides": […]}` sketches.
+- `scenario_set` is a portable `finplan_scenario_set` document (`{"base": BaseRef, "scenarios": […]}`); its set-level base is authoritative.
+- `state_json` is optional when the base's `state_ref` is still live; it takes precedence when given.
+- `time_horizon_months` defaults to 360 (30 years) and is shared by the base and every scenario so outcomes land on one comparable grid.
+- `assumptions_preset` defaults to `"standard"`.
+- `inflation` is a decimal (default 0.025; 0 gives nominal dollars). An inflation override in a scenario replaces it for that scenario.
+- `percentiles` defaults to [10, 25, 50, 75, 90].
+- `marginal_ordinary_rate` (default 0.22) and `ltcg_rate` (default 0.15) are household rates for after-tax values.
+- `method` defaults to `"closed_form"`. `iterations` (default 1000) and `seed` apply only to `method="monte_carlo"`.
 
-**Response**: file URLs + compact inline summary (per-scenario input diff, final-balance percentiles and deltas vs base, warnings), including `summary.inputs.base_state_ref` for reuse as `base.state_ref` while live. The per-month timelines live in the data file only.
+The response is file URLs plus a compact inline summary, including `summary.inputs.base_state_ref` for reuse as `base.state_ref` while live. The per-month timelines live in the data file only.
 
 **Warnings**: base drift (scenario authored against a different `state_hash`), dangling override targets (skipped for this run), and no-ops all surface as warnings — a scenario is never silently uncomparable. Global warnings are top-level; per-scenario warnings sit on each entry under `outputs.scenarios[].warnings`.
 

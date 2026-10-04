@@ -19,63 +19,21 @@
 
 ### create_employer_match
 
-Create a complete employer match configuration.
-
-| Parameter                | Type       | Description                                                                                      |
-| ------------------------ | ---------- | ------------------------------------------------------------------------------------------------ |
-| `formula_type`           | string     | `"basic_safe_harbor"`, `"enhanced_safe_harbor"`, `"non_elective"`, `"tiered"`, `"discretionary"` |
-| `tiers`                  | list[dict] | Match tiers: `[{match_rate, up_to_deferral_pct}]` (for tiered/enhanced)                          |
-| `non_elective_pct`       | float      | Contribution % (for non_elective, min 3% for safe harbor)                                        |
-| `discretionary_pct`      | float      | Current discretionary match %                                                                    |
-| `vesting_type`           | string     | `"immediate"`, `"cliff"`, `"graded"` (optional)                                                  |
-| `cliff_years`            | int        | Years until 100% vested (for cliff, 1-7)                                                         |
-| `graded_schedule`        | dict       | `{"1": 0, "2": 20, ...}` year-to-pct mapping                                                     |
-| `annual_match_cap_cents` | int        | Annual cap on match in cents (optional)                                                          |
-| `is_qaca`                | bool       | QACA arrangement (allows 2-yr cliff, default: false)                                             |
-| `true_up`                | bool       | Year-end true-up (default: false)                                                                |
+- `tiers` is `[{match_rate, up_to_deferral_pct}]`, for tiered/enhanced formulas.
+- `non_elective_pct` is for `non_elective` (minimum 3% for safe harbor); `discretionary_pct` is the current discretionary match %.
+- `cliff_years` (cliff vesting) is years until 100% vested, 1-7; `graded_schedule` is a year-to-percent mapping such as `{"1": 0, "2": 20, ...}`.
+- `is_qaca` marks a QACA arrangement, which allows a 2-year cliff (default false). `true_up` is a year-end true-up (default false).
 
 ### calculate_401k_employer_match
 
-Calculate match for a given employee contribution. Optionally includes monthly breakdown and/or maximum possible annual match.
-
-| Parameter                     | Type | Description                                                                                               |
-| ----------------------------- | ---- | --------------------------------------------------------------------------------------------------------- |
-| `employer_match_json`         | dict | Match config from `create_employer_match`                                                                 |
-| `employee_contribution_cents` | int  | Employee deferral in cents                                                                                |
-| `annual_compensation_cents`   | int  | Annual compensation in cents                                                                              |
-| `ytd_employer_match_cents`    | int  | YTD match already contributed (default: 0)                                                                |
-| `include_monthly`             | bool | If True, also calculate monthly match by dividing annual by 12 (default: false)                           |
-| `include_max_match`           | bool | If True, also calculate maximum possible annual employer match (default: false)                           |
-| `compensation_limit_cents`    | int  | IRS annual compensation limit for the projection year, in cents. Defaults to the 2026 limit when omitted. |
-
-Returns: `employer_match_cents`, `effective_deferral_pct`, `effective_match_pct`. When `include_monthly=True`, also returns `monthly_employer_match_cents`. When `include_max_match=True`, also returns `max_annual_match_cents`.
-
-### calculate_401k_vested_amount
-
-Vested portion of employer contributions based on years of service.
-
-| Parameter                            | Type | Description                           |
-| ------------------------------------ | ---- | ------------------------------------- |
-| `employer_match_json`                | dict | Match config                          |
-| `total_employer_contributions_cents` | int  | Total employer contributions in cents |
-| `years_of_service`                   | int  | Years with employer                   |
+`ytd_employer_match_cents` defaults to 0. `compensation_limit_cents` defaults to the 2026 IRS limit when omitted. `include_monthly=True` adds `monthly_employer_match_cents` (annual divided by 12); `include_max_match=True` adds `max_annual_match_cents`.
 
 ### plan_401k_deferral
 
-Plan the per-paycheck 401(k) deferral that reaches the year's limit. Spreads what is left under the limit (with the age catch-up, including age 60-63) evenly across the remaining paychecks, with the rounding remainder on the final one. Use it when someone asks what per-paycheck election maxes out their 401(k).
+Spreads what is left under the limit (with the age catch-up, including age 60-63) evenly across the remaining paychecks, with the rounding remainder on the final one. Use it when someone asks what per-paycheck election maxes out their 401(k).
 
-| Parameter                 | Type   | Description                                                                              |
-| ------------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| `tax_year`                | int    | Tax year, 2024 or later                                                                  |
-| `ytd_deferral_cents`      | int    | Deferrals already made this year, across every 401(k)-family plan                        |
-| `remaining_pay_periods`   | int    | Paychecks left in the year                                                               |
-| `per_period_gross_cents`  | int    | Gross pay on each remaining paycheck                                                     |
-| `employer_match_json`     | dict   | Match config (optional); gives the match captured and, via `true_up`, early-cap-out cost |
-| `birth_year`              | int    | Sets the catch-up by age attained in `tax_year` (optional)                               |
-| `age`                     | int    | Age attained by December 31 of `tax_year`; overrides `birth_year` (optional)             |
-| `election_type`           | string | `"flat"` (default) or `"percent"`                                                        |
-| `proposed_election_cents` | int    | A flat election to evaluate (optional)                                                   |
-| `proposed_election_pct`   | float  | A percent election to evaluate (optional)                                                |
-| `account_type`            | string | `"traditional_401k"` (default) or `"roth_401k"`                                          |
-
-Returns: `limit` (base, catch-up, total, `is_projected`), `remaining_limit_cents`, `recommended` (per-period election, `final_period_cents`, per-paycheck deferrals, `cap_out_period`, `employer_match_cents`), `proposed` when given, `employer_match` (captured vs. available, full-match deferral %), `warnings` (early cap-out with no true-up and the match forfeited, below the full-match deferral rate, limit not yet published, YTD over the limit), and `assumptions` (which paychecks the election comes from).
+- `tax_year` is 2024 or later. `ytd_deferral_cents` is deferrals already made this year across every 401(k)-family plan.
+- `age` is age attained by December 31 of `tax_year` and overrides `birth_year`.
+- `employer_match_json` is optional; it gives the match captured and, via `true_up`, the early-cap-out cost.
+- `election_type` is `"flat"` (default) or `"percent"`; `account_type` is `"traditional_401k"` (default) or `"roth_401k"`.
+- `warnings` cover early cap-out with no true-up and the match forfeited, below the full-match deferral rate, limit not yet published, and YTD over the limit.

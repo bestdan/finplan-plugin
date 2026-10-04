@@ -15,56 +15,26 @@ Build immutable, point-in-time facts records (snapshots) from planning state, an
 
 <!-- END GENERATED: tool-index snapshot -->
 
-## Tools
+## Tool notes
 
 ### build_snapshot
 
-Build an immutable snapshot from a `finplan_state` document: net worth, category and account-type rollups, allocation analytics, income, and goal funding, with the facts frozen losslessly.
+Provide exactly one of `state_json` or `state_ref` (`state_path` is local transport only and not accepted on the hosted server). A ref-fed build reports `migrated: false`. It rejects a document whose `kind` is not `finplan_state`. The generation time is stamped (UTC) in the snapshot's provenance; custom assumptions are labeled `"custom"`.
 
-| Parameter           | Type   | Description                                                                                                                                                                                                                                                    |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `state_json`        | object | A `finplan_state` document (the planning state to capture), passed inline. Provide exactly one of `state_json` or `state_ref`.                                                                                                                                 |
-| `state_path`        | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)                                                                                                                                                                    |
-| `state_ref`         | string | Opaque handle to a `finplan_state` document already uploaded to the server, resolved without re-sending it inline — the way to build on a hosted server without the document entering context. A ref-fed build reports `migrated: false` (one-of).             |
-| `as_of`             | string | Logical check-in date these facts represent, ISO format (YYYY-MM-DD). Required to build a snapshot; ignored for `dry_run`.                                                                                                                                     |
-| `dry_run`           | bool   | Validate and migrate the state without building a snapshot — a cheap "is this state usable?" check. Returns `{success, valid, migrated, errors, warnings, schema_drift, migrated_state?}` and skips the projection (default: false).                           |
-| `assumption_preset` | string | `"standard"`, `"conservative"`, or `"optimistic"` (default: standard)                                                                                                                                                                                          |
-| `stocks_return`     | float  | Override stock expected return (optional)                                                                                                                                                                                                                      |
-| `stocks_volatility` | float  | Override stock volatility (optional)                                                                                                                                                                                                                           |
-| `bonds_return`      | float  | Override bond expected return (optional)                                                                                                                                                                                                                       |
-| `bonds_volatility`  | float  | Override bond volatility (optional)                                                                                                                                                                                                                            |
-| `cash_return`       | float  | Override cash expected return (optional)                                                                                                                                                                                                                       |
-| `cash_volatility`   | float  | Override cash volatility (optional)                                                                                                                                                                                                                            |
-| `inflation`         | float  | Annual inflation rate (e.g. 0.025 = 2.5%) used to inflate real-terms goal targets to nominal before computing each goal's projected progress. Defaults to the engine's canonical rate (2.5%); pass 0 to disable. Recorded in the snapshot's assumptions stamp. |
-
-Rejects a document whose `kind` is not `finplan_state`. The generation time is stamped (UTC) in the snapshot's provenance; custom assumptions are labeled `"custom"`. Returns: `snapshot_ref` and `urls` — the full `finplan_snapshot` document stays in the file store ([don't load it into context](../SKILL.md#data-files-stay-out-of-context)) — plus the compact `derived` and `provenance` blocks inline. `derived` carries the rollups for the check-in narrative; pass `snapshot_ref` to `diff_snapshots` or the check-in template when the full document is needed.
+- `as_of` (ISO YYYY-MM-DD) is required to build a snapshot, and ignored for `dry_run`.
+- `dry_run=true` validates and migrates the state without building a snapshot, and skips the projection: a cheap "is this state usable?" check. It returns `{success, valid, migrated, errors, warnings, schema_drift, migrated_state?}`.
+- `assumption_preset` is `"standard"` (default), `"conservative"`, or `"optimistic"`. The `stocks_`, `bonds_` and `cash_` `return` / `volatility` parameters override that preset.
+- `inflation` (e.g. 0.025 = 2.5%) inflates real-terms goal targets to nominal before computing each goal's projected progress. It defaults to the engine's canonical rate (2.5%); pass 0 to disable. It is recorded in the snapshot's assumptions stamp.
+- The full `finplan_snapshot` document stays in the file store ([don't load it into context](../SKILL.md#data-files-stay-out-of-context)); the compact `derived` and `provenance` blocks come back inline.
 
 ### diff_snapshots
 
-Compute structured, signed deltas between two snapshots (old → new): money deltas in integer cents, allocation deltas in percentage points. Account types and goals present in only one snapshot are reported as added/removed.
-
-| Parameter           | Type   | Description                                                                                                                                                                                            |
-| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `old_snapshot_json` | object | The earlier `finplan_snapshot` document, passed inline. Provide exactly one of `old_snapshot_json` or `old_ref`.                                                                                       |
-| `new_snapshot_json` | object | The later `finplan_snapshot` document, passed inline. Provide exactly one of `new_snapshot_json` or `new_ref`.                                                                                         |
-| `old_ref`           | string | `snapshot_ref` of the earlier snapshot in the server's file store (as returned by `build_snapshot`), resolved in place of `old_snapshot_json` so the full document need not re-enter context (one-of). |
-| `new_ref`           | string | `snapshot_ref` of the later snapshot in the server's file store (as returned by `build_snapshot`), resolved in place of `new_snapshot_json` (one-of).                                                  |
-
-Rejects a document whose `kind` is not `finplan_snapshot`. Returns: `diff` with `as_of_old`/`as_of_new` and per-section deltas.
+Deltas run old → new: money in integer cents, allocation in percentage points. Account types and goals present in only one snapshot are reported as added/removed. Provide exactly one of `old_snapshot_json` or `old_ref`, and exactly one of `new_snapshot_json` or `new_ref`. The refs are `snapshot_ref` values from `build_snapshot`, so the full document need not re-enter context. It rejects a document whose `kind` is not `finplan_snapshot`.
 
 ### get_checkin_template
 
-Return the canonical check-in narrative template as plaintext markdown (no parameters). The template is YAML front-matter (`type: checkin`, `as_of`) plus a facts table of `${dotted.path}` markers and reserved `${narrative:*}` sections.
-
-The template is versioned with the snapshot schema, so fetch it fresh rather than caching a copy. Fill it against a `finplan_snapshot`: `${dotted.path}` markers resolve against the snapshot JSON (a `*_cents` leaf renders as a dollar amount), while `${narrative:*}` markers are left untouched for the strategy/narrative layer (or a human) to write. Returns: `template` (markdown string).
+The template is YAML front-matter (`type: checkin`, `as_of`) plus a facts table of `${dotted.path}` markers and reserved `${narrative:*}` sections. It is versioned with the snapshot schema, so fetch it fresh rather than caching a copy. `${dotted.path}` markers resolve against the snapshot JSON (a `*_cents` leaf renders as a dollar amount), while `${narrative:*}` markers are left untouched for the strategy/narrative layer (or a human) to write.
 
 ### fill_checkin_template
 
-Fill a check-in template's facts markers directly from a `finplan_snapshot`, so you never map dotted paths or convert cents → dollars by hand.
-
-| Parameter       | Type   | Description                                                                                             |
-| --------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| `snapshot_json` | object | A `finplan_snapshot` document to fill the template from                                                 |
-| `template`      | string | Template markdown with `${dotted.path}` markers (optional; defaults to the canonical check-in template) |
-
-Substitutes every resolvable `${dotted.path}` marker (`${derived.*}`, `${provenance.*}`, `${as_of}`, etc.; `*_cents` leaves rendered as dollar amounts) and leaves `${narrative:*}` markers — and any path it cannot resolve — verbatim. Rejects a document whose `kind` is not `finplan_snapshot`. Returns: `filled` (the substituted markdown) and `unresolved` (non-narrative markers that had no matching snapshot value).
+You never map dotted paths or convert cents to dollars by hand. `template` is optional and defaults to the canonical check-in template. It substitutes every resolvable `${dotted.path}` marker (`${derived.*}`, `${provenance.*}`, `${as_of}`, etc.) and leaves `${narrative:*}` markers, and any path it cannot resolve, verbatim; the latter are listed in `unresolved`. It rejects a document whose `kind` is not `finplan_snapshot`.

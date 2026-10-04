@@ -20,68 +20,17 @@ Required Minimum Distribution (RMD) calculations for retirement planning under S
 
 ### calculate_required_minimum_distribution
 
-Calculate the Required Minimum Distribution for a retirement account using IRS life expectancy tables.
-
-| Parameter                  | Type   | Description                                                                                      |
-| -------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
-| `prior_year_balance_cents` | int    | Account balance as of December 31 of prior year, in cents                                        |
-| `age`                      | int    | Account owner's age at end of current year                                                       |
-| `table_type`               | string | `"uniform_lifetime"` (default), `"joint_life"`, or `"single_life"`                               |
-| `beneficiary_age`          | int    | Spouse beneficiary's age at end of current year. Required for `"joint_life"`, rejected otherwise |
-
-Returns: `rmd_amount_cents`, `rmd_amount_dollars`, `distribution_period`, `beneficiary_age`, `explanation`.
+`table_type` defaults to `"uniform_lifetime"`. `beneficiary_age` (spouse beneficiary's age at end of current year) is required for `"joint_life"` and rejected otherwise.
 
 **Pick `"joint_life"` when the owner's sole beneficiary is a spouse more than 10 years younger.** The IRS Joint and Last Survivor Table then gives a longer distribution period — a smaller RMD — than the Uniform Lifetime Table. Owner 75 with a 60-year-old spouse divides by 28.3 instead of 24.6. A gap of 10 years or less is a validation error: the Uniform Lifetime Table already assumes a spouse exactly 10 years younger, so it is the right table there.
 
-### check_rmd_required
-
-Check if RMDs are required for a specific tax year.
-
-| Parameter    | Type | Description                |
-| ------------ | ---- | -------------------------- |
-| `birth_year` | int  | Account owner's birth year |
-| `tax_year`   | int  | Tax year to check          |
-
-Returns: `rmd_required` (boolean), `age_at_year_end`, `rmd_start_age`, `first_rmd_year`, `rule_applied`.
-
 ### calculate_rmd_shortfall_penalty
 
-Calculate the penalty for failing to take the full RMD.
-
-| Parameter                    | Type | Description                                             |
-| ---------------------------- | ---- | ------------------------------------------------------- |
-| `required_rmd_cents`         | int  | Required RMD amount in cents                            |
-| `actual_withdrawn_cents`     | int  | Amount actually withdrawn in cents                      |
-| `corrected_within_two_years` | bool | Whether shortfall was corrected timely (default: false) |
-
-Returns: `shortfall_cents`, `penalty_cents`, `penalty_rate` (0.25 or 0.10 if corrected).
+`penalty_rate` is 0.25, or 0.10 when `corrected_within_two_years` is true (default false).
 
 ### project_rmd_schedule
 
-Project future RMD requirements over multiple years.
-
-| Parameter               | Type  | Description                                 |
-| ----------------------- | ----- | ------------------------------------------- |
-| `birth_year`            | int   | Account owner's birth year                  |
-| `current_year`          | int   | Current tax year                            |
-| `current_balance_cents` | int   | Current account balance in cents            |
-| `years_to_project`      | int   | Number of years to project (default: 20)    |
-| `annual_growth_rate`    | float | Expected annual growth rate (default: 0.05) |
-
-Returns: `schedule` (list of yearly RMDs), `total_projected_rmd_cents`, `first_rmd_year`.
-
-### calculate_aggregated_ira_rmds
-
-Calculate RMDs for multiple IRAs with aggregation rules.
-
-| Parameter      | Type | Description                                            |
-| -------------- | ---- | ------------------------------------------------------ |
-| `ira_balances` | list | List of `{"account_id": string, "balance_cents": int}` |
-| `age`          | int  | Account owner's age at end of current year             |
-
-Returns: `total_rmd_cents`, `account_rmds` (per-account breakdown), `can_aggregate`.
-
-Note: IRA RMDs can be aggregated; 401(k) RMDs cannot.
+Defaults: `years_to_project` 20, `annual_growth_rate` 0.05.
 
 ## Usage notes
 

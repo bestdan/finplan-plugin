@@ -19,56 +19,25 @@ Chart.js chart generation for financial visualizations. All charts return Chart.
 
 Don't load data files into context or hardcode their arrays in HTML/JS — see [SKILL.md](../SKILL.md#data-files-stay-out-of-context). Render chart data with the [HTML rendering workflow](#html-rendering-workflow) below.
 
-## Tools
+## Tool notes
+
+On `generate_projection_fan_chart` and `generate_projection_comparison_chart`, `inflation` defaults to 0.0; when > 0, chart values are in today's purchasing power.
 
 ### generate_projection_fan_chart
 
-Percentile bands (p10/p25/p50/p75/p90) for projection results.
-
-| Parameter                    | Type   | Description                                                                                             |
-| ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| `initial_balance_cents`      | int    | Starting balance in cents                                                                               |
-| `expected_annual_return`     | float  | Expected return (0.07 = 7%)                                                                             |
-| `time_horizon_months`        | int    | Months to project                                                                                       |
-| `annual_volatility`          | float  | Annual std dev (default: 0.15)                                                                          |
-| `monthly_contribution_cents` | int    | Monthly contribution (default: 0)                                                                       |
-| `title`                      | string | Chart title (default: "Portfolio Projection")                                                           |
-| `show_deposits_line`         | bool   | Show cumulative deposits (default: true)                                                                |
-| `inflation`                  | float  | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power |
+`annual_volatility` defaults to 0.15, `monthly_contribution_cents` to 0, `title` to "Portfolio Projection", and `show_deposits_line` (cumulative deposits) to true.
 
 ### generate_account_breakdown_chart
 
-Stacked area chart showing portfolio composition by account over time.
-
-| Parameter                | Type   | Description                                       |
-| ------------------------ | ------ | ------------------------------------------------- |
-| `initial_balances`       | dict   | `{"401k": 10000000, "Roth IRA": 5000000}` (cents) |
-| `expected_annual_return` | float  | Expected return                                   |
-| `time_horizon_months`    | int    | Months to project                                 |
-| `title`                  | string | Chart title                                       |
-| `show_total_line`        | bool   | Show total portfolio line (default: true)         |
+`initial_balances` is a dict of account name to cents: `{"401k": 10000000, "Roth IRA": 5000000}`. `show_total_line` defaults to true.
 
 ### generate_allocation_chart
 
-Stacked area chart of asset allocation (stocks/bonds/cash) over time. For glide path visualization.
-
-| Parameter     | Type       | Description                                                |
-| ------------- | ---------- | ---------------------------------------------------------- |
-| `allocations` | list[dict] | `[{"stocks_pct": 90, "bonds_pct": 8, "cash_pct": 2}, ...]` |
-| `months`      | list[int]  | Corresponding month numbers                                |
-| `title`       | string     | Chart title                                                |
+For glide path visualization. `allocations` is a list of `{"stocks_pct": 90, "bonds_pct": 8, "cash_pct": 2}` entries, and `months` holds the corresponding month numbers.
 
 ### generate_projection_comparison_chart
 
-Line chart comparing projections under different return assumptions at a specific percentile.
-
-| Parameter             | Type       | Description                                                                                                  |
-| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
-| `scenarios`           | list[dict] | Each: `{name, initial_balance_cents, expected_annual_return, annual_volatility, monthly_contribution_cents}` |
-| `time_horizon_months` | int        | Months to project                                                                                            |
-| `percentile`          | int        | Percentile to compare (default: 50)                                                                          |
-| `title`               | string     | Chart title                                                                                                  |
-| `inflation`           | float      | Annual inflation rate as decimal (default: 0.0). When > 0, chart values are in today's purchasing power      |
+Compares at one percentile (`percentile`, default 50). Each `scenarios` entry is `{name, initial_balance_cents, expected_annual_return, annual_volatility, monthly_contribution_cents}`.
 
 ## File-based responses
 

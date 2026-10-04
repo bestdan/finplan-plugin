@@ -39,11 +39,9 @@ full `state_json` in that same call.
 
 <!-- END GENERATED: tool-index sync -->
 
-## Tools
+## Tool notes
 
 ### manage_state
-
-State management tool for creating and modifying user state.
 
 **Response shape:** `action="create"` returns the full UserState JSON (plus `success`, `message`, `state_hash`). The `update_*` actions return a **compact delta by default** — only the changed section plus a verification hash — instead of echoing the whole document back on every edit:
 
@@ -58,126 +56,60 @@ State management tool for creating and modifying user state.
 }
 ```
 
-You already hold the full state (you passed it in as `state_json`). To rebuild the document, apply `changed.item` to the section named in `changed.section`: for list sections (`accounts`, `goals`, `income_streams`, `expenses`) update-or-append by id (`account_id` for accounts; `id` for the rest); for `person` replace `.person`. `/finplan:save-state` does this for you. `state_hash` is a SHA-256 over the resulting full document so you can verify the rebuild. Pass `return_full_state=true` to get the full UserState returned inline instead.
+You already hold the full state (you passed it in as `state_json`). To rebuild the document, apply `changed.item` to the section named in `changed.section`: for list sections (`accounts`, `goals`, `income_streams`, `expenses`) update-or-append by id (`account_id` for accounts; `id` for the rest); for `person` replace `.person`. `/finplan:save-state` does this for you. `state_hash` is a SHA-256 over the resulting full document so you can verify the rebuild. Pass `return_full_state=true` to get the full UserState returned inline instead; every mutating action honors it, and `create` ignores it.
 
-| Parameter            | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `action`             | string | `"create"`, `"update_account"`, `"update_goal"`, `"update_person"`, `"set_spouse"`, `"clear_spouse"`, `"update_income_stream"`, `"update_expense"`, `"remove_account"`, `"remove_goal"`, `"remove_income_stream"`, `"remove_expense"`                                                                                                                                                                                                                                                                              |
-| `state_json`         | dict   | Current UserState JSON. Required for: update_account, update_goal, update_person, set_spouse, clear_spouse, update_income_stream, update_expense, remove_account, remove_goal, remove_income_stream, remove_expense.                                                                                                                                                                                                                                                                                               |
-| `person_json`        | dict   | Person profile with fields: date_of_birth (YYYY-MM-DD), employment_status, annual_pretax_income_cents, marital_status, zipcode, optionally number_of_dependents. Also optional, and supplied together: `pia_cents_today_dollars` and `pia_source` — `estimate_social_security_pia_from_earnings_record` returns both, under the keys `pia_cents_today_dollars` and `source`. Required for: create, update_person.                                                                                                  |
-| `spouse_json`        | dict   | Spouse profile (same fields as a person, the `pia_cents_today_dollars` / `pia_source` pair included — spousal and survivor benefits are computed against the spouse's own PIA). Unlike `person_json`, this payload fully **replaces** the stored spouse: one that omits the PIA pair drops it, so carry both forward when editing a saved spouse. Omitting `id` keeps the existing spouse's id; pass an explicit `id` to swap in a different person. The primary person must be married. Required for: set_spouse. |
-| `account_json`       | dict   | Account from `create_account` result. Required for: update_account.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `goal_json`          | dict   | Goal from `create_goal` result. Required for: update_goal.                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `income_stream_json` | dict   | Income stream from `create_income_stream` result. Required for: update_income_stream.                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `expense_json`       | dict   | Expense from `create_expense` result. Required for: update_expense.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `account_id`         | string | `account_id` of the account to remove. Required for: remove_account.                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `goal_id`            | string | `id` of the goal to remove. Required for: remove_goal.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `income_stream_id`   | string | `id` of the income stream to remove. Required for: remove_income_stream.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `expense_id`         | string | `id` of the expense to remove. Required for: remove_expense.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `return_full_state`  | bool   | When `true`, every mutating action (all actions except `create`) returns the full UserState inline instead of a delta (default `false`). Ignored by `create`.                                                                                                                                                                                                                                                                                                                                                      |
+**Inputs:**
+
+- `state_json` is required for every action except `create`.
+- Each action has its own payload: `person_json` (create, update_person), `spouse_json` (set_spouse), `account_json`, `goal_json`, `income_stream_json`, `expense_json` (the matching `update_*`). Each `create_*` tool's result field is what goes in; see the [mutation sequence](#how-to-integrate-accounts-and-goals).
+- The `remove_*` actions take the id of the thing to remove: `account_id`, `goal_id`, `income_stream_id`, `expense_id`.
+- `person_json` carries `date_of_birth` (YYYY-MM-DD), `employment_status`, `annual_pretax_income_cents`, `marital_status`, `zipcode`, optionally `number_of_dependents`. It may also carry `pia_cents_today_dollars` and `pia_source`, supplied together: `estimate_social_security_pia_from_earnings_record` returns both, under the keys `pia_cents_today_dollars` and `source`.
+- `spouse_json` takes the same fields as a person, the PIA pair included; spousal and survivor benefits are computed against the spouse's own PIA. Unlike `person_json`, it fully **replaces** the stored spouse: one that omits the PIA pair drops it, so carry both forward when editing a saved spouse. Omitting `id` keeps the existing spouse's id; pass an explicit `id` to swap in a different person.
 
 **Actions:**
 
-- **create** — Create a new UserState with person profile. Requires `person_json`.
-- **update_account** — Add or update an account in state. Requires `state_json` and `account_json`. If account has an 'account_id' field matching an existing account, it replaces it; otherwise adds new. Refuses (error `"Missing beneficiary"`) to add a `plan_529`, or move one off beneficiary ownership, unless `ownership_type` is `"beneficiary"`; a saved 529 that already lacked a beneficiary stays editable.
-- **update_goal** — Add or update a goal in state. Requires `state_json` and `goal_json`. If goal has an 'id' field matching an existing goal, it replaces it; otherwise adds new. A goal's funded amount is account-derived, so **adding a new goal establishes a backing account**: dedicated-savings types (emergency fund, vacation, …) auto-create a provisional Taxable Savings account linked to the goal (returned as `provisional_account` with `assumptions` to confirm; an auto-create returns the full document, not a delta); retirement/education and ambiguous types instead return `eligible_accounts` to link plus a `warnings` entry that the goal is not yet funded. A multi-owner household defers the auto-create with a `warnings` entry + `candidate_owner_ids`. Editing an existing goal never re-runs establishment.
-- **update_person** — Update (edit) person info in state. Requires `state_json` and `person_json` with fields to change.
-- **set_spouse** — Set or replace the primary person's spouse. Requires `state_json` and `spouse_json` (a full person profile; omitting its `id` keeps the existing spouse's id, so editing spouse fields never changes identity and never orphans accounts that reference it). The primary person must be married — setting a spouse on a non-married person returns a structured "Only married persons can have spouse information" validation error and leaves state unchanged.
-- **clear_spouse** — Remove the primary person's spouse. Requires `state_json`. Idempotent (clearing when there is no spouse still succeeds); does not cascade to the spouse's linked accounts.
-- **update_income_stream** — Add or update an income stream in state. Requires `state_json` and `income_stream_json`. If income stream has an 'id' field matching an existing one, it replaces it; otherwise adds new.
-- **update_expense** — Add or update an expense in state. Requires `state_json` and `expense_json`. If expense has an 'id' field matching an existing one, it replaces it; otherwise adds new.
-- **remove_account** — Remove an account from state by `account_id`. Requires `state_json` and `account_id`.
-- **remove_goal** — Remove a goal from state by `goal_id`. Requires `state_json` and `goal_id`.
-- **remove_income_stream** — Remove an income stream from state by `income_stream_id`. Requires `state_json` and `income_stream_id`.
-- **remove_expense** — Remove an expense from state by `expense_id`. Requires `state_json` and `expense_id`.
+- **update_account** — If the account has an `account_id` matching an existing account, it replaces it; otherwise adds new. Refuses (error `"Missing beneficiary"`) to add a `plan_529`, or move one off beneficiary ownership, unless `ownership_type` is `"beneficiary"`; a saved 529 that already lacked a beneficiary stays editable.
+- **update_goal** — If the goal has an `id` matching an existing goal, it replaces it; otherwise adds new. A goal's funded amount is account-derived, so **adding a new goal establishes a backing account**: dedicated-savings types (emergency fund, vacation, …) auto-create a provisional Taxable Savings account linked to the goal (returned as `provisional_account` with `assumptions` to confirm; an auto-create returns the full document, not a delta); retirement/education and ambiguous types instead return `eligible_accounts` to link plus a `warnings` entry that the goal is not yet funded. A multi-owner household defers the auto-create with a `warnings` entry + `candidate_owner_ids`. Editing an existing goal never re-runs establishment.
+- **update_income_stream**, **update_expense** — Replace by matching `id`; otherwise add new.
+- **update_person** — `person_json` carries only the fields to change.
+- **set_spouse** — The primary person must be married; setting a spouse on a non-married person returns a structured "Only married persons can have spouse information" validation error and leaves state unchanged. Omitting the spouse's `id` keeps the existing id, so editing spouse fields never changes identity and never orphans accounts that reference it.
+- **clear_spouse** — Idempotent (clearing when there is no spouse still succeeds); does not cascade to the spouse's linked accounts.
 
 ### describe_state_schema
 
-Return the JSON Schema for a `finplan_state` document. Fetch it **once** to author a valid state in a single pass, instead of discovering required fields by submitting and reading validation errors. The schema describes every nested shape under `json_schema["$defs"]` — including the `PeriodRate` / `ReturnPeriod` rate types and all enums such as `property_type` — so you don't have to probe level-by-level.
-
-Takes no parameters. Returns `{kind, schema_fingerprint, json_schema}`. The result is static for a given server version and safe to cache; `schema_fingerprint` identifies the schema version a document must match.
+Fetch it **once** to author a valid state in a single pass, instead of discovering required fields by submitting and reading validation errors. Every nested shape is under `json_schema["$defs"]`. The result is static for a given server version and safe to cache; `schema_fingerprint` identifies the schema version a document must match.
 
 ### get_sample_profile
 
-Load the Larsons — a fictional demo household — without the state document entering context. Takes no parameters. Returns a `FileResponse`: the full `finplan_state` JSON at `urls.data`, a schema + jq examples at `urls.schema`, and a compact `summary` (household label, marital status, account/goal/income/expense counts, goal names). `note` flags the data as fictional and suggests follow-up calls (e.g. a Monte Carlo retirement projection for Mark at 62, federal + NY tax filing jointly, Social Security claiming ages 62/67/70, both 529 goals). Never merge this document into a real user's state.
+Returns a `FileResponse` (the state at `urls.data`, a schema + jq examples at `urls.schema`), so the state document never enters context. `note` flags the data as fictional. Never merge this document into a real user's state.
 
 ### migrate_state
 
-Upgrade a state document to the current schema **once** and hand it back as a download. An unstamped or stale document makes every `build_snapshot` re-migrate it; this runs the shared ingest path (validate → migrate → stamp `kind` + `schema_fingerprint`), writes the upgraded document to file storage, and returns a download URL plus a compact summary — never the full document inline. Persist the downloaded document (e.g. via `/finplan:save-state`); subsequent `build_snapshot` calls then see a conformant document and report `migrated: false`, ending the re-migration loop.
+An unstamped or stale document makes every `build_snapshot` re-migrate it. This runs the shared ingest path once and returns a download, never the full document inline. Persist the downloaded document (e.g. via `/finplan:save-state`); subsequent `build_snapshot` calls then report `migrated: false`. The migrated document is at `urls.data`; an error envelope with structured `errors` comes back when the document cannot validate.
 
-| Parameter    | Type | Description                                                                                                          |
-| ------------ | ---- | -------------------------------------------------------------------------------------------------------------------- |
-| `state_json` | dict | A `finplan_state` document to upgrade. May be unstamped or stale; it is validated and re-stamped on the way through. |
+## Monarch sync tools
 
-Returns `{success, urls, summary}` on success — the migrated document lives at `urls.data`, and `summary` carries `kind`, `schema_hash`, `migrated`, `schema_drift`, and `warnings`. Returns an error envelope with structured `errors` when the document cannot validate.
+The sync tools take the state as exactly one of `state_json`, `state_ref` (`state_path` is local transport only and not accepted on the hosted server). `system` (on `link_account`, `unlink_account`, `exclude_account`, and `complete_synced_account`) defaults to `monarch`, and `synced_on` (YYYY-MM-DD, on `reconcile_with_monarch` and `complete_synced_account`) defaults to today. Tools that persist return a new `state_ref`.
 
 ### link_account
 
-Persist external-sync crosswalk links onto FinPlan accounts so a Monarch↔FinPlan link is confirmed **once** and every later sync matches deterministically on `external_id`. Batch and many-to-one (several source ids onto one FinPlan account); appending an already-linked id is a no-op. The whole batch fails (nothing persisted) if any `finplan_account_id` is unknown, if an id is already linked to a different account, or if the account is already linked to a different `system`. Returns the linked-account summaries and a new `state_ref`.
-
-| Parameter    | Type   | Description                                                                                                                   |
-| ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `links`      | list   | Links to persist, each `{finplan_account_id, external_ids}` (external_ids is a list of source ids mapping onto that account). |
-| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                                                |
-| `state_path` | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)                                   |
-| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                                                        |
-| `system`     | string | The external source system being linked (default: monarch).                                                                   |
+Confirms a Monarch↔FinPlan link **once**, so every later sync matches deterministically on `external_id`. Batch and many-to-one (several source ids onto one FinPlan account); appending an already-linked id is a no-op. The whole batch fails (nothing persisted) if any `finplan_account_id` is unknown, if an id is already linked to a different account, or if the account is already linked to a different `system`.
 
 ### unlink_account
 
-Remove some or all external-sync crosswalk links from a FinPlan account. With `external_ids`, only those ids are removed; omitting them clears the account's link entirely. Scoped to one `system`; a no-op (wrong system, or ids not present) succeeds without churning state. Returns the remaining link state, a `changed` flag, and a `state_ref`.
-
-| Parameter            | Type   | Description                                                                                 |
-| -------------------- | ------ | ------------------------------------------------------------------------------------------- |
-| `finplan_account_id` | string | The FinPlan account to unlink.                                                              |
-| `state_json`         | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).              |
-| `state_path`         | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`) |
-| `state_ref`          | string | Handle to an already-uploaded state document (one-of).                                      |
-| `external_ids`       | list   | Source ids to remove; omit to clear the account's crosswalk entirely (default: none).       |
-| `system`             | string | The external source system to unlink (default: monarch).                                    |
+With `external_ids`, only those ids are removed; omitting them clears the account's link entirely. A no-op (wrong system, or ids not present) succeeds without churning state.
 
 ### reconcile_with_monarch
 
-Reconcile a Monarch account pull against FinPlan state. Translates and gates each raw Monarch account, diffs it against the state's accounts via the persisted crosswalk, and reports four buckets: `matched` balance deltas, `only_in_monarch` (READY adds with no FinPlan link), `only_in_finplan` (accounts no candidate carried — reported, never touched), and `held_back` (items the gate couldn't accept, e.g. an unmodeled mortgage — surfaced, never dropped). With `confirm=False` (default) it writes nothing and returns an `apply_preview` of what the apply would do per each account's `sync_policy`; with `confirm=True` it applies the matched deltas (`live` overwritten, `estimate` overwritten but flagged noisy, `manual` skipped), persists the new state, and returns the `apply_report` plus a new `state_ref`. A re-run dry run after a confirm shows no residual drift on the applied accounts (idempotent).
-
-| Parameter               | Type   | Description                                                                                          |
-| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| `monarch_accounts_json` | list   | Raw Monarch GetAccounts items (each `{id, type, balance, name?}`) to reconcile against the state.    |
-| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                       |
-| `state_path`            | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)          |
-| `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
-| `confirm`               | bool   | False (default) = dry-run diff + apply_preview, no writes; True = apply per sync_policy and persist. |
-| `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto each refreshed account's source.last_synced; defaults to today.  |
+Reports four buckets: `matched` balance deltas, `only_in_monarch` (READY adds with no FinPlan link), `only_in_finplan` (accounts no candidate carried — reported, never touched), and `held_back` (items the gate couldn't accept, e.g. an unmodeled mortgage — surfaced, never dropped). With `confirm=False` (default) it writes nothing and returns an `apply_preview`; with `confirm=True` it applies the matched deltas per each account's `sync_policy` (`live` overwritten, `estimate` overwritten but flagged noisy, `manual` skipped), persists, and returns the `apply_report`. A re-run dry run after a confirm shows no residual drift on the applied accounts (idempotent).
 
 ### exclude_account
 
-Record external accounts as knowingly excluded from the modeled state (batch). Use it when an `only_in_monarch` (or held-back) account is one the user deliberately won't model — a mortgage, a spouse's account, an extra card. Each exclusion is written onto `UserState.excluded_external_accounts` keyed on `(system, external_id)`, so every snapshot/check-in surfaces "seen in Monarch, not modeled" and a later `reconcile_with_monarch` stops re-proposing it as an add or held-back item. Idempotent: re-excluding the same key refreshes its record. Returns the recorded exclusions and a new `state_ref`.
-
-| Parameter    | Type   | Description                                                                                 |
-| ------------ | ------ | ------------------------------------------------------------------------------------------- |
-| `exclusions` | list   | Accounts to exclude, each `{external_id, label, reason, last_seen_balance_cents?}`.         |
-| `state_json` | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).              |
-| `state_path` | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`) |
-| `state_ref`  | string | Handle to an already-uploaded state document (one-of).                                      |
-| `system`     | string | The external source system the exclusions belong to (default: monarch).                     |
+Use it when an `only_in_monarch` (or held-back) account is one the user deliberately won't model — a mortgage, a spouse's account, an extra card. Each exclusion is keyed on `(system, external_id)`, so every snapshot/check-in surfaces "seen in Monarch, not modeled" and a later `reconcile_with_monarch` stops re-proposing it. Idempotent: re-excluding the same key refreshes its record.
 
 ### complete_synced_account
 
-Complete a held-back mortgage/real-estate account (surfaced as `needs_manual_input` in `reconcile_with_monarch`'s `held_back` bucket) with the loan terms / property details the source can't supply, plus the ownership it omits, then write it. The candidate is re-identified from the fresh `monarch_accounts_json` by `external_id` (never a stale copy), so balance/name/type stay current; the account is validated like `create_account` and written carrying its `source` provenance (stamped `last_synced`), so a later `reconcile_with_monarch` matches it. It's a no-op (writes nothing) when the id is already linked, knowingly excluded, not in the latest pull, or not held back anymore; a mortgage missing `mortgage_terms_json` (or real estate missing `property_details_json`) is reported pending, never partially written. With `confirm=False` (default) it returns an `account_preview`; with `confirm=True` it appends the account and persists a new `state_ref`.
-
-| Parameter               | Type   | Description                                                                                          |
-| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
-| `monarch_accounts_json` | list   | Raw Monarch GetAccounts items (each `{id, type, balance, name?}`); the candidate is re-found here.   |
-| `external_id`           | string | The source id of the held-back account to complete (from a prior `held_back` entry).                 |
-| `ownership_json`        | dict   | Account ownership (required — the source omits it): `{ownership_type, owner_ids, beneficiary_id?}`.  |
-| `mortgage_terms_json`   | dict   | Mortgage loan terms (required for a `mortgage`; same shape as `create_account`).                     |
-| `property_details_json` | dict   | Property details (required for a `real_estate` account; same shape as `create_account`).             |
-| `state_json`            | dict   | Inline planning-state document (provide exactly one of state_json, state_ref).                       |
-| `state_path`            | string | (local transport only; not accepted on the hosted server — use `state_json` or `state_ref`)          |
-| `state_ref`             | string | Handle to an already-uploaded state document (one-of).                                               |
-| `system`                | string | The external source system the external_id belongs to (default: monarch).                            |
-| `confirm`               | bool   | False (default) = validate + return account_preview, no writes; True = append the account + persist. |
-| `synced_on`             | string | Sync date (YYYY-MM-DD) stamped onto the created account's source.last_synced; defaults to today.     |
+Completes a held-back account (`needs_manual_input` in `reconcile_with_monarch`'s `held_back` bucket) with the loan terms / property details and ownership the source omits. The candidate is re-identified from the fresh `monarch_accounts_json` by `external_id` (never a stale copy). `ownership_json` is required; `mortgage_terms_json` is required for a `mortgage` and `property_details_json` for a `real_estate` account, in the same shape as `create_account`. A mortgage missing its terms (or real estate missing its details) is reported pending, never partially written. It is a no-op (writes nothing) when the id is already linked, knowingly excluded, not in the latest pull, or not held back anymore. `confirm=False` (default) returns an `account_preview` and writes nothing; `confirm=True` appends the account and persists.
 
 ## Typical workflow
 
