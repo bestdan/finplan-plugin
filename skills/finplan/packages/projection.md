@@ -63,10 +63,19 @@ Compares conservative (5%/8%), moderate (7%/15%), and aggressive (9%/22%) return
 Supply either the full `state_json` or a live `state_ref`; inline state takes precedence. The response returns `summary.inputs.base_state_ref`, reusable as `state_ref` while live. Refs have an approximately 60-minute sliding TTL that refreshes on each use; on `state_ref_expired`, re-send the full `state_json` in that same call.
 
 - Liability and real-estate accounts are reported under `skipped_accounts`, not projected.
+- Each account's after-tax figure is a full-liquidation haircut: its projected balance scaled by that account's withdrawal tax treatment, as if the whole balance were cashed out in that month. It is not a tax on withdrawals as they happen.
 - Defaults: `time_horizon_months` 360; `assumptions_preset` `"standard"` (or `"conservative"`, `"optimistic"`); `inflation` 0.025 (when > 0, values are in today's purchasing power; 0 gives nominal dollars); `marginal_ordinary_rate` 0.22 and `ltcg_rate` 0.15 for after-tax values; `iterations` 1000 and `seed` apply only to `method="monte_carlo"`; `seed` pins the draw, and omitting it uses a fixed default.
 - `invest_residual_surplus` (default true) invests the household surplus left over after account contribution pins across the remaining accounts by balance. Set false to hold the leftover out of the plan.
 - Accounts are projected independently and aggregated by summing matching percentiles (a perfectly-correlated / comonotonic assumption), surfaced in the response `assumptions` block.
 - An account contribution pin (a current-employer 401(k)'s employee deferral) is honored first. A configured `employer_match` on that plan is computed on the employee contribution and the household's annual W-2 compensation and routed on top (reported per account as `monthly_employer_match_cents`), so employer money compounds instead of being folded into one undifferentiated surplus. Income tax on wages is not modeled inside the projection.
+
+**Limits.** Three decumulation behaviors `project_plan` does not model.
+
+- **Deficit drawdowns are untaxed.** When household spending exceeds income, the monthly deficit is funded as a negative contribution — a proportional drawdown from the accounts that carry no `monthly_contribution_cents` pin — with no tax taken at the point of withdrawal. The plan funds that spending with gross dollars, so it overstates what the accounts can support. When every projected account is pinned there is no unpinned account to draw from, and the deficit is not funded at all.
+- **Age rules never fire.** This path resolves the budget without a household person list, so every `start_age`/`end_age` rule is unresolvable: an age-gated income stream (Social Security, a pension) is dropped for the whole horizon and an age-bounded expense runs for all of it. Income is understated and spending overstated wherever an age rule is set. No tool evaluates these rules today — `get_budget_summary` filters on `start_date`/`end_date` only — so there is no second tool to call for the age-aware answer.
+- **RMDs are not forced.** Nothing in the projection distributes a pre-tax balance at the required beginning date, taxes it, or reinvests what is left, so a pre-tax account compounds past the age the IRS would have forced money out of it. The RMD tools are calculators the projection never calls — see [rmd.md](rmd.md).
+
+The first two limits also appear in the response's `assumptions` block when a plan triggers them; the RMD limit does not.
 
 ## Working with file-based responses
 

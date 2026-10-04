@@ -16,6 +16,8 @@ Required Minimum Distribution (RMD) calculations for retirement planning under S
 
 <!-- END GENERATED: tool-index rmd -->
 
+**These tools are calculators; projections do not apply RMDs.** Neither `project_plan` nor `run_projection` forces a distribution from a pre-tax balance at the required beginning date, taxes it, or reinvests what is left — a pre-tax account compounds through the whole horizon. Call the tools below for the RMD figures; do not read them out of a projection.
+
 ## Tools
 
 ### calculate_required_minimum_distribution
