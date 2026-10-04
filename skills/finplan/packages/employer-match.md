@@ -58,3 +58,23 @@ Vested portion of employer contributions based on years of service.
 | `employer_match_json`                | dict | Match config                          |
 | `total_employer_contributions_cents` | int  | Total employer contributions in cents |
 | `years_of_service`                   | int  | Years with employer                   |
+
+### plan_401k_deferral
+
+Plan the per-paycheck 401(k) deferral that reaches the year's limit. Spreads what is left under the limit (with the age catch-up, including age 60-63) evenly across the remaining paychecks, with the rounding remainder on the final one. Use it when someone asks what per-paycheck election maxes out their 401(k).
+
+| Parameter                 | Type   | Description                                                                              |
+| ------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `tax_year`                | int    | Tax year, 2024 or later                                                                  |
+| `ytd_deferral_cents`      | int    | Deferrals already made this year, across every 401(k)-family plan                        |
+| `remaining_pay_periods`   | int    | Paychecks left in the year                                                               |
+| `per_period_gross_cents`  | int    | Gross pay on each remaining paycheck                                                     |
+| `employer_match_json`     | dict   | Match config (optional); gives the match captured and, via `true_up`, early-cap-out cost |
+| `birth_year`              | int    | Sets the catch-up by age attained in `tax_year` (optional)                               |
+| `age`                     | int    | Age attained by December 31 of `tax_year`; overrides `birth_year` (optional)             |
+| `election_type`           | string | `"flat"` (default) or `"percent"`                                                        |
+| `proposed_election_cents` | int    | A flat election to evaluate (optional)                                                   |
+| `proposed_election_pct`   | float  | A percent election to evaluate (optional)                                                |
+| `account_type`            | string | `"traditional_401k"` (default) or `"roth_401k"`                                          |
+
+Returns: `limit` (base, catch-up, total, `is_projected`), `remaining_limit_cents`, `recommended` (per-period election, `final_period_cents`, per-paycheck deferrals, `cap_out_period`, `employer_match_cents`), `proposed` when given, `employer_match` (captured vs. available, full-match deferral %), `warnings` (early cap-out with no true-up and the match forfeited, below the full-match deferral rate, limit not yet published, YTD over the limit), and `assumptions` (which paychecks the election comes from).
