@@ -48,11 +48,20 @@ Project investment growth with uncertainty using analytical or Monte Carlo metho
 
 The response is described under [Working with file-based responses](#working-with-file-based-responses). All monetary values are in **cents**.
 
+**Depletion.** `summary.outputs.depletion` (also on `projection_result`) says how often and when the money runs out. A path depletes in the first month an outflow could not be funded.
+
+- `probability` is the share of all paths that depleted; `never_depleted_share` is the rest. `depleted_paths` / `total_paths` are the counts.
+- `month_percentiles` (`p10`, `p50`, ...: the requested percentiles) is the depletion month, counted from the projection start (month 1 is the first month), over the **depleted paths only**. `year_percentiles` is the same in years (month / 12, one decimal). Both are empty when no path depleted.
+- There is no age input. For the age at depletion, add the person's current age to the year.
+- `null` when no paths were sampled: the analytic closed form (growth-only inputs) and `deterministic`. A projection with cashflows under `closed_form` or `monte_carlo` reports it.
+- Balances are floored at zero, so a balance percentile of 0 does not by itself give the depletion probability. Read `depletion` for that.
+- `summary` ends with a one-line depletion clause when it was computed.
+
 ### run_projections
 
 Use this instead of N serial `run_projection` calls whenever you have several same-shape, independent projections (a per-account retirement breakdown, one chart series per allocation, etc.). Each `projections` entry is a `run_projection` parameter object: at minimum `{initial_balance_cents}` plus either constant-return params or a `return_distribution_timeline`.
 
-Up to 50 projections per call. `projections` in the response holds one result per input entry, **in the same order**. A malformed entry yields a per-entry `{success: false, error, message}` in its slot without failing the others.
+Up to 50 projections per call. `projections` in the response holds one result per input entry, **in the same order**. A malformed entry yields a per-entry `{success: false, error, message}` in its slot without failing the others. Each result carries the same `depletion` as `run_projection`.
 
 ### compare_return_assumptions
 
@@ -67,6 +76,7 @@ Supply either the full `state_json` or a live `state_ref`; inline state takes pr
 - Defaults: `time_horizon_months` 360; `assumptions_preset` `"standard"` (or `"conservative"`, `"optimistic"`); `inflation` 0.025 (when > 0, values are in today's purchasing power; 0 gives nominal dollars); `marginal_ordinary_rate` 0.22 and `ltcg_rate` 0.15 for after-tax values; `iterations` 1000 and `seed` apply only to `method="monte_carlo"`; `seed` pins the draw, and omitting it uses a fixed default.
 - `invest_residual_surplus` (default true) invests the household surplus left over after account contribution pins across the remaining accounts by balance. Set false to hold the leftover out of the plan.
 - Accounts are projected independently and aggregated by summing matching percentiles (a perfectly-correlated / comonotonic assumption), surfaced in the response `assumptions` block.
+- **Depletion is per account.** Each `per_account` entry carries `depletion`, shaped as in [run_projection](#run_projection) (`null` when its paths were not sampled). There is no household-level depletion figure: summed percentiles carry no joint per-path data, so "when does the household run out" cannot be read from them.
 - An account contribution pin (a current-employer 401(k)'s employee deferral) is honored first. A configured `employer_match` on that plan is computed on the employee contribution and the household's annual W-2 compensation and routed on top (reported per account as `monthly_employer_match_cents`), so employer money compounds instead of being folded into one undifferentiated surplus.
 
 **Income tax is computed by default.** For each calendar year, federal (with NIIT and Additional Medicare), state, local, and employee FICA plus self-employment tax are computed from the income streams, pre-tax 401(k) deferrals, mortgages and `deductible_as` expenses, and subtracted from the surplus before it is invested. The surplus is therefore after tax, which lowers projected balances for any plan with taxable income.
@@ -107,8 +117,16 @@ The data file schema is:
     "p90": ["...same shape..."]
   },
   "inputs": { "initial_balance_cents": 50000000, "...": "..." },
-  "outputs": { "final_balance_percentiles": { "p10": { "cents": 0, "dollars": 0 }, "...": "..." } },
-  "projection_result": { "scenario_id": "...", "iterations": 10000, "time_horizon_months": 360 }
+  "outputs": {
+    "final_balance_percentiles": { "p10": { "cents": 0, "dollars": 0 }, "...": "..." },
+    "depletion": { "probability": 0.47, "month_percentiles": { "p50": 239 }, "...": "..." }
+  },
+  "projection_result": {
+    "scenario_id": "...",
+    "iterations": 10000,
+    "time_horizon_months": 360,
+    "depletion": "...same as outputs.depletion..."
+  }
 }
 ```
 
