@@ -41,6 +41,14 @@ https://mcp.finplan.tools/mcp
 - **Tax year**: `calculate_federal_tax_liability`, `calculate_amt`, `get_tax_parameters`, `analyze_roth_conversion`, `model_iso_exercise`, `model_nqso_exercise`, and `model_rsu_vest` accept `tax_year` 2026 only. `calculate_federal_income_tax`, `calculate_capital_gains_tax_rate`, and `calculate_payroll_tax` accept 2024-2026
 - **All tools return**: `success`, `summary`/`message`, plus detailed fields
 
+## When a call fails
+
+A tool that runs and cannot do what was asked returns `success: false` with `error` (a short category) and `message` (what was wrong, usually naming the field). Some failures add `action` (the recovery step) or `errors` (one entry per rejected item). Read them, correct the input, and call again. Don't resend an identical call, and don't present any part of a failed result as an answer.
+
+- **`state_ref_expired`**: the `st_…` handle lapsed (refs have a roughly 60-minute sliding TTL). Make the same call again with the full `state_json` in place of `state_ref`, as its `action` says.
+- **A batch entry fails alone**: `run_projections` and `calculate_portfolio_characteristics_batch` put `{success: false, error, message}` in that entry's slot and still return the others. Check every entry.
+- **Rejected before the tool runs**: a wrong type or a missing required parameter comes back as an MCP error, not a `success: false` result. Call `describe_finplan_tool` for the live schema and fix the arguments.
+
 ## If MCP tools aren't available
 
 FinPlan tools carry one of three prefixes, depending on how the server was connected: `mcp__plugin_finplan_finplan__` (this plugin), `mcp__claude_ai_<connector name>__` (a claude.ai connector, where the middle part is whatever the user named it, e.g. `mcp__claude_ai_FinPlan__`), or `mcp__finplan__` (a `finplan` entry in a project `.mcp.json`, or added with `claude mcp add`). Whatever the prefix, a tool whose name ends in a FinPlan tool name such as `__ping` or `__search_finplan_tools` is a FinPlan tool. If no such tool appears in the tools or deferred tools list, the MCP connection failed to establish. Do NOT try to call MCP tools or curl the server directly — run `/finplan:diagnose` instead. It tests server reachability, authentication, and tool availability client-side and provides specific remediation steps.
@@ -135,7 +143,17 @@ These commands are bundled with the FinPlan plugin and available automatically a
 
 ## Recommended workflows
 
-**Quick projection**: Use `run_projection` for fast analytical projections with percentile outputs. This is the recommended default.
+**Choosing a projection tool**:
+
+- `project_plan` projects a household. It takes the whole state (`state_json` or a live `state_ref`), projects each account on its own allocation, takes income, expenses and each year's income tax into account, and returns one after-tax outcome. Use it for any question about the user's plan, or about the Larsons, the fictional sample household: "can we retire at 62", "how does our plan look". To project the Larsons, load their state with `/finplan:demo` and pass that file's contents as `state_json`. `get_sample_profile` returns only file URLs, not a `state_ref`.
+- `run_projection` projects one balance. You supply the return and volatility, plus any contributions or withdrawals. It knows nothing about accounts, income, expenses or tax. Use it for a standalone "what does $X grow to" question. Get the return and volatility for an allocation from `calculate_portfolio_characteristics`, whose `expected_annual_return` and `annual_volatility` are `run_projection`'s inputs of the same name. `run_projections` runs several in one call.
+- `compare_scenarios` compares the plan against what-if variants, projecting each one as a whole plan on the same grid. Use it rather than calling `project_plan` twice and diffing the results yourself. See [scenarios.md](packages/scenarios.md).
+
+**Which tool feeds which**:
+
+- **Mortgage schedule**: `generate_mortgage_amortization_schedule` requires `monthly_payment_cents`. Get it from `calculate_mortgage_monthly_payment` with the same principal, rate and term first, rather than computing the payment yourself.
+- **Employer match**: `create_employer_match` builds and validates a match, and reports `is_safe_harbor` and `max_match_pct`. Its `employer_match` object is accepted unchanged as `employer_match_json` by `create_account`, `calculate_401k_employer_match`, `calculate_401k_vested_amount` and `plan_401k_deferral`. Writing `employer_match_json` inline is equivalent. Use `create_employer_match` when you want the formula checked before it goes on an account.
+- **Portfolio assumptions**: no tool accepts `create_portfolio_assumptions` output. It shows the per-asset-class returns and volatilities a preset implies, with any overrides applied. To use those numbers, pass the preset name (`assumptions_preset` on `project_plan` and `compare_scenarios`, `assumption_preset` on `calculate_portfolio_characteristics` and `build_snapshot`), or pass the same overrides to `calculate_portfolio_characteristics` (all asset classes) or `build_snapshot` (stocks, bonds and cash only).
 
 **New user setup**: Run `/finplan:setup` for a guided interview that creates the profile, adds accounts, and sets up goals.
 
@@ -145,9 +163,8 @@ These commands are bundled with the FinPlan plugin and available automatically a
 2. `manage_state(action="create")` → `/finplan:save-state`
 3. For each account: `create_account` → `manage_state(action="update_account")` → `/finplan:save-state`
 4. For each goal: `create_goal` → `manage_state(action="update_goal")` → `/finplan:save-state`
-5. `calculate_portfolio_characteristics` for return/volatility assumptions
-6. `run_projection` for projections
-7. `generate_projection_fan_chart` to visualize results
+5. `project_plan` with the saved state to project the household
+6. To chart one balance's percentile fan, `generate_projection_fan_chart`. It takes return inputs, as `run_projection` does, not a `project_plan` result
 
 **Periodic review**: Run `/finplan:checkup` to review the plan for life changes, update values, and identify new goals.
 
