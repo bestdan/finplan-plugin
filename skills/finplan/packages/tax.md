@@ -63,7 +63,6 @@ Composes the underlying primitives. When the filer itemizes, the deductible SALT
 - `medical_expenses_cents`: only the portion above 7.5% of AGI is deductible (IRC §213(a)).
 - `casualty_theft_loss_cents` is from a single federally declared disaster event and is deductible only when `federally_declared_disaster` is `true` (default `false`).
 - `iso_preference_cents` is the ISO exercise-and-hold bargain element (AMT deferral preference).
-- `tax_year` is 2026 only.
 
 ### calculate_amt
 
@@ -71,15 +70,15 @@ Preference items split into deferral items (e.g. the ISO exercise-and-hold sprea
 
 ### model_iso_exercise
 
-`intent` is `"hold"` (exercise-and-hold, AMT preference) or `"disqualify_same_year"` (same-year sale, ordinary income, FICA-exempt). `ytd_supplemental_paid_cents` is unused for ISO and accepted for symmetry. The result carries `shares_surrendered_for_strike`, `shares_surrendered_for_tax`, and `shares_retained` as share-surrender placeholders for the cashless / net-exercise scenario. `tax_year` is 2026 only.
+`intent` is `"hold"` (exercise-and-hold, AMT preference) or `"disqualify_same_year"` (same-year sale, ordinary income, FICA-exempt). `ytd_supplemental_paid_cents` is unused for ISO and accepted for symmetry. The result carries `shares_surrendered_for_strike`, `shares_surrendered_for_tax`, and `shares_retained` as share-surrender placeholders for the cashless / net-exercise scenario.
 
 ### model_nqso_exercise
 
-The bargain element is (FMV − strike) × shares. Supplemental-wage withholding is a flat 22% up to the $1M aggregate YTD cap and a mandatory 37% above; `ytd_supplemental_paid_cents` positions the spread against that cap. `tax_year` is 2026 only.
+The bargain element is (FMV − strike) × shares. Supplemental-wage withholding is a flat 22% up to the $1M aggregate YTD cap and a mandatory 37% above; `ytd_supplemental_paid_cents` positions the spread against that cap.
 
 ### model_rsu_vest
 
-Same withholding rule as `model_nqso_exercise` (flat 22% up to the $1M aggregate YTD cap, mandatory 37% above); `ytd_supplemental_paid_cents` positions the vest value against the cap. `tax_year` is 2026 only.
+Same withholding rule as `model_nqso_exercise` (flat 22% up to the $1M aggregate YTD cap, mandatory 37% above); `ytd_supplemental_paid_cents` positions the vest value against the cap.
 
 ### calculate_payroll_tax
 
@@ -87,7 +86,7 @@ Payroll tax is per person — call once per earner, never with a household's com
 
 ### get_tax_parameters
 
-Each dollar scalar is returned in both `_cents` and `_dollars` form, plus a `source` citation string. `tax_year` is 2026 only. Pass `age` (age at the end of `tax_year`) to also get the person's limits for that age:
+Each dollar scalar is returned in both `_cents` and `_dollars` form, plus a `source` citation string. Pass `age` (age at the end of `tax_year`) to also get the person's limits for that age:
 
 - `retirement_contribution_limit`: `catchup_tier` is `none` under 50, `standard` at 50-59 and 64+, `super` at 60-63.
 - `ira_contribution_limit_for_age`: tier `none` under 50, `standard` from 50. The IRA limit is shared by traditional and Roth contributions and does not apply the Roth income phase-out.
@@ -125,9 +124,3 @@ Input notes:
 - `future_state_marginal_rate` is a decimal (e.g. `0.0685`). When `state_code` is set but this is omitted, the conversion's own state+local marginal cost rate is used as the proxy, so state is then a wash in the decision.
 - `early_withdrawal_penalty_cents` is the IRC §72(t) penalty on the IRA funds used to pay the conversion tax when the owner is under 59½ (`0` otherwise), folded into `break_even_future_rate`. Its base is the tax actually paid from the IRA: federal-only, or federal+state when `state_code` is set. The penalty is itself paid from the IRA and so penalizes itself, making the effective rate charged on that tax `0.10/0.90` ≈ 11.11%, not 10%.
 - When `state_code` is set, the result also carries the `state_*` and `combined_*` cost fields, and `break_even` reflects the combined cost plus any penalty.
-
-## Usage notes
-
-- All income in **cents**. 10000000 = $100,000.
-- Filing status uses short strings: `"married_joint"` not `"married_filing_jointly"`.
-- For after-tax projections: first run `run_projection`, then pass its `projection_ref` to `apply_after_tax_to_projection_result`.

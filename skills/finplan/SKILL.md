@@ -38,6 +38,7 @@ https://mcp.finplan.tools/mcp
 - **Displaying money**: Money values from tools are in cents. **Always reformat for display**: divide by 100 and format as `$X,XXX.XX` (e.g., `10000000` → `$100,000.00`). Use the `_dollars` field when available for convenience, but the `_cents` field is the canonical value
 - **Rates/returns**: Float decimals. `0.07` = 7%, `0.15` = 15%
 - **Percentages**: Integer 0-100 for allocations. Float 0.0-1.0 for rates
+- **Tax year**: `calculate_federal_tax_liability`, `calculate_amt`, `get_tax_parameters`, `analyze_roth_conversion`, `model_iso_exercise`, `model_nqso_exercise`, and `model_rsu_vest` accept `tax_year` 2026 only. `calculate_federal_income_tax`, `calculate_capital_gains_tax_rate`, and `calculate_payroll_tax` accept 2024-2026
 - **All tools return**: `success`, `summary`/`message`, plus detailed fields
 
 ## If MCP tools aren't available

@@ -28,7 +28,7 @@ Required Minimum Distribution (RMD) calculations for retirement planning under S
 
 ### calculate_rmd_shortfall_penalty
 
-`penalty_rate` is 0.25, or 0.10 when `corrected_within_two_years` is true (default false).
+`penalty_rate` is the SECURE 2.0 rate: 0.25, or 0.10 when `corrected_within_two_years` is true (default false).
 
 ### project_rmd_schedule
 
@@ -36,8 +36,5 @@ Defaults: `years_to_project` 20, `annual_growth_rate` 0.05.
 
 ## Usage notes
 
-- All balances in **cents**. 50000000 = $500,000.
-- Uses IRS Uniform Lifetime Table for account owners, the Joint and Last Survivor Table for an owner whose sole beneficiary is a spouse more than 10 years younger, and the Single Life Table for beneficiaries.
-- SECURE 2.0 penalty rate: 25% of shortfall (reduced to 10% if corrected within 2 years).
 - Roth 401(k) no longer requires RMDs as of 2024.
 - IRAs can be aggregated (take total RMD from any combination); 401(k)s cannot.

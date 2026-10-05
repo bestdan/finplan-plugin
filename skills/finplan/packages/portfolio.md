@@ -17,6 +17,8 @@ Capital market assumptions, portfolio characteristics, and glide path generation
 
 ## Tools
 
+Allocation percentages are integers 0-100. The asset-class overrides on `calculate_portfolio_characteristics` and `create_portfolio_assumptions` (`stocks_return`, `bonds_volatility`, and the other `*_return` / `*_volatility` parameters) are annual decimals: `0.07` = 7%.
+
 ### calculate_portfolio_characteristics
 
 Allocations must sum to 100.
