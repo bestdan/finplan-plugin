@@ -83,7 +83,7 @@ See [packages/file-tools.md](packages/file-tools.md) for full details and the HT
 
 ## Tool categories
 
-When working with a specific area, read its detailed reference for tool names, parameters, and usage:
+When working with a specific area, read its detailed reference for tool names, parameters, and usage. Each category reference (all but File Tools and Reference Data) opens with a tool index that lists every parameter of every tool (`p` required, `p?` optional, `a|b` exactly one of, `a|b?` at most one of); call `describe_finplan_tool` for types, defaults, and allowed values.
 
 | Category        | What it does                                            | Reference                                                  |
 | --------------- | ------------------------------------------------------- | ---------------------------------------------------------- |

@@ -6,10 +6,10 @@ Discover FinPlan MCP tools relevant to your current task without loading all too
 
 ## Tool index
 
-| Tool                    | Description                                                           | Parameters                                      |
-| ----------------------- | --------------------------------------------------------------------- | ----------------------------------------------- |
-| `describe_finplan_tool` | Load the full schema for one tool on demand.                          | name                                            |
-| `search_finplan_tools`  | Search FinPlan tools by natural-language query, or browse a category. | query, detail_level, max_results, include_tools |
+| Tool                    | Description                                                           | Parameters                                         |
+| ----------------------- | --------------------------------------------------------------------- | -------------------------------------------------- |
+| `describe_finplan_tool` | Load the full schema for one tool on demand.                          | name                                               |
+| `search_finplan_tools`  | Search FinPlan tools by natural-language query, or browse a category. | query, detail_level?, max_results?, include_tools? |
 
 <!-- END GENERATED: tool-index search -->
 

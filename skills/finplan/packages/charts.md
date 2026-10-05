@@ -6,12 +6,12 @@ Chart.js chart generation for financial visualizations. All charts return Chart.
 
 ## Tool index
 
-| Tool                                   | Description                                                                                                       | Parameters                                                         |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `generate_account_breakdown_chart`     | Generate a stacked area chart showing each account's contribution to total portfolio over time.                   | initial_balances, expected_annual_return, time_horizon_months      |
-| `generate_allocation_chart`            | Generate a stacked area chart of asset allocation (stocks/bonds/cash) over time.                                  | allocations, months                                                |
-| `generate_projection_comparison_chart` | Generate a line chart comparing projections under different return assumptions side by side (not plan scenarios). | scenarios, time_horizon_months, percentile?                        |
-| `generate_projection_fan_chart`        | Generate a fan chart with percentile bands (p10/p25/p50/p75/p90) for projection results.                          | initial_balance_cents, expected_annual_return, time_horizon_months |
+| Tool                                   | Description                                                                                                       | Parameters                                                                                                                                                   |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `generate_account_breakdown_chart`     | Generate a stacked area chart showing each account's contribution to total portfolio over time.                   | initial_balances, expected_annual_return, time_horizon_months, title?, show_total_line?                                                                      |
+| `generate_allocation_chart`            | Generate a stacked area chart of asset allocation (stocks/bonds/cash) over time.                                  | allocations, months, title?                                                                                                                                  |
+| `generate_projection_comparison_chart` | Generate a line chart comparing projections under different return assumptions side by side (not plan scenarios). | scenarios, time_horizon_months, percentile?, title?, inflation?                                                                                              |
+| `generate_projection_fan_chart`        | Generate a fan chart with percentile bands (p10/p25/p50/p75/p90) for projection results.                          | initial_balance_cents, expected_annual_return, time_horizon_months, annual_volatility?, monthly_contribution_cents?, title?, show_deposits_line?, inflation? |
 
 <!-- END GENERATED: tool-index charts -->
 
