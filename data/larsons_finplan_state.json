@@ -373,7 +373,7 @@
       "frequency": "semi_monthly",
       "is_pretax": true,
       "start_date": null,
-      "end_date": null,
+      "end_date": "2045-04-30",
       "annual_growth_rate": {
         "value": 0.03,
         "period": "annual",
@@ -389,7 +389,7 @@
       "frequency": "monthly",
       "is_pretax": true,
       "start_date": null,
-      "end_date": null,
+      "end_date": "2045-04-30",
       "annual_growth_rate": {
         "value": 0.025,
         "period": "annual",
@@ -564,9 +564,9 @@
     {
       "id": "goal-retirement-62",
       "name": "Retire at 62",
-      "description": "Mark retires at 62; Dana winds down the practice around the same time.",
+      "description": "Mark retires at 62 and Dana winds down the practice at the same time, both at the end of April 2045. The target is about 25 times the household's retirement-era spending (roughly $68,000 a year in today's dollars: everything but the kids' activities and the mortgage payment, which ends in 2049, about four years into retirement), before Social Security.",
       "goal_type": "retirement",
-      "target_amount_cents": null,
+      "target_amount_cents": 170000000,
       "target_date": "2045-05-01",
       "target_date_flexibility": "flexible",
       "current_balance_cents": 0,
