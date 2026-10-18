@@ -1,6 +1,6 @@
 ---
 name: finplan
-description: Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, what-if scenarios, tax calculations, retirement planning, required minimum distributions, Social Security benefits, account management, employer 401(k) match, goal planning, budgets and cashflow, portfolio analysis, mortgages and other debt payoff, charts, financial snapshots, or syncing accounts from an aggregator. All capabilities are accessed through MCP tools at https://mcp.finplan.tools/mcp — never call Python or CLI directly.
+description: Load this skill before your first call to any FinPlan MCP tool (mcp__plugin_finplan_finplan__*, mcp__finplan__*, or a FinPlan connector's search_finplan_tools, describe_finplan_tool, call_tool or manage_state). It names the right tool for each task, which tool feeds which, and how to recover from failures, so you do not need search_finplan_tools to find a tool it names. Personal finance projection engine accessed via MCP tools. Use when helping users with financial projections, what-if scenarios, tax calculations, retirement planning, required minimum distributions, Social Security benefits, account management, employer 401(k) match, goal planning, budgets and cashflow, portfolio analysis, mortgages and other debt payoff, charts, financial snapshots, or syncing accounts from an aggregator. All capabilities are accessed through MCP tools at https://mcp.finplan.tools/mcp — never call Python or CLI directly.
 ---
 
 # FinPlan — Personal Finance Projection Engine
