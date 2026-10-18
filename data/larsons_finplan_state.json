@@ -413,7 +413,8 @@
         "period": "annual",
         "inflation_adjustment": "nominal"
       },
-      "notes": null
+      "notes": null,
+      "linked_account_id": "acct-home-mortgage"
     },
     {
       "id": "expense-property-tax-insurance",
