@@ -23,6 +23,9 @@ Financial goal definitions, progress tracking, and contribution calculations.
 A goal's funded amount is account-derived (earmark an account to it via `goal_id`), so there is no manual current-balance input. A new goal starts unfunded at $0. When the goal is added to state with `manage_state(action="update_goal")`, a backing account is established automatically for dedicated-savings goal types (or eligible accounts are offered to link for retirement/education); see the state tools.
 
 - `months_expenses` is required when `goal_type` is `"emergency_fund"`; otherwise unused.
+- `contribution_schedule` is a monthly contribution that starts, stops or grows: `{"monthly_amount_cents": int, "start_date"?: "YYYY-MM-DD", "end_date"?: "YYYY-MM-DD", "annual_growth_rate"?: float, "real_terms"?: bool}`, both dates inclusive. It replaces `contribution_amount_cents` / `contribution_percentage`, so pass none of those with it. Amounts are nominal unless `real_terms` is true, which makes them today's dollars grown by the projection's `inflation`. A window that has already started counts from next month, since projections have no slot for the current month.
+- `deposit_schedule` is dated one-off deposits, such as a bonus: `[{"deposit_date": "YYYY-MM-DD", "amount_cents": int > 0}]`, sorted. Amounts are nominal whatever `target_price_level` says, and deposits on one date add up.
+- Enter a bonus once: as a `deposit_schedule` entry, or as a `one_time` income stream (linked to the goal if it backs it), never both — see [dated cashflows](state.md#dated-cashflows).
 - `target_price_level` sets the price level of `target_amount_cents` and of every `payout_schedule` amount. Omit it for today's dollars (real purchasing power at creation). For future nominal dollars, such as quoted future tuition bills: `{"adjustment": "nominal"}`. For a specific reference purchasing power: `{"adjustment": "real", "reference_year": 2026, "reference_month": 1}`.
 - `payout_schedule` amounts are in `target_price_level`'s frame (today's dollars when omitted), so set `target_price_level` to `{"adjustment": "nominal"}` for face-value future bills.
 - For tuition, prefer the generator parameters over `payout_schedule`; pass one form, never both.
@@ -44,6 +47,7 @@ Pass `state_json` to derive the funded balance from accounts linked to the goal'
 - `annual_return_rate` defaults to 0.07; `annual_volatility` > 0 spreads the output into a p10/p25/p50/p75/p90 band.
 - Omit `months_ahead` to project to the goal's own `target_date`.
 - `monthly_income_cents` is only used for percentage-income goals.
+- `schedule_warnings` lists deposits, and a `contribution_schedule` start, beyond the projection date; a goal with a `contribution_schedule` gets it echoed back as `contribution_schedule`.
 - `inflation` inflates a real-terms target, and a real-terms payout schedule at each payout's month. The response names each block's frame: `payout_coverage.price_level` (nominal when inflated, otherwise the goal's own `target_price_level` frame) and `remaining_payouts_price_level`.
 
 ### project_goal_series

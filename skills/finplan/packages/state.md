@@ -81,6 +81,34 @@ You already hold the full state (you passed it in as `state_json`). To rebuild t
 
 Fetch it **once** to author a valid state in a single pass, instead of discovering required fields by submitting and reading validation errors. Every nested shape is under `json_schema["$defs"]`. The result is static for a given server version and safe to cache; `schema_fingerprint` identifies the schema version a document must match.
 
+### Dated cashflows
+
+Money that arrives, stops or changes on a known date has a typed field. Put it there, never in `notes`: projections ignore `notes`, so a date written there has no effect.
+
+| Case                                          | Field (links to its full shape)                                                        | Frame                                                 |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| A bonus or other one-off sum paid into a goal | goal [`deposit_schedule`](goals.md#create_goal)                                        | nominal (face value on that date)                     |
+| A goal contribution that runs for a window    | goal [`contribution_schedule`](goals.md#create_goal)                                   | nominal, or today's dollars when `real_terms` is true |
+| A raise, or an expense that changes on a date | income stream or expense [`amount_steps`](budget.md#dated-amount-changes-amount_steps) | the item's own `price_level`                          |
+
+A tax-savings goal funded at $1,293/mo from Sep 2026 through Apr 2027, plus two $10,800 bonus deposits, and a salary that rises to $209,000 on 2026-10-02:
+
+```jsonc
+// goal
+"contribution_schedule": {"monthly_amount_cents": 129300, "start_date": "2026-09-01", "end_date": "2027-04-30"},
+"deposit_schedule": [{"deposit_date": "2026-10-31", "amount_cents": 1080000},
+                     {"deposit_date": "2027-01-31", "amount_cents": 1080000}]
+
+// income stream, frequency "annual", price_level "nominal"
+"amount_cents": 19500000,
+"amount_steps": [{"effective_date": "2026-10-02", "amount_cents": 20900000}]
+```
+
+- **Enter a bonus once.** A bonus paid into a goal is either a goal `deposit_schedule` entry or income (a `one_time` income stream, optionally linked to the goal with `goal_id` and `funding_role`), not both. Entering it both ways puts the same dollars in the plan twice.
+- `contribution_schedule` replaces `contribution_amount_cents` and `contribution_percentage`: a goal with a `contribution_schedule` carries neither scalar.
+- Projections skip a deposit dated before today (it is already in the balance), and list in `schedule_warnings` any deposit, or a `contribution_schedule` start, beyond the projection's horizon.
+- Each field's full shape and rules are in [goals.md](goals.md#create_goal) (the two goal fields) and [budget.md](budget.md#dated-amount-changes-amount_steps) (`amount_steps`).
+
 ### get_sample_profile
 
 Returns a `FileResponse` (the state at `urls.data`, a schema + jq examples at `urls.schema`), so the state document never enters context. `note` flags the data as fictional. Never merge this document into a real user's state.
