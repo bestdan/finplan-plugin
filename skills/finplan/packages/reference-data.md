@@ -8,7 +8,7 @@ Static lookup data for FinPlan MCP tools. Embedded here to avoid unnecessary too
 | --------------------------- | --------------------------------------------------------------------- |
 | `traditional_401k`          | Employer-sponsored 401k with pre-tax contributions                    |
 | `roth_401k`                 | Employer-sponsored 401k with post-tax contributions (tax-free growth) |
-| `traditional_401k_rollover` | 401k rolled over from previous employer                               |
+| `traditional_401k_rollover` | 401k balance rolled over from a previous employer (no new deferrals)  |
 | `traditional_ira`           | Individual Retirement Account with pre-tax contributions              |
 | `roth_ira`                  | Individual Retirement Account with post-tax contributions             |
 | `sep_ira`                   | Simplified Employee Pension IRA (for self-employed/small business)    |
