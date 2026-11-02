@@ -13,6 +13,7 @@ prose (and re-derived on every run):
                document) into a local state file, verifying the rebuilt document
                against the server-returned ``state_hash`` before writing.
                ``apply-delta`` is an alias.
+* ``hash``   — print a state file's content hash, for ``save --expect-hash``.
 * ``fmt``    — format integer cents as a ``$X,XXX.XX`` dollar string, or add
                ``*_dollars`` siblings for every ``*_cents`` leaf in a JSON doc.
 """
@@ -20,10 +21,13 @@ prose (and re-derived on every run):
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import sys
+import tempfile
+from collections.abc import Generator
 from typing import Any
 
 # Response keys that are transport/verification metadata, never persisted state.
@@ -96,7 +100,8 @@ exit codes (shared with fpt; one table for every command):
   2  validation: bad arguments, a malformed response or state file, or a
      removal whose target is missing or ambiguous
   3  hash mismatch or stale write: the rebuilt document does not match the
-     server's state_hash; nothing was written
+     server's state_hash, or the file changed since --expect-hash was
+     recorded; nothing was written
   4  local I/O: a file could not be read or written
   5  authentication (reserved)
   6  network (reserved)
@@ -222,9 +227,13 @@ class _SaveError(Exception):
         pointer: str | None = None,
         source: str | None = None,
         details: dict[str, Any] | None = None,
+        error: str | None = None,
     ) -> None:
         super().__init__(message)
         self.exit_code = exit_code
+        # Code 3 covers two failures a caller recovers from differently, so the
+        # name, not the code, tells a stale write from a hash mismatch.
+        self.error = error or _EXIT_CODE_NAMES[exit_code]
         self.message = message
         self.hint = hint
         self.pointer = pointer
@@ -234,7 +243,7 @@ class _SaveError(Exception):
     def to_json(self) -> dict[str, Any]:
         """The stderr payload: what failed, where, and what to change."""
         payload: dict[str, Any] = {
-            "error": _EXIT_CODE_NAMES[self.exit_code],
+            "error": self.error,
             "exit_code": self.exit_code,
             "message": self.message,
             "source": self.source,
@@ -403,19 +412,302 @@ def _verify_hash(document: dict[str, Any], expected_hash: str) -> None:
     )
 
 
-def _input_hash(path: str) -> str | None:
-    """Content hash of the state file before the save, or None when there is none.
+class _Destination:
+    """What the file a save would replace held when it was read.
 
-    Only the full-document path calls this; a delta has already parsed the file.
-    A missing or unparseable file is not an error there — ``create`` and a
-    migrated document both replace the file outright.
+    ``data`` is the raw bytes (None when the file is absent); ``content_hash`` is
+    :func:`content_hash` of them; ``state_hash`` is the server-comparable hash, or
+    None when the bytes are not a JSON object.
     """
+
+    def __init__(self, data: bytes | None) -> None:
+        self.data = data
+        self.exists = data is not None
+        self.state_hash: str | None = None
+        self.content_hash: str | None = None
+        if data is not None:
+            self.state_hash = _state_hash_of_bytes(data)
+            self.content_hash = self.state_hash or _bytes_hash(data)
+
+
+def _state_hash_of_bytes(data: bytes) -> str | None:
+    """:func:`compute_state_hash` of ``data`` parsed, or None if it is no JSON object."""
     try:
-        with open(path, encoding="utf-8") as handle:
-            parsed: Any = json.load(handle)
-    except (OSError, ValueError):
+        parsed: Any = json.loads(data.decode("utf-8"))
+    except ValueError:  # JSONDecodeError and UnicodeDecodeError both subclass it
         return None
     return compute_state_hash(parsed) if isinstance(parsed, dict) else None
+
+
+def _bytes_hash(data: bytes) -> str:
+    """Hash of raw bytes, for a file that does not parse as a state document.
+
+    A distinct prefix, so it can never equal a server ``state_hash``: a corrupt
+    file still has a hash to pass to ``--expect-hash`` before it is replaced, but
+    no response can ever be taken as a duplicate of it.
+    """
+    return "sha256-bytes:" + hashlib.sha256(data).hexdigest()
+
+
+def content_hash(data: bytes) -> str:
+    """The hash ``--expect-hash`` compares: the state hash, else the bytes hash.
+
+    For a state file this is the server's own hash of it, so the ``result_hash``
+    one save prints is the ``--expect-hash`` the next one passes.
+    """
+    return _state_hash_of_bytes(data) or _bytes_hash(data)
+
+
+def _read_destination(path: str) -> _Destination:
+    """Read the file a save would replace, or raise :class:`_SaveError`."""
+    try:
+        with open(path, "rb") as handle:
+            return _Destination(handle.read())
+    except FileNotFoundError:
+        return _Destination(None)
+    except OSError as exc:
+        raise _SaveError(
+            EXIT_LOCAL_IO,
+            f"cannot read state file {path!r}: {exc}",
+            f"Check that {path!r} is readable.",
+            source="state file",
+        ) from exc
+
+
+def _write_temp(target: str, data: bytes) -> str:
+    """Write ``data`` to a new uniquely named file beside ``target``; return its path.
+
+    Unique, so two saves of one file never write through the same temporary path,
+    and in the same directory, so the ``os.replace`` that installs it stays on one
+    filesystem and is atomic. The file is removed again if the write fails.
+    """
+    directory = os.path.dirname(os.path.abspath(target))
+    fd, tmp_path = tempfile.mkstemp(
+        dir=directory, prefix="." + os.path.basename(target) + ".", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except BaseException:
+        _remove_quietly(tmp_path)
+        raise
+    return tmp_path
+
+
+def _remove_quietly(path: str) -> None:
+    """Delete ``path`` if it exists; a cleanup failure must not mask the real error."""
+    with contextlib.suppress(OSError):
+        os.unlink(path)
+
+
+def _replace_with(target: str, data: bytes) -> None:
+    """Atomically make ``target`` hold ``data``, through a unique temporary file."""
+    tmp_path = _write_temp(target, data)
+    try:
+        os.replace(tmp_path, target)
+    finally:
+        _remove_quietly(tmp_path)
+
+
+def _acquire_lock(fd: int) -> bool:
+    """Take an exclusive lock on ``fd``, blocking; False if the platform has none."""
+    if sys.platform == "win32":  # pragma: no cover - exercised only on Windows
+        import msvcrt
+
+        # LK_LOCK retries for about ten seconds, then raises OSError.
+        msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+        return True
+    try:
+        import fcntl
+    except ImportError:
+        return False
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    return True
+
+
+def _release_lock(fd: int) -> None:
+    """Release :func:`_acquire_lock`'s lock. Closing the fd releases ``flock``."""
+    if sys.platform == "win32":  # pragma: no cover - exercised only on Windows
+        import msvcrt
+
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+
+
+@contextlib.contextmanager
+def _file_lock(path: str, warnings: list[Any]) -> Generator[None, None, None]:
+    """Hold an exclusive lock on ``path`` for the duration of the block.
+
+    The lock is taken on a ``<path>.lock`` sidecar, not on ``path`` itself:
+    ``os.replace`` swaps in a new inode, so a lock held on the old one would guard
+    nothing for the next writer. The sidecar is left in place — deleting it would
+    let a waiter lock an unlinked inode while a newcomer locks a fresh one. Where
+    the platform offers no lock, the save goes ahead and says so in ``warnings``.
+    """
+    fd = os.open(path + ".lock", os.O_RDWR | os.O_CREAT, 0o644)
+    try:
+        locked = _acquire_lock(fd)
+        if not locked:
+            warnings.append(
+                f"no file locking on this platform; {path} was saved without a lock, "
+                "so a concurrent save could go undetected"
+            )
+        try:
+            yield
+        finally:
+            if locked:
+                _release_lock(fd)
+    finally:
+        os.close(fd)
+
+
+def _pending_path(path: str) -> str:
+    return path + ".pending.json"
+
+
+def _stale_write(
+    path: str,
+    expected: str | None,
+    found: _Destination,
+    response: dict[str, Any],
+    keep_pending: bool,
+) -> _SaveError:
+    """Build the stale-write error, first saving ``response`` beside the file.
+
+    ``expected`` is the ``--expect-hash`` (None for a create, which expected no
+    file). The pending copy is what lets the user see what the lost edit was; it is
+    never applied automatically, because it was computed against an older file.
+    """
+    pending: str | None = None
+    if keep_pending:
+        pending = _pending_path(path)
+        try:
+            _replace_with(
+                pending, (json.dumps(response, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+            )
+        except OSError:
+            pending = None
+    if expected is None:
+        what = f"{path!r} was created by someone else after this save began"
+    elif not found.exists:
+        what = f"{path!r} was deleted after its hash was recorded"
+    else:
+        what = f"{path!r} changed after its hash was recorded"
+    kept = f"The server's response was kept in {pending!r}. " if pending else ""
+    return _SaveError(
+        EXIT_HASH_MISMATCH,
+        f"stale write: {what} (expected {expected}, found {found.content_hash}). "
+        "The file was left untouched.",
+        f"{kept}This edit was made against an older version of the file and must be "
+        "reapplied: re-read the state file, record its hash, redo the manage_state "
+        "call against it, and save that new response. Do not write the state file "
+        "directly, and do not copy the pending response over it.",
+        pointer="",
+        source="state file",
+        details={"expected": expected, "found": found.content_hash, "pending": pending},
+        error="stale_write",
+    )
+
+
+def _check_fresh(
+    path: str,
+    expected: str | None,
+    current: _Destination,
+    response: dict[str, Any],
+    keep_pending: bool,
+) -> None:
+    """Raise a stale write unless ``current`` is the file the edit was made against.
+
+    With ``--expect-hash`` the file must still exist and still have that hash; with
+    none (a create) it must still be absent.
+    """
+    if expected is None:
+        if current.exists:
+            raise _stale_write(path, expected, current, response, keep_pending)
+        return
+    if current.content_hash != expected:
+        raise _stale_write(path, expected, current, response, keep_pending)
+
+
+def _install_new(tmp_path: str, out_path: str) -> bool:
+    """Put ``tmp_path`` at ``out_path`` only if nothing is there; False if something is.
+
+    ``os.link`` is the exclusive create: it fails if the name exists, and the file
+    it creates is already complete. Where a filesystem has no hard links, an
+    ``O_EXCL`` create claims the name and a replace fills it.
+    """
+    try:
+        os.link(tmp_path, out_path)
+        return True
+    except FileExistsError:
+        return False
+    except OSError:
+        pass
+    try:
+        os.close(os.open(out_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644))
+    except FileExistsError:
+        return False
+    try:
+        os.replace(tmp_path, out_path)
+    except BaseException:
+        # The rename did not happen, so out_path is still this call's empty
+        # placeholder (other saves are held off by the lock). Left in place, the
+        # next save would take it for an existing, corrupt state file. A hard kill
+        # between the create and the replace still leaves it: the stdlib has no
+        # rename-without-replace to close that window.
+        _remove_quietly(out_path)
+        raise
+    return True
+
+
+def _install(
+    document: dict[str, Any],
+    out_path: str,
+    expected: str | None,
+    result_hash: str,
+    response: dict[str, Any],
+    warnings: list[Any],
+) -> tuple[bool, _Destination]:
+    """Write ``document`` to ``out_path`` if the file is still the one edited.
+
+    Under the per-file lock: re-read the file; if it already holds the result
+    (a duplicate delivery), write nothing; otherwise check it is the file the edit
+    was made against, keep it as ``<file>.bak``, and replace it through a unique
+    temporary file. Returns whether anything was written, and the file as found.
+
+    Raises:
+        _SaveError: a stale write, or a local I/O failure; either way the file is
+            unchanged.
+    """
+    data = (json.dumps(document, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    try:
+        with _file_lock(out_path, warnings):
+            current = _read_destination(out_path)
+            if current.state_hash == result_hash:
+                return False, current
+            _check_fresh(out_path, expected, current, response, keep_pending=True)
+            tmp_path = _write_temp(out_path, data)
+            try:
+                if current.data is None:
+                    if not _install_new(tmp_path, out_path):
+                        raise _stale_write(
+                            out_path, expected, _read_destination(out_path), response, True
+                        )
+                else:
+                    _replace_with(out_path + ".bak", current.data)
+                    os.replace(tmp_path, out_path)
+            finally:
+                _remove_quietly(tmp_path)
+    except OSError as exc:
+        raise _SaveError(
+            EXIT_LOCAL_IO,
+            f"cannot write state file {out_path!r}: {exc}",
+            "Check that the directory exists and is writable; the previous file is "
+            "unchanged. " + _DO_NOT_HAND_WRITE,
+            source="state file",
+        ) from exc
+    return True, current
 
 
 def _save(args: argparse.Namespace) -> dict[str, Any]:
@@ -426,11 +718,44 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
     if isinstance(response_warnings, list):
         warnings.extend(response_warnings)
 
+    out_path = args.out if args.out else args.state
+    # An empty value is no hash at all: `--expect-hash "$(finplan.py hash F)"` on a
+    # file that does not exist yet passes "", and that is a create, not a deletion.
+    expected: str | None = args.expect_hash or None
+    current = _read_destination(out_path)
+
+    # A response whose result the file already holds was delivered before: that
+    # is success, and nothing is written. Checked before the delta is applied,
+    # because applying a delta twice is what it must never do, and before the
+    # --expect-hash requirement, because a retried create arrives without one.
+    response_hash = response.get("state_hash")
+    if isinstance(response_hash, str) and current.state_hash == response_hash:
+        return _duplicate_envelope(response, out_path, current, warnings)
+
+    if current.exists and expected is None and not args.dry_run:
+        raise _SaveError(
+            EXIT_VALIDATION,
+            f"{out_path!r} exists, so save needs --expect-hash",
+            f"Before the manage_state call, record the file's hash with "
+            f"`finplan.py hash {out_path}` (or take the result_hash the last save "
+            "printed), and pass it as --expect-hash. " + _DO_NOT_HAND_WRITE,
+            pointer="",
+            source="state file",
+        )
+
+    # Checked before the delta is read, so an edit made against an older file is
+    # reported as the stale write it is, not as whatever its replay against the
+    # newer file happens to break.
+    # A dry run may leave --expect-hash off: it writes nothing, so there is no
+    # write to guard, but given one it reports a stale response as a real run would.
+    if not (args.dry_run and expected is None):
+        _check_fresh(out_path, expected, current, response, keep_pending=not args.dry_run)
+
     if "changed" not in response:
         # Full / migrated document (create, return_full_state, migrated): the
         # response *is* the new state, once its transient metadata is stripped below.
         document: dict[str, Any] = dict(response)
-        input_hash = _input_hash(args.state)
+        input_hash = current.state_hash
         summary: dict[str, Any] = {
             "change": "replaced",
             "section": None,
@@ -482,14 +807,13 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
         )
     _verify_hash(document, expected_hash)
 
-    out_path = args.out if args.out else args.state
     data: dict[str, Any] = {
         "action": response.get("action"),
         "change": summary["change"],
         "section": summary["section"],
         "item_id": summary["item_id"],
         "path": out_path,
-        "written": not args.dry_run,
+        "written": False,
     }
     if args.dry_run:
         data["item"] = summary["item"]
@@ -498,7 +822,11 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
         # `schema_fingerprint` are both declared UserState fields, so every document
         # the server hashes already carries them. Filling them in here would be the
         # one path by which the bytes on disk could differ from the bytes verified.
-        _write_document(document, out_path)
+        written, found = _install(document, out_path, expected, expected_hash, response, warnings)
+        if not written:
+            # Another save delivered this same result while this one was running.
+            return _duplicate_envelope(response, out_path, found, warnings)
+        data["written"] = True
     return {
         "data": data,
         "metadata": {
@@ -509,29 +837,26 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-def _write_document(document: dict[str, Any], out_path: str) -> None:
-    """Write ``document`` to ``out_path`` atomically, or raise :class:`_SaveError`.
-
-    Write to a sibling and rename over the target. A plain open(…, "w") truncates
-    the existing state before json.dump writes a byte, so a full disk or a Ctrl-C
-    mid-write would leave a truncated file with the previous state gone — and this
-    file is the only copy of the user's financial state, with no history behind it.
-    os.replace is atomic within a filesystem, and a sibling path keeps it there.
-    """
-    tmp_path = out_path + ".tmp"
-    try:
-        with open(tmp_path, "w", encoding="utf-8") as handle:
-            json.dump(document, handle, indent=2, ensure_ascii=False)
-            handle.write("\n")
-        os.replace(tmp_path, out_path)
-    except OSError as exc:
-        raise _SaveError(
-            EXIT_LOCAL_IO,
-            f"cannot write state file {out_path!r}: {exc}",
-            "Check that the directory exists and is writable; the previous file is "
-            "unchanged. " + _DO_NOT_HAND_WRITE,
-            source="state file",
-        ) from exc
+def _duplicate_envelope(
+    response: dict[str, Any], out_path: str, current: _Destination, warnings: list[Any]
+) -> dict[str, Any]:
+    """The success envelope for a response whose result the file already holds."""
+    return {
+        "data": {
+            "action": response.get("action"),
+            "change": "unchanged",
+            "section": None,
+            "item_id": None,
+            "path": out_path,
+            "written": False,
+            "duplicate": True,
+        },
+        "metadata": {
+            "input_hash": current.state_hash,
+            "result_hash": response.get("state_hash"),
+            "warnings": warnings,
+        },
+    }
 
 
 def _cmd_save(args: argparse.Namespace) -> int:
@@ -549,6 +874,16 @@ def _cmd_save(args: argparse.Namespace) -> int:
     nothing is added afterwards, so the bytes written are the bytes that were
     verified.
 
+    A verified response can still be stale: computed against a file that has
+    changed since. So when the destination exists, ``--expect-hash`` must give its
+    hash as recorded before the server call, and the file is replaced only if it
+    still has that hash; when it does not exist, it must still be absent when the
+    new file is installed. Both checks run under a per-file lock. A stale response
+    leaves the file untouched and is kept beside it as ``<file>.pending.json``; a
+    response whose result the file already holds is a duplicate delivery and
+    succeeds without writing. A successful write keeps the replaced file as
+    ``<file>.bak``.
+
     Standard output carries one JSON envelope and nothing else: ``data`` says what
     changed, ``metadata`` carries the input and result content hashes and the
     server's ``warnings``. A failure prints one JSON object to standard error and
@@ -561,6 +896,23 @@ def _cmd_save(args: argparse.Namespace) -> int:
         sys.stderr.write(json.dumps(exc.to_json(), ensure_ascii=False) + "\n")
         return exc.exit_code
     sys.stdout.write(json.dumps(envelope, ensure_ascii=False) + "\n")
+    return EXIT_OK
+
+
+def _cmd_hash(args: argparse.Namespace) -> int:
+    """Print a file's content hash: the value ``save --expect-hash`` compares.
+
+    For a state document this is the server's ``state_hash`` of it; for a file that
+    is not a JSON object, a hash of its bytes (``sha256-bytes:…``), so even a
+    corrupt file can be replaced deliberately.
+    """
+    try:
+        with open(args.file, "rb") as handle:
+            data = handle.read()
+    except OSError as exc:
+        print(f"error: cannot read {args.file!r}: {exc}", file=sys.stderr)
+        return EXIT_LOCAL_IO
+    print(content_hash(data))
     return EXIT_OK
 
 
@@ -624,7 +976,12 @@ def _build_parser() -> argparse.ArgumentParser:
             "Merge a manage_state response (an update, a remove_*, a person change,\n"
             "or a full document) into the local state file, and write it only if the\n"
             "result reproduces the response's state_hash. Prints one JSON envelope on\n"
-            "stdout ({data, metadata}); errors go to stderr as JSON."
+            "stdout ({data, metadata}); errors go to stderr as JSON.\n\n"
+            "If the file exists, pass --expect-hash with its hash from before the\n"
+            "manage_state call (`finplan.py hash FILE`, or the last save's result_hash).\n"
+            "If it changed since, nothing is written: the response is kept in\n"
+            "FILE.pending.json and the edit must be reapplied. A successful write keeps\n"
+            "the previous file as FILE.bak."
         ),
         epilog=EXIT_CODES_HELP,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -635,11 +992,22 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_save.add_argument("--out", default=None, help="write here instead of --state")
     p_save.add_argument(
+        "--expect-hash",
+        default=None,
+        help="the destination's hash before the server call; required when it exists",
+    )
+    p_save.add_argument(
         "--dry-run",
         action="store_true",
         help="verify and print the item that would change; write nothing",
     )
     p_save.set_defaults(func=_cmd_save)
+
+    p_hash = subparsers.add_parser(
+        "hash", help="print a state file's content hash, for save --expect-hash"
+    )
+    p_hash.add_argument("file", help="the state file")
+    p_hash.set_defaults(func=_cmd_hash)
 
     p_fmt = subparsers.add_parser("fmt", help="format cents as dollars")
     p_fmt.add_argument(

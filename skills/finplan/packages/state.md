@@ -171,27 +171,37 @@ Call `/finplan:save-state` immediately after:
 `finplan.py save`, from the helper script that ships in the plugin's `scripts` directory, merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input). `apply-delta` is an older name for the same command.
 
 ```bash
-python3 finplan.py save --state <name>_finplan_state.json --response response.json [--dry-run]
+H=$(python3 finplan.py hash <name>_finplan_state.json)   # before the manage_state call
+# ... call manage_state, write its response to response.json ...
+python3 finplan.py save --state <name>_finplan_state.json --response response.json --expect-hash "$H" [--dry-run]
+
+# create (no state file yet): no hash to record, so no flag
+python3 finplan.py save --state <name>_finplan_state.json --response response.json
 ```
 
+- **Stale writes:** a response can verify and still be stale, computed against a file that has changed since. So when the state file exists, `--expect-hash` is required: the file's hash recorded **before** the `manage_state` call, from `finplan.py hash` or the `result_hash` the previous save printed. The file is replaced only if it still has that hash. For `create` (no file yet) leave the flag off; the file must still be absent when the new one is installed. Both checks run under a per-file lock (`<file>.lock`, left in place). On a conflict the file is left untouched, the response is kept as `<file>.pending.json`, and `save` exits 3 with `error: stale_write`: re-read the state file and redo the edit against it. Do not write the state file directly, and do not copy the pending response over it.
+- **`--out`:** the stale-write guard checks the file being written, so with `--out` it checks the `--out` destination, not `--state`. `--state` is covered only by the `state_hash` check on the rebuilt document.
+- **Duplicate delivery:** a response whose result the file already holds succeeds without writing (`data.duplicate: true`, `change: unchanged`).
+- **Backup:** a successful write keeps the replaced file as `<file>.bak` (one version). The new file is written through a unique temporary file in the same directory and renamed into place, so an interrupted save leaves the previous file intact.
+- **Permissions:** the state file and its `.bak` are written readable and writable by their owner only (mode `0600`), whatever mode the file had before. A state file holds a household's whole financial plan.
 - **Removals** delete the one item with the response's id. If the state file holds no item with that id, or more than one, the file is not the document the server edited: it exits with the validation code and writes nothing.
 - **Timestamps:** the written file carries the server's `last_updated`, so the bytes written are the bytes verified.
-- **Output:** standard output carries one JSON object and nothing else. `data` names the `action`, the `change` (`added`, `updated`, `removed`, `replaced`), the `section`, the `item_id`, the `path` and whether it was `written`. `metadata` carries `input_hash` (the state file before the save; `null` when the file was absent or could not be read as a JSON object), `result_hash` (the server's `state_hash`) and the server's `warnings`.
+- **Output:** standard output carries one JSON object and nothing else. `data` names the `action`, the `change` (`added`, `updated`, `removed`, `replaced`, or `unchanged` for a duplicate), the `section`, the `item_id`, the `path` and whether it was `written`. `metadata` carries `input_hash` (the state file before the save; `null` when the file was absent or could not be read as a JSON object), `result_hash` (the server's `state_hash`) and the server's `warnings`.
 - **Errors** go to standard error as one JSON object: `error`, `exit_code`, `message`, `source` (the response or the state file), a JSON Pointer `pointer` to the field at fault, a `hint` saying what to change, and, where they apply, the `id`, `expected` and `found` values. On any error the state file is unchanged. Do not write the state file by hand to get around one.
 - **`--dry-run`** verifies everything, adds the item that would change to `data.item` (the removed item, for a removal), and writes nothing.
 
 **Exit codes.** One table for `finplan.py` and the `fpt` CLI that takes its commands over; branch on the code, not the text. Codes 5–7 are reserved for the commands that call the server.
 
-| Code | Meaning                                                                                                     |
-| ---- | ----------------------------------------------------------------------------------------------------------- |
-| 0    | Success                                                                                                     |
-| 1    | Internal error (an uncaught exception; a bug)                                                               |
-| 2    | Validation: bad arguments, a malformed response or state file, or a removal with a missing/ambiguous target |
-| 3    | Hash mismatch or stale write: the rebuilt document does not match `state_hash`; nothing was written         |
-| 4    | Local I/O: a file could not be read or written                                                              |
-| 5    | Authentication (reserved)                                                                                   |
-| 6    | Network (reserved)                                                                                          |
-| 7    | Server error (reserved)                                                                                     |
+| Code | Meaning                                                                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Success                                                                                                                                                                   |
+| 1    | Internal error (an uncaught exception; a bug)                                                                                                                             |
+| 2    | Validation: bad arguments, a malformed response or state file, or a removal with a missing/ambiguous target                                                               |
+| 3    | Hash mismatch or stale write: the document does not match `state_hash`, or the file changed since `--expect-hash` was recorded; nothing was written (`error` names which) |
+| 4    | Local I/O: a file could not be read or written                                                                                                                            |
+| 5    | Authentication (reserved)                                                                                                                                                 |
+| 6    | Network (reserved)                                                                                                                                                        |
+| 7    | Server error (reserved)                                                                                                                                                   |
 
 ### How to integrate accounts and goals
 
