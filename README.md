@@ -27,7 +27,7 @@ git clone https://github.com/bestdan/finplan-plugin.git
 claude plugin install finplan --plugin-dir ./finplan-plugin
 ```
 
-Both approaches install the skill, commands, MCP server connection, and a hook that prompts you to allowlist curl for file downloads.
+Both approaches install the skill, commands, MCP server connection, and three hooks: one that prompts you to allowlist curl for file downloads, one that tells you when a newer plugin version is out, and one that stops Claude from editing your `finplan_state.json` or `*_finplan_state.json` directly (saves go through `/finplan:save-state`).
 
 After installing, go to `/plugins` → Installed → finplan and make sure MCP is enabled, then restart your session.
 

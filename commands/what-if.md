@@ -8,7 +8,6 @@ allowed-tools:
   - Glob
   - Read
   - Write
-  - Edit
 argument-hint: <natural-language what-if>  (e.g. "retire at 62", "save $500 more a month", "what if returns are lower")
 ---
 

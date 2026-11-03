@@ -35,7 +35,7 @@ Save to the same `*_finplan_state.json` file in the current working directory th
 
 ## When save refuses
 
-`save` writes nothing on any error. It prints one JSON object to standard error, with a `hint` saying what to do. **Never write the state file by hand, with Write, or with a shell redirect to get around an error.** Write is for the response file under `/tmp/finplan/` only.
+`save` writes nothing on any error. It prints one JSON object to standard error, with a `hint` saying what to do. **Never write the state file by hand to get around an error: not with Write or Edit, which the plugin's hook denies on `finplan_state.json` and `*_finplan_state.json`, and not through the shell (`>`, `jq … > file`, `cp`, `mv`, `tee`, an inline `python3` script).** A redirect onto the file being read empties it before `jq` runs. Write is for the response file under `/tmp/finplan/` only.
 
 - **Exit 3, `error: stale_write`:** the file changed after its hash was recorded. The response is kept as `<file>.pending.json` for reference. Re-read the state file, record its hash, redo the `manage_state` call against it, and save that new response. Do not copy the pending response over the file.
 - **Exit 3, `error: hash_mismatch`:** the rebuilt document does not match the server's `state_hash`. Most often the `state_json` passed to `manage_state` was not the file's content verbatim. Re-read the file and redo the edit against it unchanged.

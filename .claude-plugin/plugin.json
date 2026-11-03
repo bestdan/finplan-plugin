@@ -1,7 +1,7 @@
 {
   "name": "finplan",
   "description": "Personal finance projection engine \u2014 Monte Carlo projections, tax calculations, retirement planning, Social Security analysis, and interactive dashboards. Powered by 80+ MCP tools.",
-  "version": "1.5.103",
+  "version": "1.6.0",
   "author": {
     "name": "Prethink",
     "url": "https://prethink.io"
@@ -18,6 +18,17 @@
     "financial-planning"
   ],
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-state-file.py\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "mcp__(plugin_finplan_)?finplan__.*",
