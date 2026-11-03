@@ -232,13 +232,34 @@ def _cmd_inject(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+# The extra fields an error may carry beside the fixed ones. Each name has one
+# meaning in every error that uses it, so a caller reads a field without first
+# checking which error it is in. skills/finplan/packages/state.md lists the same.
+_DETAIL_FIELDS = {
+    "section": "the section the response's changed.section named",
+    "allowed_sections": "the sections a delta may change",
+    "expected_section": "the section the removal action must change",
+    "id_key": "the id field of the section, e.g. account_id",
+    "id": "the id the removal targets",
+    "item": "the response's changed.item",
+    "match_count": "how many state-file entries carry that id",
+    "expected_hash": "the hash the save required (null when it required no file)",
+    "found_hash": "the hash it found (null when there was no file)",
+    "pending": "the path the response was kept at (null when it could not be kept)",
+    "url": "the --from-url value",
+    "http_status": "the HTTP status the download got",
+    "server_message": "the response's message",
+}
+
+
 class _SaveError(Exception):
     """A ``save`` failure, reported to stderr as one JSON object.
 
     ``pointer`` is a JSON Pointer (RFC 6901) into the document named by
     ``source`` — the response or the state file — following RFC 9457's
     ``errors[].pointer``. ``hint`` says what to change, and where an obvious wrong
-    move exists, what not to do instead.
+    move exists, what not to do instead. ``details`` keys must be names in
+    :data:`_DETAIL_FIELDS`.
     """
 
     def __init__(
@@ -252,6 +273,9 @@ class _SaveError(Exception):
         error: str | None = None,
     ) -> None:
         super().__init__(message)
+        unknown = set(details or {}) - set(_DETAIL_FIELDS)
+        if unknown:
+            raise ValueError(f"undocumented error fields: {sorted(unknown)}")
         self.exit_code = exit_code
         # Code 3 covers two failures a caller recovers from differently, so the
         # name, not the code, tells a stale write from a hash mismatch.
@@ -356,7 +380,7 @@ def _apply_delta_to_document(
             + ", ".join(["person"] + sorted(_LIST_SECTIONS)),
             pointer="/changed/section",
             source="response",
-            details={"expected": ["person"] + sorted(_LIST_SECTIONS), "found": section},
+            details={"allowed_sections": ["person"] + sorted(_LIST_SECTIONS), "section": section},
         )
     id_key = _LIST_SECTIONS[section]
     existing = document.get(section)
@@ -373,7 +397,7 @@ def _apply_delta_to_document(
                 "Pass the manage_state response unedited.",
                 pointer="/changed/section",
                 source="response",
-                details={"expected": expected_section, "found": section},
+                details={"expected_section": expected_section, "section": section},
             )
         # Checked before matching: a None id would otherwise match any entry that
         # also lacks the key, and the error would surface as a hash mismatch.
@@ -384,7 +408,7 @@ def _apply_delta_to_document(
                 "Pass the manage_state response unedited.",
                 pointer=f"/changed/item/{id_key}",
                 source="response",
-                details={"expected": id_key, "found": item},
+                details={"id_key": id_key, "item": item},
             )
         if len(matches) != 1:
             problem = "no" if not matches else f"{len(matches)}"
@@ -396,7 +420,7 @@ def _apply_delta_to_document(
                 "file and run the removal against it again. " + _DO_NOT_HAND_WRITE,
                 pointer=f"/changed/item/{id_key}",
                 source="response",
-                details={"id": item_id, "expected": 1, "found": len(matches)},
+                details={"id_key": id_key, "id": item_id, "match_count": len(matches)},
             )
         removed = items.pop(matches[0])
         document[section] = items
@@ -430,7 +454,7 @@ def _verify_hash(document: dict[str, Any], expected_hash: str) -> None:
         "against it, and save the new response. " + _DO_NOT_HAND_WRITE,
         pointer="/state_hash",
         source="response",
-        details={"expected": expected_hash, "found": actual_hash},
+        details={"expected_hash": expected_hash, "found_hash": actual_hash},
     )
 
 
@@ -627,7 +651,7 @@ def _stale_write(
         "directly, and do not copy the pending response over it.",
         pointer="",
         source="state file",
-        details={"expected": expected, "found": found.content_hash, "pending": pending},
+        details={"expected_hash": expected, "found_hash": found.content_hash, "pending": pending},
         error="stale_write",
     )
 
@@ -755,7 +779,7 @@ def _rejected_url(url: str, why: str) -> _SaveError:
         "download the document some other way and save that instead. " + _DO_NOT_HAND_WRITE,
         pointer="/urls/data",
         source="response",
-        details={"found": url},
+        details={"url": url},
     )
 
 
@@ -820,7 +844,7 @@ def _fetch(url: str) -> bytes:
             f"the server answered the download with HTTP {exc.code} ({exc.reason})",
             hint_retry,
             source="response",
-            details={"found": exc.code},
+            details={"http_status": exc.code},
         ) from exc
     # http.client.HTTPException is not an OSError: a chunked body cut off mid-chunk
     # (IncompleteRead) or a malformed status line (BadStatusLine) raises it.
@@ -1035,7 +1059,7 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
             "call rather than the state file.",
             pointer="/state_hash",
             source="response",
-            details={"found": response.get("message")},
+            details={"server_message": response.get("message")},
         )
     _verify_hash(document, expected_hash)
 

@@ -194,7 +194,13 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_sta
 - **Removals** delete the one item with the response's id. If the state file holds no item with that id, or more than one, the file is not the document the server edited: it exits with the validation code and writes nothing.
 - **Timestamps:** the written file carries the server's `last_updated`, so the bytes written are the bytes verified.
 - **Output:** standard output carries one JSON object and nothing else. `data` names the `action`, the `change` (`added`, `updated`, `removed`, `replaced`, or `unchanged` for a duplicate), the `section`, the `item_id`, the `path` and whether it was `written`. `metadata` carries `input_hash` (the state file before the save; `null` when the file was absent or could not be read as a JSON object), `result_hash` (the server's `state_hash`) and the server's `warnings`.
-- **Errors** go to standard error as one JSON object: `error`, `exit_code`, `message`, `source` (the response or the state file), a JSON Pointer `pointer` to the field at fault, a `hint` saying what to change, and, where they apply, the `id`, `expected` and `found` values. On any error the state file is unchanged. Do not write the state file by hand to get around one.
+- **Errors** go to standard error as one JSON object: `error`, `exit_code`, `message`, `source` (the response or the state file), a JSON Pointer `pointer` to the field at fault, a `hint` saying what to change, and, where they apply, these fields, each with one meaning in every error that carries it:
+  - `section`: the section `changed.section` named; `allowed_sections`: the sections a delta may change; `expected_section`: the section a removal must change.
+  - `id_key`: the section's id field (`account_id`, `id`); `id`: the id a removal targets; `item`: the response's `changed.item`; `match_count`: how many state-file entries carry that id.
+  - `expected_hash`: the hash the save required (`null` when it required no file); `found_hash`: the hash it found (`null` when there was no file). On `hash_mismatch` they are the server's `state_hash` and the rebuilt document's; on `stale_write`, the `--expect-hash` and the file's.
+  - `pending`: where the response was kept (`null` if it could not be); `url`: the `--from-url` value; `http_status`: the status the download got; `server_message`: the response's `message`.
+
+  On any error the state file is unchanged. Do not write the state file by hand to get around one.
 - **`--dry-run`** verifies everything, adds the item that would change to `data.item` (the removed item, for a removal), and writes nothing.
 
 **Exit codes.** One table for `finplan.py` and the `fpt` CLI that takes its commands over; branch on the code, not the text. Codes 5–7 are reserved for the commands that call the server.
