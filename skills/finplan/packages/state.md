@@ -119,7 +119,7 @@ An unstamped or stale document makes every `build_snapshot` re-migrate it. This 
 
 ## Monarch sync tools
 
-The sync tools take the state as exactly one of `state_json`, `state_ref` (`state_path` is local transport only and not accepted on the hosted server). `system` (on `link_account`, `unlink_account`, `exclude_account`, and `complete_synced_account`) defaults to `monarch`, and `synced_on` (YYYY-MM-DD, on `reconcile_with_monarch` and `complete_synced_account`) defaults to today. Tools that persist return a new `state_ref`.
+The sync tools take the state as exactly one of `state_json`, `state_ref` (`state_path` is local transport only and not accepted on the hosted server). `system` (on `link_account`, `unlink_account`, `exclude_account`, and `complete_synced_account`) defaults to `monarch`, and `synced_on` (YYYY-MM-DD, on `reconcile_with_monarch` and `complete_synced_account`) defaults to today. Tools that persist return a new `state_ref`, which passes the new state to the next tool, and the same state as a `urls.data` download with its `content_hash`. Save that with `/finplan:save-state`, which installs it through `finplan.py save --from-url`; never rebuild the state from the response yourself. An `unlink_account` that changed nothing returns no download, because there is nothing new to save.
 
 ### link_account
 
@@ -164,6 +164,7 @@ Call `/finplan:save-state` immediately after:
 - Updating person information (via `action="update_person"`)
 - Setting or clearing the spouse (via `action="set_spouse"` / `action="clear_spouse"`)
 - Removing an account, goal, income stream or expense (via the `remove_*` actions)
+- Any sync tool that changed the state: `link_account`, `unlink_account`, `exclude_account`, a confirmed `reconcile_with_monarch` or `complete_synced_account`
 - Any time the user provides new financial information
 
 ### Saving with `finplan.py save`

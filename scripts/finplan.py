@@ -834,10 +834,12 @@ def _fetch(url: str) -> bytes:
         if "Tunnel connection failed" in str(reason):
             hint = (
                 "Nothing was written. A sandbox or proxy refused the connection to the "
-                "FinPlan server, so retrying will not help. Redo the tool call with "
-                "full_document='inline' and save that response instead, and tell the "
-                "user that allowing mcp.finplan.tools in the sandbox's network settings "
-                "makes later saves cheaper. "
+                "FinPlan server, so retrying will not help. For manage_state, redo the "
+                "call with full_document='inline' and save that response instead; "
+                "migrate_state and the sync tools have no inline form. Either way, tell "
+                "the user that allowing mcp.finplan.tools in the sandbox's network "
+                "settings is the only way to save migrate_state and sync-tool results, "
+                "and makes manage_state saves cheaper. "
             )
         raise _SaveError(
             EXIT_NETWORK,
