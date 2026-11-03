@@ -115,7 +115,7 @@ Returns a `FileResponse` (the state at `urls.data`, a schema + jq examples at `u
 
 ### migrate_state
 
-An unstamped or stale document makes every `build_snapshot` re-migrate it. This runs the shared ingest path once and returns a download, never the full document inline. Persist the downloaded document (e.g. via `/finplan:save-state`); subsequent `build_snapshot` calls then report `migrated: false`. The migrated document is at `urls.data`; an error envelope with structured `errors` comes back when the document cannot validate.
+An unstamped or stale document makes every `build_snapshot` re-migrate it. This runs the shared ingest path once and returns a download, never the full document inline. The migrated document is at `urls.data` and its hash is `content_hash`: persist it with `/finplan:save-state`, which saves it through `finplan.py save --from-url` without the document entering context. Subsequent `build_snapshot` calls then report `migrated: false`. An error envelope with structured `errors` comes back when the document cannot validate.
 
 ## Monarch sync tools
 
@@ -177,7 +177,12 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_sta
 
 # create (no state file yet): no hash to record, so no flag
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_state.json --response response.json
+
+# a full document served as a download (urls.data): no response file
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_state.json --from-url <urls.data> --state-hash <content_hash> --expect-hash "$H"
 ```
+
+- **Downloads (`--from-url`):** `manage_state` with `full_document: "download"`, and `migrate_state` always, return a full document as `urls.data` plus `content_hash` instead of inline. Pass both to `save` in place of `--response`; never download the document into context or write it yourself. `save` fetches it only from the FinPlan server's `/files/` (or a local server's download directory, `FINPLAN_DATA_DIR`), refuses any other URL, follows no redirect, checks the hash, and installs it with the same stale-write guard. A link lasts about an hour: a network failure exits 6, an HTTP error (an expired link) exits 7, and either way nothing is written. A retried save whose result the file already holds succeeds without downloading again.
 
 - **Stale writes:** a response can verify and still be stale, computed against a file that has changed since. So when the state file exists, `--expect-hash` is required: the file's hash recorded **before** the `manage_state` call, from `finplan.py hash` or the `result_hash` the previous save printed. The file is replaced only if it still has that hash. For `create` (no file yet) leave the flag off; the file must still be absent when the new one is installed. Both checks run under a per-file lock (`<file>.lock`, left in place). On a conflict the file is left untouched, the response is kept as `<file>.pending.json`, and `save` exits 3 with `error: stale_write`: re-read the state file and redo the edit against it. Do not write the state file directly, and do not copy the pending response over it.
 - **The response file:** write the response unedited with the Write tool, to a new file named after its `state_hash`, so no save reads an earlier one; `/finplan:save-state` gives the path. Do not pass the JSON through a shell heredoc or `echo`: Claude Code's Bash check refuses commands that mix braces and quotes.

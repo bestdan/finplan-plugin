@@ -48,6 +48,14 @@ Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. f
 
 The first rule lets FinPlan's tools run without a prompt each time; the second allows `curl` only against the FinPlan file server; the third allows `scripts/finplan.py`, which saves your state file and builds the HTML pages; the fourth lets Claude write files under `/tmp/finplan/`, where `/finplan:save-state` puts each response before saving it. It does not cover your state file.
 
+**If you run Claude Code with its sandbox on**, the sandbox also has to let commands reach `mcp.finplan.tools`, or `curl` and `/finplan:save-state` cannot download from it. In an interactive session Claude Code asks the first time a command needs the domain: answer "Yes, and don't ask again". Auto mode does not ask, and a headless `claude -p` run has no one to answer, so for those add the domain to `sandbox.network.allowedDomains` in `~/.claude/settings.json`, keeping the entries already there:
+
+```json
+"sandbox": { "network": { "allowedDomains": ["mcp.finplan.tools"] } }
+```
+
+Without it nothing breaks: a save whose download is blocked asks the server for the document inline instead, which costs more context.
+
 ## What you get
 
 ### Skill

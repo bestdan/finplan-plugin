@@ -12,7 +12,8 @@ prose (and re-derived on every run):
 * ``save``   — merge a ``manage_state`` response (an update, a removal, or a full
                document) into a local state file, verifying the rebuilt document
                against the server-returned ``state_hash`` before writing.
-               ``apply-delta`` is an alias.
+               ``--from-url`` installs a full document served as a download
+               (``urls.data``) instead. ``apply-delta`` is an alias.
 * ``hash``   — print a state file's content hash, for ``save --expect-hash``.
 * ``fmt``    — format integer cents as a ``$X,XXX.XX`` dollar string, or add
                ``*_dollars`` siblings for every ``*_cents`` leaf in a JSON doc.
@@ -23,10 +24,14 @@ from __future__ import annotations
 import argparse
 import contextlib
 import hashlib
+import http.client
 import json
 import os
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections.abc import Generator
 from typing import Any
 
@@ -71,9 +76,9 @@ _REMOVE_ACTIONS: dict[str, str] = {
 _FILE_URI_PREFIX = "file://"
 
 # Exit codes, shared for good by finplan.py and the fpt CLI that takes its commands
-# over: a caller branches on the code without parsing text. finplan.py uses 0, 2, 3
-# and 4 today; the rest are reserved so the commands that talk to the server add no
-# codes of their own. 1 stays what Python itself exits with on an uncaught error.
+# over: a caller branches on the code without parsing text. finplan.py uses all but
+# 5, which is reserved so the commands that talk to the server add no codes of their
+# own. 1 stays what Python itself exits with on an uncaught error.
 EXIT_OK = 0
 EXIT_INTERNAL = 1
 EXIT_VALIDATION = 2
@@ -97,16 +102,33 @@ EXIT_CODES_HELP = """\
 exit codes (shared with fpt; one table for every command):
   0  success
   1  internal error (an uncaught exception; a bug)
-  2  validation: bad arguments, a malformed response or state file, or a
-     removal whose target is missing or ambiguous
+  2  validation: bad arguments, a malformed response or state file, a
+     removal whose target is missing or ambiguous, or a --from-url that is
+     not one of FinPlan's own download URLs
   3  hash mismatch or stale write: the rebuilt document does not match the
      server's state_hash, or the file changed since --expect-hash was
      recorded; nothing was written
   4  local I/O: a file could not be read or written
   5  authentication (reserved)
-  6  network (reserved)
-  7  server error (reserved)
+  6  network: a --from-url download could not reach the server
+  7  server error: the server answered a --from-url download with an HTTP
+     error (most often an expired link)
 """
+
+# Where --from-url may download from. The hosted server serves downloads under
+# `<base>/files/`; FINPLAN_FILE_SERVER_URL is the same override the server reads for
+# its own base URL. Without it, the host comes from the plugin's .mcp.json, so a
+# fork pointed at another server accepts that server's links.
+_FILE_SERVER_ENV = "FINPLAN_FILE_SERVER_URL"
+_DEFAULT_FILE_SERVER = "https://mcp.finplan.tools"
+_MCP_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".mcp.json")
+# A local (stdio) server writes downloads here and links them as file:// URLs. The
+# default and the variable match the server's (finplan_core.io.finplan_temp_dir).
+_DATA_DIR_ENV = "FINPLAN_DATA_DIR"
+_DEFAULT_DATA_DIR = "/tmp/finplan"
+# The server refuses to write a download larger than this (MAX_BUNDLE_SIZE_BYTES).
+_MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024
+_DOWNLOAD_TIMEOUT_SECONDS = 60
 
 
 def compute_state_hash(document: dict[str, Any]) -> str:
@@ -710,19 +732,227 @@ def _install(
     return True, current
 
 
+def _file_server_prefix() -> str:
+    """The URL every accepted https download must start with: ``<base>/files/``."""
+    base = os.environ.get(_FILE_SERVER_ENV, "")
+    if not base:
+        try:
+            with open(_MCP_CONFIG, encoding="utf-8") as handle:
+                configured: Any = json.load(handle)
+            url = configured["mcpServers"]["finplan"]["url"]
+            parsed = urllib.parse.urlsplit(url)
+            base = f"{parsed.scheme}://{parsed.netloc}"
+        except (OSError, ValueError, KeyError, TypeError):
+            base = _DEFAULT_FILE_SERVER
+    return base.rstrip("/") + "/files/"
+
+
+def _rejected_url(url: str, why: str) -> _SaveError:
+    return _SaveError(
+        EXIT_VALIDATION,
+        f"--from-url {url!r} is not a FinPlan download: {why}",
+        "Pass the urls.data value from the FinPlan tool response, unedited. Do not "
+        "download the document some other way and save that instead. " + _DO_NOT_HAND_WRITE,
+        pointer="/urls/data",
+        source="response",
+        details={"found": url},
+    )
+
+
+def _download_source(url: str) -> tuple[str, str]:
+    """Check ``url`` is one of FinPlan's own downloads; return ``(kind, target)``.
+
+    ``kind`` is ``"https"`` (``target`` is the URL) or ``"file"`` (``target`` is the
+    resolved local path). The hash proves the bytes arrived intact, not where they
+    came from, and both the URL and the hash come from the model, so the source is
+    pinned instead: an https URL under the FinPlan server's ``/files/``, or a
+    ``file://`` path that resolves, symlinks followed, inside the local server's
+    download directory. Anything else would let a model install a file it wrote and
+    hashed itself, which is the hand-write the plugin's hook exists to stop.
+    """
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme == "https":
+        prefix = _file_server_prefix()
+        if not url.startswith(prefix) or parsed.query or parsed.fragment:
+            raise _rejected_url(url, f"downloads come from {prefix}")
+        # A dot-segment would climb out of /files/ on the server: refuse it here,
+        # percent-encoded or not, rather than trust the server to normalise it.
+        path = urllib.parse.unquote(parsed.path).replace("\\", "/")
+        if "/../" in path or path.endswith("/.."):
+            raise _rejected_url(url, "the path climbs out of /files/")
+        return "https", url
+    if parsed.scheme == "file":
+        if parsed.netloc not in ("", "localhost"):
+            raise _rejected_url(url, "a file:// URL must name a local path")
+        data_dir = os.path.realpath(os.environ.get(_DATA_DIR_ENV) or _DEFAULT_DATA_DIR)
+        raw_path = urllib.request.url2pathname(parsed.path)
+        # A percent-encoded NUL decodes to a real one, which realpath and open reject
+        # with ValueError rather than OSError.
+        if "\x00" in raw_path:
+            raise _rejected_url(url, "the path is not a valid local path")
+        path = os.path.realpath(raw_path)
+        if os.path.commonpath([path, data_dir]) != data_dir:
+            raise _rejected_url(url, f"local downloads live under {data_dir}")
+        return "file", path
+    raise _rejected_url(url, "only https and file:// downloads are accepted")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects: a redirect could lead off the host that was checked."""
+
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+def _fetch(url: str) -> bytes:
+    """Download ``url`` (already checked by :func:`_download_source`), size-capped."""
+    opener = urllib.request.build_opener(_NoRedirect)
+    hint_retry = (
+        "Nothing was written. A download link lasts about an hour: if it has expired, "
+        "redo the tool call and save its new response. " + _DO_NOT_HAND_WRITE
+    )
+    try:
+        with opener.open(url, timeout=_DOWNLOAD_TIMEOUT_SECONDS) as reply:
+            data: bytes = reply.read(_MAX_DOWNLOAD_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        raise _SaveError(
+            EXIT_SERVER,
+            f"the server answered the download with HTTP {exc.code} ({exc.reason})",
+            hint_retry,
+            source="response",
+            details={"found": exc.code},
+        ) from exc
+    # http.client.HTTPException is not an OSError: a chunked body cut off mid-chunk
+    # (IncompleteRead) or a malformed status line (BadStatusLine) raises it.
+    except (urllib.error.URLError, http.client.HTTPException, OSError) as exc:
+        reason = getattr(exc, "reason", exc)
+        hint = (
+            "Nothing was written. Check the network connection and retry the same "
+            "save; if the link has expired, redo the tool call. "
+        )
+        # A sandbox's filtering proxy refuses the CONNECT for a host it does not allow.
+        if "Tunnel connection failed" in str(reason):
+            hint = (
+                "Nothing was written. A sandbox or proxy refused the connection to the "
+                "FinPlan server, so retrying will not help. Redo the tool call with "
+                "full_document='inline' and save that response instead, and tell the "
+                "user that allowing mcp.finplan.tools in the sandbox's network settings "
+                "makes later saves cheaper. "
+            )
+        raise _SaveError(
+            EXIT_NETWORK,
+            f"cannot download {url!r}: {reason}",
+            hint + _DO_NOT_HAND_WRITE,
+            source="response",
+        ) from exc
+    return data
+
+
+def _download_document(url: str, kind: str, target: str, state_hash: str) -> dict[str, Any]:
+    """Fetch the document at ``url`` as a full-document response carrying ``state_hash``.
+
+    ``kind`` and ``target`` are :func:`_download_source`'s verdict on ``url``. The
+    result has the shape of an inline full-document response, so the rest of
+    ``save`` treats both alike: the hash check, the stale-write guard and the
+    duplicate check do not know where the document came from.
+    """
+    if kind == "https":
+        data = _fetch(target)
+    else:
+        try:
+            with open(target, "rb") as handle:
+                data = handle.read(_MAX_DOWNLOAD_BYTES + 1)
+        except (OSError, ValueError) as exc:
+            raise _SaveError(
+                EXIT_LOCAL_IO,
+                f"cannot read download {target!r}: {exc}",
+                "Nothing was written. A local download is removed after about an hour: "
+                "redo the tool call and save its new response.",
+                source="response",
+            ) from exc
+    if len(data) > _MAX_DOWNLOAD_BYTES:
+        raise _SaveError(
+            EXIT_VALIDATION,
+            f"the download is larger than {_MAX_DOWNLOAD_BYTES} bytes, so it is not a "
+            "FinPlan state document",
+            "Pass the urls.data value from the FinPlan tool response, unedited.",
+            pointer="/urls/data",
+            source="response",
+        )
+    try:
+        parsed: Any = json.loads(data.decode("utf-8"))
+    except ValueError as exc:
+        raise _SaveError(
+            EXIT_VALIDATION,
+            f"the download at {url!r} is not valid JSON: {exc}",
+            "Nothing was written. Redo the tool call and save its new response.",
+            pointer="",
+            source="response",
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise _SaveError(
+            EXIT_VALIDATION,
+            f"the download at {url!r} is not a JSON object",
+            "Nothing was written. Pass the urls.data of a state document.",
+            pointer="",
+            source="response",
+        )
+    response = dict(parsed)
+    # A state document has no top-level `changed`; forcing the key out keeps a
+    # download on the full-document path, never the delta path.
+    response.pop("changed", None)
+    response["state_hash"] = state_hash
+    return response
+
+
+def _load_response(args: argparse.Namespace, current: _Destination) -> dict[str, Any] | None:
+    """The response to save, or None when ``--from-url`` names a result already on disk.
+
+    ``--from-url`` requires ``--state-hash`` (the response's ``state_hash``, which a
+    download response also carries as ``content_hash``), and ``--state-hash`` means
+    nothing without it. The URL is checked first, always. A download whose result
+    the file already holds is then not fetched: the retry of a save that succeeded
+    must succeed even once the link has expired.
+    """
+    if args.from_url is None:
+        if args.state_hash is not None:
+            raise _SaveError(
+                EXIT_VALIDATION,
+                "--state-hash goes with --from-url; a --response carries its own state_hash",
+                "Drop --state-hash, or pass the download's URL as --from-url.",
+                source="response",
+            )
+        return _load_json_object(args.response, "response")
+    if not args.state_hash:
+        raise _SaveError(
+            EXIT_VALIDATION,
+            "--from-url needs --state-hash",
+            "Pass the response's state_hash (equal to its content_hash) as --state-hash.",
+            pointer="/state_hash",
+            source="response",
+        )
+    kind, target = _download_source(args.from_url)
+    if current.state_hash == args.state_hash:
+        return None
+    return _download_document(args.from_url, kind, target, args.state_hash)
+
+
 def _save(args: argparse.Namespace) -> dict[str, Any]:
     """Run ``save`` and return its envelope, or raise :class:`_SaveError`."""
-    response = _load_json_object(args.response, "response")
+    out_path = args.out if args.out else args.state
+    current = _read_destination(out_path)
+    loaded = _load_response(args, current)
+    if loaded is None:
+        return _duplicate_envelope({"state_hash": args.state_hash}, out_path, current, [])
+    response = loaded
     warnings: list[Any] = []
     response_warnings = response.get("warnings")
     if isinstance(response_warnings, list):
         warnings.extend(response_warnings)
 
-    out_path = args.out if args.out else args.state
     # An empty value is no hash at all: `--expect-hash "$(finplan.py hash F)"` on a
     # file that does not exist yet passes "", and that is a create, not a deletion.
     expected: str | None = args.expect_hash or None
-    current = _read_destination(out_path)
 
     # A response whose result the file already holds was delivered before: that
     # is success, and nothing is written. Checked before the delta is applied,
@@ -884,6 +1114,11 @@ def _cmd_save(args: argparse.Namespace) -> int:
     succeeds without writing. A successful write keeps the replaced file as
     ``<file>.bak``.
 
+    ``--from-url`` takes the place of ``--response`` when a tool served the full
+    document as a ``urls.data`` download: the document is fetched only from
+    FinPlan's own download locations (:func:`_download_source`), checked against
+    ``--state-hash``, and saved exactly as an inline full document would be.
+
     Standard output carries one JSON envelope and nothing else: ``data`` says what
     changed, ``metadata`` carries the input and result content hashes and the
     server's ``warnings``. A failure prints one JSON object to standard error and
@@ -981,14 +1216,27 @@ def _build_parser() -> argparse.ArgumentParser:
             "manage_state call (`finplan.py hash FILE`, or the last save's result_hash).\n"
             "If it changed since, nothing is written: the response is kept in\n"
             "FILE.pending.json and the edit must be reapplied. A successful write keeps\n"
-            "the previous file as FILE.bak."
+            "the previous file as FILE.bak.\n\n"
+            "When the response carries urls.data instead of the document, pass\n"
+            "--from-url URL --state-hash HASH in place of --response: the document is\n"
+            "downloaded (only from the FinPlan server, or from the local server's\n"
+            "download directory), checked against HASH, and saved the same way."
         ),
         epilog=EXIT_CODES_HELP,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p_save.add_argument("--state", required=True, help="path to the local state.json")
+    source = p_save.add_mutually_exclusive_group(required=True)
+    source.add_argument("--response", help="manage_state response file, or - for stdin")
+    source.add_argument(
+        "--from-url",
+        default=None,
+        help="the response's urls.data: download the full document from it instead",
+    )
     p_save.add_argument(
-        "--response", required=True, help="manage_state response file, or - for stdin"
+        "--state-hash",
+        default=None,
+        help="with --from-url: the response's state_hash (its content_hash)",
     )
     p_save.add_argument("--out", default=None, help="write here instead of --state")
     p_save.add_argument(
