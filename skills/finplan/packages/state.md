@@ -168,18 +168,19 @@ Call `/finplan:save-state` immediately after:
 
 ### Saving with `finplan.py save`
 
-`finplan.py save`, from the helper script that ships in the plugin's `scripts` directory, merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input, an edit that moves a goal's derived balance). `apply-delta` is an older name for the same command.
+`finplan.py save`, from the helper script that ships with the Claude Code plugin (`${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py`), merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input, an edit that moves a goal's derived balance). `apply-delta` is an older name for the same command.
 
 ```bash
-H=$(python3 finplan.py hash <name>_finplan_state.json)   # before the manage_state call
+H=$(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <name>_finplan_state.json)   # before the manage_state call
 # ... call manage_state, write its response to response.json ...
-python3 finplan.py save --state <name>_finplan_state.json --response response.json --expect-hash "$H" [--dry-run]
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_state.json --response response.json --expect-hash "$H" [--dry-run]
 
 # create (no state file yet): no hash to record, so no flag
-python3 finplan.py save --state <name>_finplan_state.json --response response.json
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <name>_finplan_state.json --response response.json
 ```
 
 - **Stale writes:** a response can verify and still be stale, computed against a file that has changed since. So when the state file exists, `--expect-hash` is required: the file's hash recorded **before** the `manage_state` call, from `finplan.py hash` or the `result_hash` the previous save printed. The file is replaced only if it still has that hash. For `create` (no file yet) leave the flag off; the file must still be absent when the new one is installed. Both checks run under a per-file lock (`<file>.lock`, left in place). On a conflict the file is left untouched, the response is kept as `<file>.pending.json`, and `save` exits 3 with `error: stale_write`: re-read the state file and redo the edit against it. Do not write the state file directly, and do not copy the pending response over it.
+- **The response file:** write the response unedited with the Write tool, to a new file named after its `state_hash`, so no save reads an earlier one; `/finplan:save-state` gives the path. Do not pass the JSON through a shell heredoc or `echo`: Claude Code's Bash check refuses commands that mix braces and quotes.
 - **`--out`:** the stale-write guard checks the file being written, so with `--out` it checks the `--out` destination, not `--state`. `--state` is covered only by the `state_hash` check on the rebuilt document.
 - **Duplicate delivery:** a response whose result the file already holds succeeds without writing (`data.duplicate: true`, `change: unchanged`).
 - **Backup:** a successful write keeps the replaced file as `<file>.bak` (one version). The new file is written through a unique temporary file in the same directory and renamed into place, so an interrupted save leaves the previous file intact.
@@ -217,8 +218,7 @@ Every object a `create_*` tool returns is lost until it is integrated into state
    | `create_income_stream` | `"update_income_stream"` | `income_stream_json` ← its `income_stream` field |
    | `create_expense`       | `"update_expense"`       | `expense_json` ← its `expense` field             |
 
-3. **Rebuild full state** — the response is normally a delta (see [manage_state](#manage_state)): apply `changed.item` to the section named in `changed.section`. It is the full document instead when you passed `return_full_state=true`, when the input was migrated, when `update_goal` auto-created a provisional account, or when the edit moved a linked goal's derived `current_balance_cents` (or your file held one that disagreed with its accounts) — then use it directly. `/finplan:save-state` handles either shape for you.
-4. **Save** — call `/finplan:save-state`, then continue from the rebuilt state for the next object.
+3. **Save** — call `/finplan:save-state` with no argument; it passes the hash recorded before step 2 to `finplan.py save` as `--expect-hash`. It applies the response with [`finplan.py save`](#saving-with-finplanpy-save), whether it is a delta or a full document; do not rebuild the state yourself. The next object's `state_json` is the saved file.
 
 For example, integrating a new account — `manage_state` with these arguments:
 

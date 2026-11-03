@@ -18,7 +18,7 @@ Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/np
   Then add the vendored path as one more pair on the [inject script](../skills/finplan/packages/file-tools.md#embedding-data-in-self-contained-html-files) call:
 
   ```bash
-  python3 -c "..." output.html \
+  python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject output.html \
     "__CHARTJS__"  "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
     "__DATA__"     "${TMPDIR:-/tmp}/finplan/compare_data.json"
   ```

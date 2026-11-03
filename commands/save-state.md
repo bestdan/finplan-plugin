@@ -1,14 +1,15 @@
 ---
 description: Save the current FinPlan user state JSON to the local file system after any state modification
 allowed-tools:
-  - Write
   - Glob
+  - Edit(//tmp/finplan/**)
+  - Bash(python3 *scripts/finplan.py *)
 argument-hint: [file-path]
 ---
 
 # Save Financial Plan State
 
-Write the current user state JSON to the local file system.
+Merge the latest `manage_state` response into the local state file with `finplan.py save`. You never write the state file yourself: the helper applies the response, checks the result against the server's `state_hash`, and replaces the file only if nobody changed it since you recorded its hash.
 
 ## State file location
 
@@ -17,18 +18,32 @@ Save to the same `*_finplan_state.json` file in the current working directory th
 ## How to save
 
 1. Find the existing state file using Glob for `*finplan_state.json` in the working directory.
-2. Reconstruct the most recent **complete** state from the current conversation context:
-   - If the most recent `manage_state` result is a **full document** (an `action="create"` result, any `manage_state` call made with `return_full_state=True`, or a **migrated** result carrying `migrated: true` — returned when the `state_json` passed in was stale, so the whole reshaped document comes back instead of a delta), use it directly.
-   - If the most recent `manage_state` result is a **delta** (it has a `changed` field with `section` and `item`, and a `state_hash`, but no top-level `accounts`/`goals`/`person`), apply that delta to the full state you passed into that same `manage_state` call:
-     - For list sections (`accounts`, `goals`, `income_streams`, `expenses`): replace the existing item whose id matches (`account_id` for accounts; `id` for the rest), or append it if there is no match.
-     - For `person`: replace the `person` object with `changed.item`.
-3. Update the `last_updated` field to today's date (YYYY-MM-DD format).
-4. Strip the transient response metadata (`success`, `message`, `state_hash`, `action`, `changed`, `migrated`) before writing — a full-document result carries these merged in alongside the state fields, and they must not be persisted. Write only the state fields: `schema_fingerprint` (default to the empty string if the state being written has none — a legacy file predating the field has no fingerprint), `person`, `accounts`, `goals`, `income_streams`, `expenses`, `created_at`, `last_updated`. A migrated document already carries the current `schema_fingerprint`; persist it as-is so the file is conformant on the next load.
-5. Write the full state JSON to the file using the Write tool, with consistent formatting (2-space indentation).
-6. Confirm to the user that the state was saved, including the file path and a brief summary of what's in it (number of accounts, goals, etc.).
+2. Take the file's hash **recorded before** the `manage_state` call: the output of `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <file>` that the calling command ran, or the `metadata.result_hash` that the previous save printed. If the file does not exist yet (an `action="create"`), there is no hash: leave `--expect-hash` off.
+   - If the file exists and no hash was recorded, run `finplan.py hash <file>` now and pass that. The save is then guarded only against changes made after this moment, so say so in your report.
+3. Write the most recent `manage_state` response with the Write tool to `/tmp/finplan/response-<id>.json`, where `<id>` is the first 12 hex characters of the response's `state_hash`. Write it **exactly as the tool returned it**: every key, unedited, nothing added or removed. This works for every response shape: an `update_*` or `remove_*` delta, a person change, and a full document (`create`, `return_full_state=true`, or a migrated input).
+   - Naming the file after the hash gives every response its own new file, so an earlier save's file is never read by mistake. If Write refuses because the file has not been read yet, the file already exists, so this same response was written before: use that file as it is.
+   - Do not pass the JSON through a shell heredoc or `echo`. Claude Code's Bash check refuses commands that mix braces and quotes.
+4. Run `save` on that file:
+
+   ```bash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response /tmp/finplan/response-<id>.json --expect-hash <hash>
+
+   # create: no state file yet, so no --expect-hash
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response /tmp/finplan/response-<id>.json
+   ```
+5. Report the result from the JSON envelope `save` prints: the file path (`data.path`), what changed (`data.change`, `data.section`, `data.item_id`), and any `metadata.warnings`. Keep `metadata.result_hash`: it is the `--expect-hash` for the next save of this file.
+
+## When save refuses
+
+`save` writes nothing on any error. It prints one JSON object to standard error, with a `hint` saying what to do. **Never write the state file by hand, with Write, or with a shell redirect to get around an error.** Write is for the response file under `/tmp/finplan/` only.
+
+- **Exit 3, `error: stale_write`:** the file changed after its hash was recorded. The response is kept as `<file>.pending.json` for reference. Re-read the state file, record its hash, redo the `manage_state` call against it, and save that new response. Do not copy the pending response over the file.
+- **Exit 3, `error: hash_mismatch`:** the rebuilt document does not match the server's `state_hash`. Most often the `state_json` passed to `manage_state` was not the file's content verbatim. Re-read the file and redo the edit against it unchanged.
+- **Exit 2, `error: validation`:** a missing `--expect-hash` while the state file exists, a malformed response (an error response carries no `state_hash`), or a removal whose target is not in the file. Fix the call, not the file.
+- **Exit 4, `error: local_io`:** a file could not be read or written.
 
 ## Important
 
-- Always preserve the complete state structure — never write a partial state. Mutation responses are deltas by default; expand them back to the full document before writing.
 - If no state has been created or loaded in this session, inform the user that there is nothing to save and suggest using `/finplan:read-state` first or creating a new state via `manage_state`.
 - If `$ARGUMENTS` is provided, treat it as an explicit file path to save to instead of the default location.
+- A successful save keeps the previous file as `<file>.bak`.

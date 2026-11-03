@@ -3,7 +3,9 @@ description: Generate an interactive HTML financial projection dashboard with go
 allowed-tools:
   - Bash(jq *)
   - Bash(open *)
-  - Bash(python3 *)
+  - Bash(curl *)
+  - Bash(mkdir *)
+  - Bash(python3 *scripts/finplan.py *)
   - WebFetch
   - Write
 argument-hint: [output-filename]
@@ -225,30 +227,16 @@ NOT just cumulative contributions. Net deposits represents total capital committ
 always use the pre-computed `net_deposits` data from `run_projection`. Never manually
 calculate net deposits as only cumulative contributions starting from zero.
 
-**Step 2**: Run a bash command to replace each placeholder with the actual data file:
+**Step 2**: Run `finplan.py inject` to replace each placeholder with the actual data file:
 
 ```bash
-python3 -c "
-import sys, json
-html_path = sys.argv[1]
-with open(html_path) as f:
-    html = f.read()
-# Replace each placeholder with its data file contents
-replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-for placeholder, data_path in replacements.items():
-    # Handle both file:// URIs and plain paths
-    path = data_path.replace('file://', '') if data_path.startswith('file://') else data_path
-    with open(path) as f:
-        html = html.replace(placeholder, f.read())
-with open(html_path, 'w') as f:
-    f.write(html)
-" OUTPUT_FILE.html \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject OUTPUT_FILE.html \
   "__DATA_TOTAL_PORTFOLIO__" "/tmp/finplan/abc123_data.json" \
   "__DATA_RETIREMENT__" "/tmp/finplan/def456_data.json" \
   "__DATA_EDUCATION__" "/tmp/finplan/ghi789_data.json"
 ```
 
-Use the actual `urls.data` paths returned by each MCP tool call (strip the `file://` prefix for local paths, or use HTTP URLs as-is with `urllib` if remote).
+Use the actual `urls.data` paths returned by each MCP tool call. A `file://` path can be passed as-is (`inject` strips the prefix). `inject` reads only local files, so download an `https` URL first: `mkdir -p /tmp/finplan && curl -s "<urls.data>" -o /tmp/finplan/<file>`.
 
 **Summary**: Use `summary` for statistics, placeholder tokens + bash injection for HTML data embedding.
 

@@ -4,7 +4,7 @@ allowed-tools:
   - Bash(jq *)
   - Bash(curl *)
   - Bash(open *)
-  - Bash(python3 *)
+  - Bash(python3 *scripts/finplan.py *)
   - Bash(mkdir *)
   - Bash(ls *)
   - Glob
@@ -117,10 +117,10 @@ need from it **on disk with `jq`**. For goal funding use `project_goal_progress`
 funded-balance note in Step 4).
 
 > **Known limitation — do not route around it silently.** `apply_scenario` returns only a
-> `state_ref` (+ hash), and today `project_plan` / `run_projection` require `state_json` and do
-> **not** accept a `state_ref`. So the `state_ref` is usable for _inspecting_ the resolved
-> state, not as a feed into those tools — derive ad-hoc detail from the `compare_scenarios`
-> outputs above rather than an `apply_scenario` → `project_plan` chain. Separately,
+> `state_ref` (+ hash). `project_plan` accepts that `state_ref` in place of `state_json`, so an
+> `apply_scenario` → `project_plan` chain projects the resolved scenario state without it
+> entering your context. `run_projection` takes no `state_ref`; for its per-account detail, read
+> the `compare_scenarios` outputs above. Separately,
 > projection-time overrides (`return_assumption`, `inflation`, account-scoped
 > `monthly_contribution`) have no state slot and only take effect via `compare_scenarios`; a
 > state-level number must have them passed explicitly or flag the gap. (Both are tracked as
@@ -209,7 +209,7 @@ sub-card in the ad-hoc section of that scenario's page, not as a new scenario co
 Download this scenario's (and the base's) timeline from the `compare_scenarios` data file to
 disk (handle `file://` paths directly; `curl` https URLs), write the HTML with
 `__DATA_<SLUG>__` / `__DATA_BASE__` tokens plus the `__CHARTJS__` token (and any per-ad-hoc
-data tokens), then replace every token in **one** `python3` pass so nothing large enters your
+data tokens), then replace every token in **one** `finplan.py inject` call so nothing large enters your
 context:
 
 > **Keep the page re-editable.** Ad-hoc accumulation means this file gets rewritten repeatedly,
@@ -221,19 +221,7 @@ context:
 > structure up top + one heavy blob at the bottom keeps re-renders and inspection cheap.
 
 ```bash
-python3 -c "
-import sys
-html_path = sys.argv[1]
-with open(html_path) as f:
-    html = f.read()
-replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-for token, path in replacements.items():
-    path = path.replace('file://', '') if path.startswith('file://') else path
-    with open(path) as f:
-        html = html.replace(token, f.read())
-with open(html_path, 'w') as f:
-    f.write(html)
-" scenarios/<slug>/scenario.html \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject scenarios/<slug>/scenario.html \
   "__CHARTJS__"     "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
   "__DATA_BASE__"   "/tmp/finplan/base_data.json" \
   "__DATA_<SLUG>__" "/tmp/finplan/<slug>_data.json"

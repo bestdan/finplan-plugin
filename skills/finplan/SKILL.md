@@ -125,7 +125,7 @@ When working with a specific area, read its detailed reference for tool names, p
 These commands are bundled with the FinPlan plugin and available automatically after installation. For setup on other platforms, see https://docs.finplan.tools/setup/.
 
 - **`/read-state`** — Read state from local JSON file using targeted `jq` queries (minimal token usage). Supports: `/read-state`, `/read-state person`, `/read-state accounts`, `/read-state goals`, `/read-state account <id>`, `/read-state goal <id>`.
-- **`/save-state`** — Write the current state JSON to the local file system. Call after every state mutation.
+- **`/save-state`** — Save the latest `manage_state` response to the local state file through `finplan.py save`. Call after every state mutation.
 - **`/projection-dashboard`** — Generate a self-contained HTML dashboard with goal-oriented Monte Carlo projections and interactive Chart.js charts.
 - **`/profile`** — View and update the user's personal financial profile (age, income, employment, marital status, dependents).
 - **`/accounts`** — View and manage financial accounts (balances, allocations, add/update accounts).
@@ -137,9 +137,10 @@ These commands are bundled with the FinPlan plugin and available automatically a
 
 1. **Load state at session start** — Use `/finplan:read-state` to load existing state from the local file (default: `./finplan_state.json`).
 2. **Integrate every object you create** — An account, goal, income stream, or expense made with a `create_*` tool is lost until you add it to state with the matching `manage_state` `update_*` action.
-3. **Save after every change** — Call `/finplan:save-state` immediately after each state mutation, and whenever the user gives new financial information. Don't batch saves.
+3. **Record the file's hash before each `manage_state` call** — in the Claude Code plugin, `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <state file>`, or the `result_hash` the previous save printed. Pass the file's state to `manage_state` as it is on disk, not retyped.
+4. **Save after every change** — Call `/finplan:save-state` immediately after each state mutation, and whenever the user gives new financial information. Don't batch saves.
 
-`update_*` actions normally return a compact delta rather than the full document (the full document comes back with `return_full_state=true`, on a migrated input, or when `update_goal` auto-creates a provisional account); `/finplan:save-state` handles either shape. The full create → integrate → apply delta → save sequence, and the list of events that require a save, are in [state.md](packages/state.md#state-persistence-rules).
+`/finplan:save-state` runs `finplan.py save`, which applies the `manage_state` response to the file, whether it is a delta, a removal or a full document. It writes only when the result reproduces the server's `state_hash` and the file still has the hash recorded before the call. Never write the state file yourself, with Write, Edit or a shell redirect. The command's flags, output and errors, and the list of events that require a save, are in [state.md](packages/state.md#state-persistence-rules).
 
 ## Recommended workflows
 

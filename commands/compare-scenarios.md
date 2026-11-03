@@ -4,7 +4,7 @@ allowed-tools:
   - Bash(jq *)
   - Bash(curl *)
   - Bash(open *)
-  - Bash(python3 *)
+  - Bash(python3 *scripts/finplan.py *)
   - Bash(rm *)
   - Bash(ls *)
   - Glob
@@ -188,24 +188,12 @@ validation standard** the finished palette must pass, not a from-scratch design 
 timelines nested under `timelines.<base|scenario_id>` — not one file per scenario. Download
 that **one** file to disk (handle `file://` paths directly; `curl` https URLs) into a temp
 dir you create first (`mkdir -p /tmp/finplan`), write the HTML with a single `__DATA__`
-token plus the `__CHARTJS__` token, then replace both in **one** `python3` pass so nothing
+token plus the `__CHARTJS__` token, then replace both in **one** `finplan.py inject` call so nothing
 large enters your context. In the page's render loop, index that injected object by column
 id (`DATA.timelines[columnId]`) to draw each column.
 
 ```bash
-python3 -c "
-import sys
-html_path = sys.argv[1]
-with open(html_path) as f:
-    html = f.read()
-replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-for token, path in replacements.items():
-    path = path.replace('file://', '') if path.startswith('file://') else path
-    with open(path) as f:
-        html = html.replace(token, f.read())
-with open(html_path, 'w') as f:
-    f.write(html)
-" scenarios/scenario_comparison.html \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject scenarios/scenario_comparison.html \
   "__CHARTJS__"  "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
   "__DATA__"     "/tmp/finplan/compare_data.json"
 ```

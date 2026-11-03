@@ -2,6 +2,7 @@
 description: Guided interview to set up your complete financial profile, accounts, and goals from scratch
 allowed-tools:
   - Bash(jq *)
+  - Bash(python3 *scripts/finplan.py *)
   - Bash(echo *)
   - Bash(curl *)
   - Bash(mkdir *)
@@ -157,6 +158,14 @@ After all sections are complete:
    - "Run `/finplan:projection-dashboard` to see how your plan projects over time"
    - "Use `/finplan:checkup` periodically to review and update your plan"
    - "Ask me about specific topics like Social Security estimates, tax planning, or mortgage analysis"
+
+## Saving changes
+
+Every `manage_state` call in this command is one guarded edit:
+
+1. Before the call, record the state file's hash: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <state file>`, or reuse the `metadata.result_hash` the previous save printed. `manage_state(action="create")` has no file yet, so it has no hash to record.
+2. Call `manage_state`, passing the file's current state as `state_json` exactly as it is on disk: load it with `jq -c . <state file>` and pass that output unchanged. read-state's jq-only rule governs display and queries, not this. A retyped or trimmed `state_json` drops fields, and the save then refuses with a hash mismatch. For `manage_state(action="create")` there is no file yet: pass no `state_json`.
+3. Call `/finplan:save-state` with no argument (its argument is a file path, not a hash). It passes the hash you recorded to `finplan.py save` as `--expect-hash` and writes the file through it. Never write the state file yourself.
 
 ## Important
 

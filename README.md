@@ -37,14 +37,16 @@ The FinPlan server requires authentication. The first time you invoke a FinPlan 
 
 Use `/finplan:login` only when you need a long-lived (90-day) API key — e.g. for Claude Agent SDK, scripts, Cowork, or a shared project where the token must be pinned into `.mcp.json`. If you go that route, add `.mcp.json` to `.gitignore` so the token isn't committed.
 
-**Recommended**: let FinPlan's tools, and `curl` against its file server, run without an approval prompt each time. Append these two entries to the `permissions.allow` array in `~/.claude/settings.json` (create the array if it isn't there). Don't replace the array: keep the entries already in it.
+**Recommended**: let FinPlan's tools, `curl` against its file server, and the plugin's helper script run without an approval prompt each time. Append these four entries to the `permissions.allow` array in `~/.claude/settings.json` (create the array if it isn't there). Don't replace the array: keep the entries already in it.
 
 ```json
 "mcp__plugin_finplan_finplan",
-"Bash(curl*mcp.finplan.tools*)"
+"Bash(curl*mcp.finplan.tools*)",
+"Bash(python3 *scripts/finplan.py *)",
+"Edit(//tmp/finplan/**)"
 ```
 
-The first rule lets FinPlan's tools run without a prompt each time; the second allows `curl` only against the FinPlan file server.
+The first rule lets FinPlan's tools run without a prompt each time; the second allows `curl` only against the FinPlan file server; the third allows `scripts/finplan.py`, which saves your state file and builds the HTML pages; the fourth lets Claude write files under `/tmp/finplan/`, where `/finplan:save-state` puts each response before saving it. It does not cover your state file.
 
 ## What you get
 

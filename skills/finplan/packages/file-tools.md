@@ -71,21 +71,10 @@ When building HTML files, embed data via the placeholder/inject pattern rather t
 
 1. **Write the HTML** with placeholder tokens where data should go (e.g., `__DATA_TOTAL_PORTFOLIO__`)
 2. **Download each `urls.data` file** into one scratch directory, `${TMPDIR:-/tmp}/finplan/`, never the user's working directory: `mkdir -p "${TMPDIR:-/tmp}/finplan" && curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/<file>"`.
-3. **Run the inject script** to replace each placeholder with its downloaded file. Pass the HTML file, then one placeholder/file pair per token:
+3. **Run `finplan.py inject`** (the helper that ships with the Claude Code plugin) to replace each placeholder with its downloaded file. Pass the HTML file, then one placeholder/file pair per token:
 
 ```bash
-python3 -c "
-import sys
-html_path = sys.argv[1]
-with open(html_path) as f:
-    html = f.read()
-replacements = dict(zip(sys.argv[2::2], sys.argv[3::2]))
-for placeholder, data_path in replacements.items():
-    with open(data_path) as f:
-        html = html.replace(placeholder, f.read())
-with open(html_path, 'w') as f:
-    f.write(html)
-" dashboard.html \
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject dashboard.html \
   "__DATA_PLACEHOLDER_1__" "${TMPDIR:-/tmp}/finplan/scenario1_data.json" \
   "__DATA_PLACEHOLDER_2__" "${TMPDIR:-/tmp}/finplan/scenario2_data.json"
 ```

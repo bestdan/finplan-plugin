@@ -103,6 +103,6 @@ Where `FILE` is the state file path (default: `./finplan_state.json`).
 
 ## Important
 
-- If the file does not exist, tell the user no state file was found and suggest creating one with `manage_state(action="create")`.
+- If the file does not exist, tell the user no state file was found and suggest creating one with `manage_state(action="create")` and saving it with `/finplan:save-state`.
 - Always use `jq` — never use `cat` or the Read tool on the state file, to avoid loading the full JSON into context.
 - For the `summary` query, present the results in a readable format to the user.

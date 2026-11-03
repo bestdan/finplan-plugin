@@ -2,6 +2,7 @@
 description: View and update your personal financial profile (age, income, employment, marital status, dependents)
 allowed-tools:
   - Bash(jq *)
+  - Bash(python3 *scripts/finplan.py *)
   - Skill(finplan)
   - Skill(finplan:read-state)
   - Skill(finplan:save-state)
@@ -51,6 +52,14 @@ Collect the fields the user wants to change, then:
 1. Call `manage_state(action="update_person", state_json=<current_state>, person_json=<updated_fields>)`
 2. Call `/finplan:save-state` immediately after
 3. Confirm the changes by displaying the updated profile
+
+## Saving changes
+
+Every `manage_state` call in this command is one guarded edit:
+
+1. Before the call, record the state file's hash: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <state file>`, or reuse the `metadata.result_hash` the previous save printed.
+2. Call `manage_state`, passing the file's current state as `state_json` exactly as it is on disk: load it with `jq -c . <state file>` and pass that output unchanged. read-state's jq-only rule governs display and queries, not this. A retyped or trimmed `state_json` drops fields, and the save then refuses with a hash mismatch.
+3. Call `/finplan:save-state` with no argument (its argument is a file path, not a hash). It passes the hash you recorded to `finplan.py save` as `--expect-hash` and writes the file through it. Never write the state file yourself.
 
 ## Important
 
