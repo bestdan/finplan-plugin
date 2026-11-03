@@ -45,7 +45,7 @@ Tell the user:
 > To get a manual API key:
 >
 > 1. Sign in at **https://mcp.finplan.tools/auth/login**
-> 2. Create an API key at **https://mcp.finplan.tools/auth/api-keys**
+> 2. If you have no key yet, the page shows a new one. If it says you already have an active key, click **Generate New Token** (an existing key can't be shown again); if you're at the key limit, revoke an unused key in the list first
 > 3. Copy the key (it starts with `fp_live_...`) and paste it here
 
 Wait for the user to paste their key.
