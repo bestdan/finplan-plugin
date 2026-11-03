@@ -168,7 +168,7 @@ Call `/finplan:save-state` immediately after:
 
 ### Saving with `finplan.py save`
 
-`finplan.py save`, from the helper script that ships in the plugin's `scripts` directory, merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input). `apply-delta` is an older name for the same command.
+`finplan.py save`, from the helper script that ships in the plugin's `scripts` directory, merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input, an edit that moves a goal's derived balance). `apply-delta` is an older name for the same command.
 
 ```bash
 H=$(python3 finplan.py hash <name>_finplan_state.json)   # before the manage_state call
@@ -217,7 +217,7 @@ Every object a `create_*` tool returns is lost until it is integrated into state
    | `create_income_stream` | `"update_income_stream"` | `income_stream_json` ← its `income_stream` field |
    | `create_expense`       | `"update_expense"`       | `expense_json` ← its `expense` field             |
 
-3. **Rebuild full state** — the response is normally a delta (see [manage_state](#manage_state)): apply `changed.item` to the section named in `changed.section`. It is the full document instead when you passed `return_full_state=true`, when the input was migrated, or when `update_goal` auto-created a provisional account — then use it directly. `/finplan:save-state` handles either shape for you.
+3. **Rebuild full state** — the response is normally a delta (see [manage_state](#manage_state)): apply `changed.item` to the section named in `changed.section`. It is the full document instead when you passed `return_full_state=true`, when the input was migrated, when `update_goal` auto-created a provisional account, or when the edit moved a linked goal's derived `current_balance_cents` (or your file held one that disagreed with its accounts) — then use it directly. `/finplan:save-state` handles either shape for you.
 4. **Save** — call `/finplan:save-state`, then continue from the rebuilt state for the next object.
 
 For example, integrating a new account — `manage_state` with these arguments:
