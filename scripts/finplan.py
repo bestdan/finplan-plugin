@@ -4,9 +4,11 @@
 # pyright: reportUnknownVariableType=none, reportUnknownMemberType=none, reportUnknownArgumentType=none
 """FinPlan plugin client-side helper dispatcher.
 
-Stdlib-only and fully type-annotated. This is the single home for the
-deterministic client-side algorithms the plugin previously encoded as English
-prose (and re-derived on every run):
+Stdlib-only and fully type-annotated. It holds the deterministic client-side
+algorithms the plugin previously encoded as English prose (and re-derived on every
+run). ``save`` and ``hash`` are a generated copy of the fpt CLI's save module
+(``packages/fpt/fpt/save.py``), so ``finplan.py save`` and ``fpt save`` behave the
+same; ``inject`` and ``fmt`` are the plugin's own.
 
 * ``inject`` — embed raw data files into placeholder tokens in an HTML file.
 * ``save``   — merge a ``manage_state`` response (an update, a removal, or a full
@@ -21,6 +23,9 @@ prose (and re-derived on every run):
 
 from __future__ import annotations
 
+# >>> BEGIN fpt.save
+# Generated from packages/fpt/fpt/save.py by scripts/sync_fpt_save.py. Do not edit
+# between these markers: edit save.py, then run the script.
 import argparse
 import contextlib
 import hashlib
@@ -72,9 +77,6 @@ _REMOVE_ACTIONS: dict[str, str] = {
     "remove_income_stream": "income_streams",
     "remove_expense": "expenses",
 }
-
-_FILE_URI_PREFIX = "file://"
-
 # Exit codes, shared for good by finplan.py and the fpt CLI that takes its commands
 # over: a caller branches on the code without parsing text. finplan.py uses all but
 # 5, which is reserved so the commands that talk to the server add no codes of their
@@ -117,11 +119,12 @@ exit codes (shared with fpt; one table for every command):
 
 # Where --from-url may download from. The hosted server serves downloads under
 # `<base>/files/`; FINPLAN_FILE_SERVER_URL is the same override the server reads for
-# its own base URL. Without it, the host comes from the plugin's .mcp.json, so a
-# fork pointed at another server accepts that server's links.
+# its own base URL. Without it, finplan.py reads the host from the plugin's .mcp.json,
+# so a fork pointed at another server accepts that server's links; finplan.py sets
+# _mcp_config after its copy of this module. fpt has no such file and uses the default.
 _FILE_SERVER_ENV = "FINPLAN_FILE_SERVER_URL"
 _DEFAULT_FILE_SERVER = "https://mcp.finplan.tools"
-_MCP_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".mcp.json")
+_mcp_config: str | None = None
 # A local (stdio) server writes downloads here and links them as file:// URLs. The
 # default and the variable match the server's (finplan_core.io.finplan_temp_dir).
 _DATA_DIR_ENV = "FINPLAN_DATA_DIR"
@@ -143,93 +146,12 @@ def compute_state_hash(document: dict[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def format_cents(cents: int) -> str:
-    """Format integer cents as ``$X,XXX.XX`` (thousands-separated, two decimals)."""
-    sign = "-" if cents < 0 else ""
-    whole, frac = divmod(abs(cents), 100)
-    return f"{sign}${whole:,}.{frac:02d}"
-
-
-def augment_cents(value: Any) -> Any:
-    """Recursively copy ``value``, adding a ``*_dollars`` sibling for each ``*_cents``.
-
-    For every mapping key ending in ``_cents`` whose value is an ``int`` (but not a
-    ``bool``), a sibling key with ``_cents`` replaced by ``_dollars`` is added,
-    carrying the :func:`format_cents` rendering. Lists and scalars pass through.
-    """
-    if isinstance(value, dict):
-        result: dict[str, Any] = {}
-        for key, child in value.items():
-            result[key] = augment_cents(child)
-            if key.endswith("_cents") and isinstance(child, int) and not isinstance(child, bool):
-                result[key[: -len("_cents")] + "_dollars"] = format_cents(child)
-        return result
-    if isinstance(value, list):
-        return [augment_cents(item) for item in value]
-    return value
-
-
 def _read_text(source: str) -> str:
     """Read text from a file path, or from stdin when ``source`` is ``-``."""
     if source == "-":
         return sys.stdin.read()
     with open(source, encoding="utf-8") as handle:
         return handle.read()
-
-
-def _cmd_inject(args: argparse.Namespace) -> int:
-    """Replace placeholder tokens in an HTML file with raw data-file contents.
-
-    ``pairs`` is a flat ``TOKEN data_path [TOKEN data_path ...]`` list. Each data
-    path may carry a leading ``file://`` (stripped). A token absent from the HTML —
-    which also means its data file goes unused — is a stderr warning, not an error.
-    The only non-zero exits are for unreadable files.
-    """
-    pairs: list[str] = list(args.pairs)
-    if len(pairs) == 0 or len(pairs) % 2 != 0:
-        print(
-            "error: inject expects an HTML file followed by TOKEN/data-path pairs",
-            file=sys.stderr,
-        )
-        return EXIT_VALIDATION
-
-    try:
-        html = _read_text(args.html)
-    except OSError as exc:
-        print(f"error: cannot read HTML file {args.html!r}: {exc}", file=sys.stderr)
-        return EXIT_LOCAL_IO
-
-    tokens = pairs[0::2]
-    data_paths = pairs[1::2]
-    # Plain zip, no strict=: the even-length check above already guarantees the two
-    # slices are the same length, and the keyword is 3.10+ — this module has to run
-    # on whatever python3 the plugin's user has, which on stock macOS is 3.9.
-    for token, data_path in zip(tokens, data_paths):
-        if token not in html:
-            print(
-                f"warning: token {token!r} not found in {args.html}; "
-                f"data file {data_path!r} is unused",
-                file=sys.stderr,
-            )
-            continue
-        if data_path.startswith(_FILE_URI_PREFIX):
-            path = data_path[len(_FILE_URI_PREFIX) :]
-        else:
-            path = data_path
-        try:
-            data = _read_text(path)
-        except OSError as exc:
-            print(f"error: cannot read data file {path!r}: {exc}", file=sys.stderr)
-            return EXIT_LOCAL_IO
-        html = html.replace(token, data)
-
-    try:
-        with open(args.html, "w", encoding="utf-8") as handle:
-            handle.write(html)
-    except OSError as exc:
-        print(f"error: cannot write HTML file {args.html!r}: {exc}", file=sys.stderr)
-        return EXIT_LOCAL_IO
-    return EXIT_OK
 
 
 # The extra fields an error may carry beside the fixed ones. Each name has one
@@ -759,9 +681,11 @@ def _install(
 def _file_server_prefix() -> str:
     """The URL every accepted https download must start with: ``<base>/files/``."""
     base = os.environ.get(_FILE_SERVER_ENV, "")
+    if not base and _mcp_config is None:
+        base = _DEFAULT_FILE_SERVER
     if not base:
         try:
-            with open(_MCP_CONFIG, encoding="utf-8") as handle:
+            with open(str(_mcp_config), encoding="utf-8") as handle:
                 configured: Any = json.load(handle)
             url = configured["mcpServers"]["finplan"]["url"]
             parsed = urllib.parse.urlsplit(url)
@@ -993,7 +917,7 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
             EXIT_VALIDATION,
             f"{out_path!r} exists, so save needs --expect-hash",
             f"Before the manage_state call, record the file's hash with "
-            f"`finplan.py hash {out_path}` (or take the result_hash the last save "
+            f"`{args.hash_command} {out_path}` (or take the result_hash the last save "
             "printed), and pass it as --expect-hash. " + _DO_NOT_HAND_WRITE,
             pointer="",
             source="state file",
@@ -1083,11 +1007,27 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
             # Another save delivered this same result while this one was running.
             return _duplicate_envelope(response, out_path, found, warnings)
         data["written"] = True
+    return _envelope(data, input_hash, expected_hash, warnings)
+
+
+def _envelope(
+    data: dict[str, Any], input_hash: str | None, result_hash: Any, warnings: list[Any]
+) -> dict[str, Any]:
+    """The success envelope, in the shape every fpt command prints (``fpt.output``).
+
+    Every ``metadata`` key is present, ``null`` where it does not apply to a save, so
+    ``fpt save`` and ``finplan.py save`` print the same bytes.
+    """
     return {
         "data": data,
         "metadata": {
             "input_hash": input_hash,
-            "result_hash": expected_hash,
+            "result_hash": result_hash,
+            "schema_fingerprint": None,
+            "out": None,
+            "truncated": False,
+            "next_cursor": None,
+            "next_action": None,
             "warnings": warnings,
         },
     }
@@ -1097,22 +1037,16 @@ def _duplicate_envelope(
     response: dict[str, Any], out_path: str, current: _Destination, warnings: list[Any]
 ) -> dict[str, Any]:
     """The success envelope for a response whose result the file already holds."""
-    return {
-        "data": {
-            "action": response.get("action"),
-            "change": "unchanged",
-            "section": None,
-            "item_id": None,
-            "path": out_path,
-            "written": False,
-            "duplicate": True,
-        },
-        "metadata": {
-            "input_hash": current.state_hash,
-            "result_hash": response.get("state_hash"),
-            "warnings": warnings,
-        },
+    data: dict[str, Any] = {
+        "action": response.get("action"),
+        "change": "unchanged",
+        "section": None,
+        "item_id": None,
+        "path": out_path,
+        "written": False,
+        "duplicate": True,
     }
+    return _envelope(data, current.state_hash, response.get("state_hash"), warnings)
 
 
 def _cmd_save(args: argparse.Namespace) -> int:
@@ -1177,6 +1111,153 @@ def _cmd_hash(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def save_description(prog: str) -> str:
+    """The ``save`` subcommand's help text, naming the command it runs under."""
+    return (
+        "Merge a manage_state response (an update, a remove_*, a person change,\n"
+        "or a full document) into the local state file, and write it only if the\n"
+        "result reproduces the response's state_hash. Prints one JSON envelope on\n"
+        "stdout ({data, metadata}); errors go to stderr as JSON.\n\n"
+        "If the file exists, pass --expect-hash with its hash from before the\n"
+        f"manage_state call (`{prog} hash FILE`, or the last save's result_hash).\n"
+        "If it changed since, nothing is written: the response is kept in\n"
+        "FILE.pending.json and the edit must be reapplied. A successful write keeps\n"
+        "the previous file as FILE.bak.\n\n"
+        "When the response carries urls.data instead of the document, pass\n"
+        "--from-url URL --state-hash HASH in place of --response: the document is\n"
+        "downloaded (only from the FinPlan server, or from the local server's\n"
+        "download directory), checked against HASH, and saved the same way."
+    )
+
+
+def add_save_arguments(parser: argparse.ArgumentParser, prog: str) -> None:
+    """Add ``save``'s arguments to ``parser``, so both commands take the same ones.
+
+    ``prog`` is the command ``save`` runs under (``fpt`` or ``finplan.py``): the hint
+    for a missing ``--expect-hash`` names that command's ``hash``.
+    """
+    parser.add_argument("--state", required=True, help="path to the local state.json")
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--response", help="manage_state response file, or - for stdin")
+    source.add_argument(
+        "--from-url",
+        default=None,
+        help="the response's urls.data: download the full document from it instead",
+    )
+    parser.add_argument(
+        "--state-hash",
+        default=None,
+        help="with --from-url: the response's state_hash (its content_hash)",
+    )
+    parser.add_argument("--out", default=None, help="write here instead of --state")
+    parser.add_argument(
+        "--expect-hash",
+        default=None,
+        help="the destination's hash before the server call; required when it exists",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="verify and print the item that would change; write nothing",
+    )
+    parser.set_defaults(func=_cmd_save, hash_command=f"{prog} hash")
+
+
+def add_hash_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add ``hash``'s arguments to ``parser``."""
+    parser.add_argument("file", help="the state file")
+    parser.set_defaults(func=_cmd_hash)
+
+
+# <<< END fpt.save
+
+# The plugin's own MCP config names the server whose downloads --from-url accepts.
+_mcp_config = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".mcp.json")
+
+_FILE_URI_PREFIX = "file://"
+
+
+def format_cents(cents: int) -> str:
+    """Format integer cents as ``$X,XXX.XX`` (thousands-separated, two decimals)."""
+    sign = "-" if cents < 0 else ""
+    whole, frac = divmod(abs(cents), 100)
+    return f"{sign}${whole:,}.{frac:02d}"
+
+
+def augment_cents(value: Any) -> Any:
+    """Recursively copy ``value``, adding a ``*_dollars`` sibling for each ``*_cents``.
+
+    For every mapping key ending in ``_cents`` whose value is an ``int`` (but not a
+    ``bool``), a sibling key with ``_cents`` replaced by ``_dollars`` is added,
+    carrying the :func:`format_cents` rendering. Lists and scalars pass through.
+    """
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, child in value.items():
+            result[key] = augment_cents(child)
+            if key.endswith("_cents") and isinstance(child, int) and not isinstance(child, bool):
+                result[key[: -len("_cents")] + "_dollars"] = format_cents(child)
+        return result
+    if isinstance(value, list):
+        return [augment_cents(item) for item in value]
+    return value
+
+
+def _cmd_inject(args: argparse.Namespace) -> int:
+    """Replace placeholder tokens in an HTML file with raw data-file contents.
+
+    ``pairs`` is a flat ``TOKEN data_path [TOKEN data_path ...]`` list. Each data
+    path may carry a leading ``file://`` (stripped). A token absent from the HTML —
+    which also means its data file goes unused — is a stderr warning, not an error.
+    The only non-zero exits are for unreadable files.
+    """
+    pairs: list[str] = list(args.pairs)
+    if len(pairs) == 0 or len(pairs) % 2 != 0:
+        print(
+            "error: inject expects an HTML file followed by TOKEN/data-path pairs",
+            file=sys.stderr,
+        )
+        return EXIT_VALIDATION
+
+    try:
+        html = _read_text(args.html)
+    except OSError as exc:
+        print(f"error: cannot read HTML file {args.html!r}: {exc}", file=sys.stderr)
+        return EXIT_LOCAL_IO
+
+    tokens = pairs[0::2]
+    data_paths = pairs[1::2]
+    # Plain zip, no strict=: the even-length check above already guarantees the two
+    # slices are the same length, and the keyword is 3.10+ — this module has to run
+    # on whatever python3 the plugin's user has, which on stock macOS is 3.9.
+    for token, data_path in zip(tokens, data_paths):
+        if token not in html:
+            print(
+                f"warning: token {token!r} not found in {args.html}; "
+                f"data file {data_path!r} is unused",
+                file=sys.stderr,
+            )
+            continue
+        if data_path.startswith(_FILE_URI_PREFIX):
+            path = data_path[len(_FILE_URI_PREFIX) :]
+        else:
+            path = data_path
+        try:
+            data = _read_text(path)
+        except OSError as exc:
+            print(f"error: cannot read data file {path!r}: {exc}", file=sys.stderr)
+            return EXIT_LOCAL_IO
+        html = html.replace(token, data)
+
+    try:
+        with open(args.html, "w", encoding="utf-8") as handle:
+            handle.write(html)
+    except OSError as exc:
+        print(f"error: cannot write HTML file {args.html!r}: {exc}", file=sys.stderr)
+        return EXIT_LOCAL_IO
+    return EXIT_OK
+
+
 def _cmd_fmt(args: argparse.Namespace) -> int:
     """Print a formatted dollar string, or a cents-augmented JSON document."""
     if args.as_json:
@@ -1233,55 +1314,16 @@ def _build_parser() -> argparse.ArgumentParser:
         "save",
         aliases=["apply-delta"],
         help="merge a manage_state response into a local state file",
-        description=(
-            "Merge a manage_state response (an update, a remove_*, a person change,\n"
-            "or a full document) into the local state file, and write it only if the\n"
-            "result reproduces the response's state_hash. Prints one JSON envelope on\n"
-            "stdout ({data, metadata}); errors go to stderr as JSON.\n\n"
-            "If the file exists, pass --expect-hash with its hash from before the\n"
-            "manage_state call (`finplan.py hash FILE`, or the last save's result_hash).\n"
-            "If it changed since, nothing is written: the response is kept in\n"
-            "FILE.pending.json and the edit must be reapplied. A successful write keeps\n"
-            "the previous file as FILE.bak.\n\n"
-            "When the response carries urls.data instead of the document, pass\n"
-            "--from-url URL --state-hash HASH in place of --response: the document is\n"
-            "downloaded (only from the FinPlan server, or from the local server's\n"
-            "download directory), checked against HASH, and saved the same way."
-        ),
+        description=save_description("finplan.py"),
         epilog=EXIT_CODES_HELP,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    p_save.add_argument("--state", required=True, help="path to the local state.json")
-    source = p_save.add_mutually_exclusive_group(required=True)
-    source.add_argument("--response", help="manage_state response file, or - for stdin")
-    source.add_argument(
-        "--from-url",
-        default=None,
-        help="the response's urls.data: download the full document from it instead",
-    )
-    p_save.add_argument(
-        "--state-hash",
-        default=None,
-        help="with --from-url: the response's state_hash (its content_hash)",
-    )
-    p_save.add_argument("--out", default=None, help="write here instead of --state")
-    p_save.add_argument(
-        "--expect-hash",
-        default=None,
-        help="the destination's hash before the server call; required when it exists",
-    )
-    p_save.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="verify and print the item that would change; write nothing",
-    )
-    p_save.set_defaults(func=_cmd_save)
+    add_save_arguments(p_save, "finplan.py")
 
     p_hash = subparsers.add_parser(
         "hash", help="print a state file's content hash, for save --expect-hash"
     )
-    p_hash.add_argument("file", help="the state file")
-    p_hash.set_defaults(func=_cmd_hash)
+    add_hash_arguments(p_hash)
 
     p_fmt = subparsers.add_parser("fmt", help="format cents as dollars")
     p_fmt.add_argument(
