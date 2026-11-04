@@ -8,7 +8,8 @@ Stdlib-only and fully type-annotated. It holds the deterministic client-side
 algorithms the plugin previously encoded as English prose (and re-derived on every
 run). ``save`` and ``hash`` are a generated copy of the fpt CLI's save module
 (``packages/fpt/fpt/save.py``), so ``finplan.py save`` and ``fpt save`` behave the
-same; ``inject`` and ``fmt`` are the plugin's own.
+same, and ``save`` runs through fpt itself when a supported version is installed;
+``inject`` and ``fmt`` are the plugin's own.
 
 * ``inject`` — embed raw data files into placeholder tokens in an HTML file.
 * ``save``   — merge a ``manage_state`` response (an update, a removal, or a full
@@ -1090,6 +1091,9 @@ def _cmd_save(args: argparse.Namespace) -> int:
     except _SaveError as exc:
         sys.stderr.write(json.dumps(exc.to_json(), ensure_ascii=False) + "\n")
         return exc.exit_code
+    # A caller's own notices, after the server's: finplan.py adds one when it saved
+    # here because the installed fpt is outside the range the plugin supports.
+    envelope["metadata"]["warnings"].extend(getattr(args, "caller_warnings", []))
     sys.stdout.write(json.dumps(envelope, ensure_ascii=False) + "\n")
     return EXIT_OK
 
@@ -1175,6 +1179,87 @@ def add_hash_arguments(parser: argparse.ArgumentParser) -> None:
 _mcp_config = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, ".mcp.json")
 
 _FILE_URI_PREFIX = "file://"
+
+# fpt, the standalone CLI, runs `save` from the same source as the copy above. When it
+# is installed at a version this plugin supports, `finplan.py save` hands the call to
+# it, so an fpt release reaches the plugin without a plugin release, and the plugin's
+# commands and allowlist stay as they are. Otherwise the copy above saves. Only `save`
+# goes to fpt: `hash` here prints the bare hash /finplan:save-state reads, and fpt has
+# no `inject` or `fmt`. FINPLAN_FPT=off keeps every save in this file (the tests use it).
+_FPT_ENV = "FINPLAN_FPT"
+_FPT_OFF = ("0", "off", "false", "no")
+_FPT_MIN = (0, 2, 0)  # the first fpt with `save` (0.1.0 was the bare skeleton)
+_FPT_BELOW = (0, 3, 0)  # the first fpt this plugin has not been checked against
+_FPT_RANGE = ">= 0.2.0, < 0.3.0"
+
+
+def _fpt_version(stdout: str) -> tuple[int, int, int] | None:
+    """The version in ``fpt --version``'s output (``fpt 0.1.0``), or None."""
+    words = stdout.split()
+    if len(words) != 2 or words[0] != "fpt":
+        return None
+    parts = words[1].split(".")
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        return None
+    return int(parts[0]), int(parts[1]), int(parts[2])
+
+
+def _supported_fpt() -> tuple[str | None, str | None]:
+    """The fpt to save with, or None; and a warning for the envelope, or None.
+
+    No fpt on PATH is the ordinary case for a plugin user and gets no warning. An fpt
+    that will not report a version, or reports one outside :data:`_FPT_RANGE`, is not
+    used, and the warning says how to bring the two back into step.
+    """
+    import shutil
+    import subprocess
+
+    if os.environ.get(_FPT_ENV, "").strip().lower() in _FPT_OFF:
+        return None, None
+    executable = shutil.which("fpt")
+    if executable is None:
+        return None, None
+    try:
+        completed = subprocess.run(
+            [executable, "--version"], capture_output=True, text=True, timeout=10, check=False
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f"fpt at {executable} did not run ({exc}), so finplan.py saved instead."
+    version = _fpt_version(completed.stdout)
+    shown = completed.stdout.strip() or "fpt (no version)"
+    if version is not None and _FPT_MIN <= version < _FPT_BELOW:
+        return executable, None
+    if version is not None and version >= _FPT_BELOW:
+        fix = "Update the FinPlan plugin to a release that supports it."
+    else:
+        fix = "Run `uv tool upgrade finplantools-fpt`."
+    return None, (
+        f"{shown} at {executable} is outside the range this plugin supports "
+        f"({_FPT_RANGE}), so finplan.py saved instead. {fix}"
+    )
+
+
+def _save_with_fpt_or_here(args: argparse.Namespace, argv: list[str]) -> int:
+    """Run ``save`` through a supported fpt when one is installed; otherwise here.
+
+    ``argv`` is the command line as given, which fpt takes unchanged (``apply-delta``,
+    the old name, becomes ``save``). fpt has no plugin ``.mcp.json`` to read the
+    download server from, so it is passed the one this plugin uses.
+    """
+    import subprocess
+
+    executable, warning = _supported_fpt()
+    if executable is not None:
+        env = dict(os.environ)
+        if not env.get(_FILE_SERVER_ENV):
+            env[_FILE_SERVER_ENV] = _file_server_prefix()[: -len("/files/")]
+        forwarded = ["save", *argv[1:]] if argv and argv[0] == "apply-delta" else argv
+        try:
+            return subprocess.run([executable, *forwarded], env=env, check=False).returncode
+        except OSError as exc:
+            warning = f"fpt at {executable} did not run ({exc}), so finplan.py saved instead."
+    args.caller_warnings = [warning] if warning else []
+    return _cmd_save(args)
 
 
 def format_cents(cents: int) -> str:
@@ -1345,6 +1430,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     func: Any = args.func
+    if func is _cmd_save:
+        return _save_with_fpt_or_here(args, list(sys.argv[1:] if argv is None else argv))
     result: int = func(args)
     return result
 

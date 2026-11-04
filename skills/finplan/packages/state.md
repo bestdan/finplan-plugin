@@ -169,7 +169,7 @@ Call `/finplan:save-state` immediately after:
 
 ### Saving with `finplan.py save`
 
-`finplan.py save`, from the helper script that ships with the Claude Code plugin (`${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py`), merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input, an edit that moves a goal's derived balance). `apply-delta` is an older name for the same command.
+`finplan.py save`, from the helper script that ships with the Claude Code plugin (`${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py`), merges a `manage_state` response into the local state file and writes it only if the result reproduces the response's `state_hash`. It handles every response shape: an `update_*` delta, a `remove_*` delta, a person change (`update_person`, `set_spouse`, `clear_spouse`), and a full document (`create`, `return_full_state`, a migrated input, an edit that moves a goal's derived balance). `apply-delta` is an older name for the same command. When the `fpt` CLI is installed at a version the plugin supports, `finplan.py save` runs `fpt save` in its place; the arguments, output and exit codes are the same either way, so nothing here changes.
 
 ```bash
 H=$(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py hash <name>_finplan_state.json)   # before the manage_state call
