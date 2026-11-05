@@ -39,7 +39,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Generator
-from typing import Any
+from typing import Any, Union
 
 # Response keys that are transport/verification metadata, never persisted state.
 _TRANSIENT_KEYS: tuple[str, ...] = (
@@ -106,8 +106,9 @@ exit codes (shared with fpt; one table for every command):
   0  success
   1  internal error (an uncaught exception; a bug)
   2  validation: bad arguments, a malformed response or state file, a
-     removal whose target is missing or ambiguous, or a --from-url that is
-     not one of FinPlan's own download URLs
+     removal whose target is missing or ambiguous, a --from-url that is
+     not one of FinPlan's own download URLs, or a full document that lacks
+     keys the state file holds (error: dropped_keys)
   3  hash mismatch or stale write: the rebuilt document does not match the
      server's state_hash, or the file changed since --expect-hash was
      recorded; nothing was written
@@ -172,6 +173,7 @@ _DETAIL_FIELDS = {
     "url": "the --from-url value",
     "http_status": "the HTTP status the download got",
     "server_message": "the response's message",
+    "dropped_keys": "JSON Pointers to the state-file keys the server does not keep",
 }
 
 
@@ -364,21 +366,181 @@ def _apply_delta_to_document(
     return document, {"change": change, "section": section, "item_id": item_id, "item": item}
 
 
-def _verify_hash(document: dict[str, Any], expected_hash: str) -> None:
-    """Raise :class:`_SaveError` unless ``document`` hashes to ``expected_hash``."""
+def _verify_hash(
+    document: dict[str, Any], expected_hash: str, changed: dict[str, Any] | None = None
+) -> None:
+    """Raise :class:`_SaveError` unless ``document`` hashes to ``expected_hash``.
+
+    ``changed`` is a delta response's ``changed`` block. Given one, a mismatch that
+    keys of the file's own explain is reported with those keys named: no redone edit
+    can save that file, so the generic "redo the edit" hint would send the caller
+    round in a loop.
+    """
     actual_hash = compute_state_hash(document)
     if actual_hash == expected_hash:
         return
+    details: dict[str, Any] = {"expected_hash": expected_hash, "found_hash": actual_hash}
+    ignored = _keys_explaining_mismatch(document, changed, expected_hash) if changed else []
+    if ignored:
+        details["dropped_keys"] = [_pointer(path) for path in ignored]
+        raise _SaveError(
+            EXIT_HASH_MISMATCH,
+            "state_hash mismatch — the state file holds keys FinPlan's schema does not "
+            f"have, which the server ignores: {_describe_paths(ignored)}. Without them "
+            "the document matches the server hash. Refusing to write.",
+            "Nothing was written; the state file is unchanged. Redoing the edit will not "
+            "help: no edit of this file can be saved while it holds those keys. Stop and "
+            "tell the user which keys they are, so they can decide where that "
+            "information should live. " + _DO_NOT_HAND_WRITE,
+            pointer=_pointer(ignored[0]),
+            source="state file",
+            details=details,
+        )
     raise _SaveError(
         EXIT_HASH_MISMATCH,
         "state_hash mismatch — the document does not match the server hash "
         f"(expected {expected_hash}, got {actual_hash}). Refusing to write.",
         "Nothing was written; the state file is unchanged. Re-read it, redo the edit "
-        "against it, and save the new response. " + _DO_NOT_HAND_WRITE,
+        "against it, and save the new response. If the same edit has already failed "
+        "this way, the state file may hold keys of its own that the server ignores; "
+        "stop and tell the user rather than retrying. " + _DO_NOT_HAND_WRITE,
         pointer="/state_hash",
         source="response",
-        details={"expected_hash": expected_hash, "found_hash": actual_hash},
+        details=details,
     )
+
+
+# A key path inside a state document: object keys and list indexes, outermost first.
+# Union, not |: an alias is evaluated at import, and the plugin's copy runs on 3.9.
+_KeyPath = tuple[Union[str, int], ...]  # noqa: UP007
+
+
+def _pointer(path: _KeyPath) -> str:
+    """The RFC 6901 JSON Pointer for ``path``."""
+    return "".join("/" + str(part).replace("~", "~0").replace("/", "~1") for part in path)
+
+
+def _describe_paths(paths: list[_KeyPath], limit: int = 8) -> str:
+    """A short list of key paths for a message: list indexes folded, repeats counted.
+
+    ``/accounts/3/balance_note`` and ``/accounts/7/balance_note`` read as
+    ``/accounts/*/balance_note (2)``. Only list indexes fold, so an object key that
+    happens to be all digits stays as it is. The error's ``dropped_keys`` holds them all.
+    """
+    counts: dict[str, int] = {}
+    for path in paths:
+        folded = _pointer(tuple("*" if isinstance(part, int) else part for part in path))
+        counts[folded] = counts.get(folded, 0) + 1
+    names = [name if n == 1 else f"{name} ({n})" for name, n in counts.items()]
+    if len(names) > limit:
+        names = names[:limit] + [f"and {len(names) - limit} more"]
+    return ", ".join(names)
+
+
+def _dropped_keys(local: Any, kept: Any, path: _KeyPath = ()) -> list[_KeyPath]:
+    """Paths to the keys ``local`` holds and ``kept`` lacks, where both still hold the parent.
+
+    Objects compare key by key. A top-level list section compares item by item,
+    matched by the section's id key, so a removed item is a removal, not a loss.
+    A list with no id (``amount_steps``, ``deposit_schedule``, match tiers) is not
+    paired at all: each local item reports its keys that no returned item has.
+    That relies on those items being flat and fully serialized, so a key the
+    schema lacks is missing from every returned item, and it does not depend on
+    the server keeping their order. It refuses falsely in one case: deleting the
+    only sub-item that held a key of the file's own, which ``--allow-dropped-keys``
+    covers. Lists of scalars are not compared.
+    A key whose value is null holds nothing and is not reported, and neither are
+    the transient response keys, which no state file should hold.
+    """
+    found: list[_KeyPath] = []
+    if isinstance(local, dict) and isinstance(kept, dict):
+        for key, value in local.items():
+            if not path and key in _TRANSIENT_KEYS:
+                continue
+            if key not in kept:
+                if value is not None:
+                    found.append((*path, key))
+            else:
+                found.extend(_dropped_keys(value, kept[key], (*path, key)))
+    elif (
+        isinstance(local, list)
+        and isinstance(kept, list)
+        and len(path) == 1
+        and path[0] in _LIST_SECTIONS
+    ):
+        id_key = _LIST_SECTIONS[str(path[0])]
+        by_id: dict[str | int, Any] = {}
+        for item in kept:
+            if isinstance(item, dict) and isinstance(item.get(id_key), (str, int)):
+                by_id.setdefault(item[id_key], item)
+        for index, item in enumerate(local):
+            item_id = item.get(id_key) if isinstance(item, dict) else None
+            if isinstance(item_id, (str, int)) and item_id in by_id:
+                found.extend(_dropped_keys(item, by_id[item_id], (*path, index)))
+    elif isinstance(local, list) and isinstance(kept, list):
+        known = {key for item in kept if isinstance(item, dict) for key in item}
+        # An empty returned list (every sub-item deleted) gives nothing to compare.
+        for index, item in enumerate(local if known else []):
+            if isinstance(item, dict):
+                found.extend(
+                    (*path, index, key)
+                    for key, value in item.items()
+                    if value is not None and key not in known
+                )
+    return found
+
+
+def _without(document: dict[str, Any], paths: list[_KeyPath]) -> dict[str, Any]:
+    """A copy of ``document`` with the key at each of ``paths`` removed."""
+    copy: dict[str, Any] = json.loads(json.dumps(document))
+    for path in paths:
+        parent: Any = copy
+        for part in path[:-1]:
+            parent = parent[part]
+        parent.pop(path[-1], None)
+    return copy
+
+
+def _keys_explaining_mismatch(
+    document: dict[str, Any], changed: dict[str, Any], expected_hash: str
+) -> list[_KeyPath]:
+    """Paths to keys of the file's own whose removal makes ``document`` match.
+
+    The server drops keys its schema lacks before it hashes, so a file carrying such
+    keys can never reproduce a delta's hash. A delta does not carry the whole
+    document, so the candidates are guessed: keys missing from the server's own
+    ``changed.item`` on the other items of its section; keys only some items of a
+    section carry (the server writes every field on every item); and top-level keys
+    starting with ``_``. They are reported only when removing them all reproduces the
+    hash, so a guess is never presented as the cause. In a section other than
+    ``changed.section``, an extra key on the only item, or on every item, cannot be
+    told from a schema field, so that mismatch falls back to the generic hint.
+    """
+    candidates: list[_KeyPath] = []
+    section = changed.get("section")
+    reference = changed.get("item")
+    for name, items in document.items():
+        if name.startswith("_") and items is not None:
+            candidates.append((name,))
+            continue
+        if name not in _LIST_SECTIONS or not isinstance(items, list):
+            continue
+        rows = [(index, item) for index, item in enumerate(items) if isinstance(item, dict)]
+        if name == section and isinstance(reference, dict):
+            known = set(reference)
+        elif rows:
+            known = set.intersection(*(set(item) for _, item in rows))
+        else:
+            continue
+        candidates.extend(
+            (name, index, key)
+            for index, item in rows
+            for key, value in item.items()
+            if key not in known and value is not None
+        )
+    if not candidates or compute_state_hash(_without(document, candidates)) != expected_hash:
+        return []
+    return candidates
 
 
 class _Destination:
@@ -888,6 +1050,52 @@ def _load_response(args: argparse.Namespace, current: _Destination) -> dict[str,
     return _download_document(args.from_url, kind, target, args.state_hash)
 
 
+def _refuse_dropped_keys(
+    args: argparse.Namespace,
+    out_path: str,
+    current: _Destination,
+    document: dict[str, Any],
+    warnings: list[Any],
+) -> None:
+    """Refuse a full document that lacks keys the state file holds.
+
+    The server keeps only the keys its schema has, so a full document it returns
+    silently lacks any others the file held: notes, say. Writing it would delete
+    them. The file compared is ``--state``, the one the edit was made against; with
+    ``--allow-dropped-keys`` the save goes ahead and the keys are listed in a warning.
+    """
+    source = current if args.state == out_path else _read_destination(args.state)
+    if source.data is None:
+        return
+    try:
+        local = json.loads(source.data)
+    except ValueError:
+        return  # a file that does not parse holds no keys to lose
+    paths = _dropped_keys(local, document)
+    dropped = [_pointer(path) for path in paths]
+    if not dropped:
+        return
+    if getattr(args, "allow_dropped_keys", False):
+        warnings.append(
+            f"--allow-dropped-keys: the saved document lacks {len(dropped)} keys the "
+            f"state file held: {_describe_paths(paths)}"
+        )
+        return
+    raise _SaveError(
+        EXIT_VALIDATION,
+        f"the response lacks {len(dropped)} keys the state file holds, so saving it "
+        f"would delete them: {_describe_paths(paths)}. FinPlan's schema has no "
+        "such fields, and the server keeps only the fields it has. Refusing to write.",
+        "Nothing was written; the state file is unchanged. Stop and tell the user "
+        "which keys these are and that saving would delete them. Pass "
+        "--allow-dropped-keys only once the user has said those keys may go. " + _DO_NOT_HAND_WRITE,
+        pointer=dropped[0],
+        source="state file",
+        details={"dropped_keys": dropped},
+        error="dropped_keys",
+    )
+
+
 def _save(args: argparse.Namespace) -> dict[str, Any]:
     """Run ``save`` and return its envelope, or raise :class:`_SaveError`."""
     out_path = args.out if args.out else args.state
@@ -986,7 +1194,12 @@ def _save(args: argparse.Namespace) -> dict[str, Any]:
             source="response",
             details={"server_message": response.get("message")},
         )
-    _verify_hash(document, expected_hash)
+    _verify_hash(document, expected_hash, response.get("changed"))
+    # Only a full document can lose keys. A delta is rebuilt from the state file, so it
+    # keeps the file's keys, and a file holding keys the server dropped cannot verify:
+    # _verify_hash has already refused it, naming them where it can.
+    if "changed" not in response:
+        _refuse_dropped_keys(args, out_path, current, document, warnings)
 
     data: dict[str, Any] = {
         "action": response.get("action"),
@@ -1164,6 +1377,12 @@ def add_save_arguments(parser: argparse.ArgumentParser, prog: str) -> None:
         action="store_true",
         help="verify and print the item that would change; write nothing",
     )
+    parser.add_argument(
+        "--allow-dropped-keys",
+        action="store_true",
+        help="save a full document even though it lacks keys the state file holds "
+        "(they are deleted); only with the user's go-ahead",
+    )
     parser.set_defaults(func=_cmd_save, hash_command=f"{prog} hash")
 
 
@@ -1188,9 +1407,11 @@ _FILE_URI_PREFIX = "file://"
 # no `inject` or `fmt`. FINPLAN_FPT=off keeps every save in this file (the tests use it).
 _FPT_ENV = "FINPLAN_FPT"
 _FPT_OFF = ("0", "off", "false", "no")
-_FPT_MIN = (0, 2, 0)  # the first fpt with `save` (0.1.0 was the bare skeleton)
-_FPT_BELOW = (0, 3, 0)  # the first fpt this plugin has not been checked against
-_FPT_RANGE = ">= 0.2.0, < 0.3.0"
+# 0.1.0 was the bare skeleton, and 0.2.x saves a full document that deletes the
+# file's own keys (notes) without a word.
+_FPT_MIN = (0, 3, 0)  # the first fpt that refuses to drop them (dropped_keys)
+_FPT_BELOW = (0, 4, 0)  # the first fpt this plugin has not been checked against
+_FPT_RANGE = ">= 0.3.0, < 0.4.0"
 
 
 def _fpt_version(stdout: str) -> tuple[int, int, int] | None:

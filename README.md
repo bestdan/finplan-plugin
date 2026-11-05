@@ -58,7 +58,7 @@ Without it nothing breaks: a save whose download is blocked asks the server for 
 
 ### Optional: the `fpt` CLI
 
-`fpt` is FinPlan's standalone command-line client. The plugin does not need it: `scripts/finplan.py` carries its own copy of the save code. When `fpt` is installed at a version the plugin supports (this release supports `>= 0.2.0, < 0.3.0`), `/finplan:save-state` saves through it instead, so a fix that ships in `fpt` reaches you before a plugin release does. With an `fpt` outside that range, the plugin saves with its own copy and the save's warnings say how to bring the two back into step.
+`fpt` is FinPlan's standalone command-line client. The plugin does not need it: `scripts/finplan.py` carries its own copy of the save code. When `fpt` is installed at a version the plugin supports (this release supports `>= 0.3.0, < 0.4.0`), `/finplan:save-state` saves through it instead, so a fix that ships in `fpt` reaches you before a plugin release does. With an `fpt` outside that range, the plugin saves with its own copy and the save's warnings say how to bring the two back into step.
 
 `fpt` is not published yet. From a checkout of the FinPlan repository:
 
