@@ -1412,6 +1412,22 @@ _FPT_OFF = ("0", "off", "false", "no")
 _FPT_MIN = (0, 3, 0)  # the first fpt that refuses to drop them (dropped_keys)
 _FPT_BELOW = (0, 4, 0)  # the first fpt this plugin has not been checked against
 _FPT_RANGE = ">= 0.3.0, < 0.4.0"
+# The release the install hint names. It must be a tagged release, since a dev-channel
+# sync tags nothing, and it must stay inside the range above. So it can lag fpt's own
+# version until a plugin release widens the range.
+_FPT_RECOMMENDED = (0, 3, 0)
+# fpt ships in the public plugin repo's fpt/ directory, one fpt-v<version> tag per release.
+_FPT_SOURCE = "git+https://github.com/bestdan/finplan-plugin@fpt-v{version}#subdirectory=fpt"
+
+
+def fpt_install_command() -> str:
+    """The command that installs the recommended fpt release, replacing any other.
+
+    ``--force`` because ``uv tool upgrade`` keeps an install's source, so it cannot move
+    a local-path or older-tag install onto this release.
+    """
+    version = ".".join(str(part) for part in _FPT_RECOMMENDED)
+    return f'uv tool install --force "{_FPT_SOURCE.format(version=version)}"'
 
 
 def _fpt_version(stdout: str) -> tuple[int, int, int] | None:
@@ -1453,7 +1469,7 @@ def _supported_fpt() -> tuple[str | None, str | None]:
     if version is not None and version >= _FPT_BELOW:
         fix = "Update the FinPlan plugin to a release that supports it."
     else:
-        fix = "Run `uv tool upgrade finplantools-fpt`."
+        fix = f"Reinstall it: `{fpt_install_command()}`."
     return None, (
         f"{shown} at {executable} is outside the range this plugin supports "
         f"({_FPT_RANGE}), so finplan.py saved instead. {fix}"

@@ -60,14 +60,14 @@ Without it nothing breaks: a save whose download is blocked asks the server for 
 
 `fpt` is FinPlan's standalone command-line client. The plugin does not need it: `scripts/finplan.py` carries its own copy of the save code. When `fpt` is installed at a version the plugin supports (this release supports `>= 0.3.0, < 0.4.0`), `/finplan:save-state` saves through it instead, so a fix that ships in `fpt` reaches you before a plugin release does. With an `fpt` outside that range, the plugin saves with its own copy and the save's warnings say how to bring the two back into step.
 
-`fpt` is not published yet. From a checkout of the FinPlan repository:
+`fpt` ships in this repository, in `fpt/`, with a `fpt-v<version>` tag for each release. Install it with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv tool install ./packages/fpt
+uv tool install "git+https://github.com/bestdan/finplan-plugin@fpt-v0.3.0#subdirectory=fpt"
 fpt --version
 ```
 
-Upgrade it with `uv tool upgrade finplantools-fpt`. The plugin runs `fpt` from inside `scripts/finplan.py`, so the allowlist entry above already covers it and it needs none of its own. To keep every save in the plugin's copy, set `FINPLAN_FPT=off`.
+To move to a newer release, run the same command with the new tag and `--force`; `uv tool upgrade` keeps the tag it was installed from. The plugin runs `fpt` from inside `scripts/finplan.py`, so the allowlist entry above already covers it and it needs none of its own. To keep every save in the plugin's copy, set `FINPLAN_FPT=off`.
 
 `fpt` also works without the plugin, in any agent with a shell: `fpt skills install <claude|codex|cursor|gemini|opencode>` installs a skill that tells the agent to save through `fpt save`. In such an agent, allow `fpt` to run without a prompt (in Claude Code, `"Bash(fpt *)"`).
 

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+# The PyPI name `fpt` is a dead placeholder, so the distribution is longer; the command is `fpt`.
+name = "finplantools-fpt"
+version = "0.3.0"
+description = "fpt: a thin local client for FinPlan that keeps state and bulk data out of the LLM"
+readme = "README.md"
+# 3.10, not the repo's 3.12: fpt installs into the user's own Python with `uv tool install`.
+requires-python = ">=3.10"
+license = { text = "MIT" }
+# fpt holds no financial logic and never imports finplan_core or finplan_mcp; HTTP is
+# stdlib urllib. keyring stores the sign-in key in the OS keychain (`fpt auth`);
+# jsonschema arrives with the task that needs it. keyring holds the user's key, so its next
+# major version is taken on purpose, after review, not by whatever installs fpt next.
+dependencies = ["keyring>=25,<26"]
+
+[project.scripts]
+fpt = "fpt.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fpt"]
+exclude = ["**/tests"]
+
+# The sdist (what `uv build` produces) ships only what the wheel needs: no tests, no dev_docs.
+[tool.hatch.build.targets.sdist]
+exclude = ["**/tests", "dev_docs"]
+
+# Inherit the repo's ruff rules, but target fpt's own floor so no 3.11+ idiom slips in.
+[tool.ruff]
+extend = "../../pyproject.toml"
+target-version = "py310"
