@@ -921,8 +921,9 @@ def _fetch(url: str) -> bytes:
     """Download ``url`` (already checked by :func:`_download_source`), size-capped."""
     opener = urllib.request.build_opener(_NoRedirect)
     hint_retry = (
-        "Nothing was written. A download link lasts about an hour: if it has expired, "
-        "redo the tool call and save its new response. " + _DO_NOT_HAND_WRITE
+        "Nothing was written. The link has probably expired or been used: a download "
+        "link lasts 15 minutes and serves its document once. Redo the tool call and "
+        "save its new response. " + _DO_NOT_HAND_WRITE
     )
     try:
         with opener.open(url, timeout=_DOWNLOAD_TIMEOUT_SECONDS) as reply:
@@ -940,8 +941,9 @@ def _fetch(url: str) -> bytes:
     except (urllib.error.URLError, http.client.HTTPException, OSError) as exc:
         reason = getattr(exc, "reason", exc)
         hint = (
-            "Nothing was written. Check the network connection and retry the same "
-            "save; if the link has expired, redo the tool call. "
+            "Nothing was written. A download link serves its document once, so a "
+            "retried save cannot fetch it again: check the network connection, then "
+            "redo the tool call and save its new response. "
         )
         # A sandbox's filtering proxy refuses the CONNECT for a host it does not allow.
         if "Tunnel connection failed" in str(reason):
