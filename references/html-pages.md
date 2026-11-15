@@ -20,7 +20,7 @@ Most pages load Chart.js from the CDN (`<script src="https://cdn.jsdelivr.net/np
   ```bash
   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject output.html \
     "__CHARTJS__"  "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
-    "__DATA__"     "${TMPDIR:-/tmp}/finplan/compare_data.json"
+    "__DATA__"     "$HOME/.cache/finplan/compare_data.json"
   ```
 
   The vendored bundle contains no `</script>` sequence, so it is safe to inline between script tags. Keeping Chart.js on the same inject pass means it never enters your context either.

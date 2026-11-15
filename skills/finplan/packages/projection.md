@@ -139,13 +139,15 @@ The data file schema is:
 }
 ```
 
+In the Claude Code plugin, create the directory with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` rather than the `mkdir` line below (see [file-tools.md](file-tools.md#embedding-data-in-self-contained-html-files)).
+
 ```bash
 # Download urls.data once, then query the local copy with jq
-mkdir -p "${TMPDIR:-/tmp}/finplan"
-curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/projection_data.json"
-jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/projection_data.json"
-jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "${TMPDIR:-/tmp}/finplan/projection_data.json"
-jq '.net_deposits[12].net_deposits_cents' "${TMPDIR:-/tmp}/finplan/projection_data.json"
+mkdir -p "$HOME/.cache/finplan" && chmod 700 "$HOME/.cache/finplan" &&
+  curl -s "<urls.data>" -o "$HOME/.cache/finplan/projection_data.json"
+jq '.percentile_timelines.p50[-1].total_value_cents' "$HOME/.cache/finplan/projection_data.json"
+jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "$HOME/.cache/finplan/projection_data.json"
+jq '.net_deposits[12].net_deposits_cents' "$HOME/.cache/finplan/projection_data.json"
 ```
 
 For embedding data in HTML dashboards, use bash to inject file contents directly — see [file-tools.md](file-tools.md).

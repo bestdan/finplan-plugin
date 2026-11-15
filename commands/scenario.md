@@ -207,7 +207,7 @@ sub-card in the ad-hoc section of that scenario's page, not as a new scenario co
 ## Step 5: Inject data + Chart.js, then open
 
 Download this scenario's (and the base's) timeline from the `compare_scenarios` data file to
-disk (handle `file://` paths directly; `curl` https URLs), write the HTML with
+disk (handle `file://` paths directly; `curl` https URLs into the private directory `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` creates, `~/.cache/finplan`, never `/tmp`), write the HTML with
 `__DATA_<SLUG>__` / `__DATA_BASE__` tokens plus the `__CHARTJS__` token (and any per-ad-hoc
 data tokens), then replace every token in **one** `finplan.py inject` call so nothing large enters your
 context:
@@ -223,8 +223,8 @@ context:
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject scenarios/<slug>/scenario.html \
   "__CHARTJS__"     "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
-  "__DATA_BASE__"   "/tmp/finplan/base_data.json" \
-  "__DATA_<SLUG>__" "/tmp/finplan/<slug>_data.json"
+  "__DATA_BASE__"   "$HOME/.cache/finplan/base_data.json" \
+  "__DATA_<SLUG>__" "$HOME/.cache/finplan/<slug>_data.json"
 ```
 
 Open the page with `open scenarios/<slug>/scenario.html` on the first render for this

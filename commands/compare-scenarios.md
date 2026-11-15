@@ -186,8 +186,8 @@ validation standard** the finished palette must pass, not a from-scratch design 
 
 `compare_scenarios` returns a **single** `urls.data` file containing every column's
 timelines nested under `timelines.<base|scenario_id>` — not one file per scenario. Download
-that **one** file to disk (handle `file://` paths directly; `curl` https URLs) into a temp
-dir you create first (`mkdir -p /tmp/finplan`), write the HTML with a single `__DATA__`
+that **one** file to disk (handle `file://` paths directly; `curl` https URLs) into the private
+directory `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` creates (`~/.cache/finplan`, never `/tmp`), write the HTML with a single `__DATA__`
 token plus the `__CHARTJS__` token, then replace both in **one** `finplan.py inject` call so nothing
 large enters your context. In the page's render loop, index that injected object by column
 id (`DATA.timelines[columnId]`) to draw each column.
@@ -195,7 +195,7 @@ id (`DATA.timelines[columnId]`) to draw each column.
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject scenarios/scenario_comparison.html \
   "__CHARTJS__"  "$CLAUDE_PLUGIN_ROOT/assets/chart.umd.min.js" \
-  "__DATA__"     "/tmp/finplan/compare_data.json"
+  "__DATA__"     "$HOME/.cache/finplan/compare_data.json"
 ```
 
 Open the page with `open scenarios/scenario_comparison.html` on the first render for this

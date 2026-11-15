@@ -2,7 +2,7 @@
 description: Save the current FinPlan user state JSON to the local file system after any state modification
 allowed-tools:
   - Glob
-  - Edit(//tmp/finplan/**)
+  - Edit(~/.cache/finplan/**)
   - Bash(python3 *scripts/finplan.py *)
 argument-hint: [file-path]
 ---
@@ -30,22 +30,22 @@ Save to the same `*_finplan_state.json` file in the current working directory th
    ```
 
    `save` downloads it only from the FinPlan server (or, for a local server, its download directory), checks it against `content_hash`, and installs it the same guarded way. Any other URL is refused.
-4. Otherwise, write the most recent `manage_state` response with the Write tool to `/tmp/finplan/response-<id>.json`, where `<id>` is the first 12 hex characters of the response's `state_hash`. Write it **exactly as the tool returned it**: every key, unedited, nothing added or removed. This works for every response shape: an `update_*` or `remove_*` delta, a person change, and a full document (`create`, `return_full_state=true`, or a migrated input).
+4. Otherwise, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir`. It creates `~/.cache/finplan`, a directory only you can read, and prints its absolute path. A response can hold the whole plan, so it never goes in `/tmp`, which every account on the machine can read. Write the most recent `manage_state` response with the Write tool to `<that path>/response-<id>.json`, where `<id>` is the first 12 hex characters of the response's `state_hash`. Write it **exactly as the tool returned it**: every key, unedited, nothing added or removed. This works for every response shape: an `update_*` or `remove_*` delta, a person change, and a full document (`create`, `return_full_state=true`, or a migrated input).
    - Naming the file after the hash gives every response its own new file, so an earlier save's file is never read by mistake. If Write refuses because the file has not been read yet, the file already exists, so this same response was written before: use that file as it is.
    - Do not pass the JSON through a shell heredoc or `echo`. Claude Code's Bash check refuses commands that mix braces and quotes.
 5. Run `save` on that file:
 
    ```bash
-   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response /tmp/finplan/response-<id>.json --expect-hash <hash>
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response "$HOME/.cache/finplan/response-<id>.json" --expect-hash <hash>
 
    # create: no state file yet, so no --expect-hash
-   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response /tmp/finplan/response-<id>.json
+   python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py save --state <file> --response "$HOME/.cache/finplan/response-<id>.json"
    ```
 6. Report the result from the JSON envelope `save` prints: the file path (`data.path`), what changed (`data.change`, `data.section`, `data.item_id`), and any `metadata.warnings`. Keep `metadata.result_hash`: it is the `--expect-hash` for the next save of this file.
 
 ## When save refuses
 
-`save` writes nothing on any error. It prints one JSON object to standard error, with a `hint` saying what to do. **Never write the state file by hand to get around an error: not with Write or Edit, which the plugin's hook denies on `finplan_state.json` and `*_finplan_state.json`, and not through the shell (`>`, `jq … > file`, `cp`, `mv`, `tee`, an inline `python3` script).** A redirect onto the file being read empties it before `jq` runs. Write is for the response file under `/tmp/finplan/` only.
+`save` writes nothing on any error. It prints one JSON object to standard error, with a `hint` saying what to do. **Never write the state file by hand to get around an error: not with Write or Edit, which the plugin's hook denies on `finplan_state.json` and `*_finplan_state.json`, and not through the shell (`>`, `jq … > file`, `cp`, `mv`, `tee`, an inline `python3` script).** A redirect onto the file being read empties it before `jq` runs. Write is for the response file under `~/.cache/finplan/` only.
 
 - **Exit 3, `error: stale_write`:** the file changed after its hash was recorded. The response is kept as `<file>.pending.json` for reference. Re-read the state file, record its hash, redo the `manage_state` call against it, and save that new response. Do not copy the pending response over the file.
 - **Exit 3, `error: hash_mismatch`:** the rebuilt document does not match the server's `state_hash`. Most often the `state_json` passed to `manage_state` was not the file's content verbatim. Re-read the file and redo the edit against it unchanged. If the same edit has already failed this way, stop and tell the user rather than retrying: the file may hold keys of its own the server does not keep.

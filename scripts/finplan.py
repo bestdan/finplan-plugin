@@ -20,6 +20,8 @@ same, and ``save`` runs through fpt itself when a supported version is installed
 * ``hash``   — print a state file's content hash, for ``save --expect-hash``.
 * ``fmt``    — format integer cents as a ``$X,XXX.XX`` dollar string, or add
                ``*_dollars`` siblings for every ``*_cents`` leaf in a JSON doc.
+* ``workdir`` — create the private directory for plan data on its way to disk
+               (responses, downloads) and print its path.
 """
 
 from __future__ import annotations
@@ -1610,6 +1612,42 @@ def _cmd_fmt(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def work_dir() -> str:
+    """Where plan data waits on its way to disk: ``~/.cache/finplan``.
+
+    A fixed path, not ``$XDG_CACHE_HOME``, because the permission rule that lets the
+    agent write there (``Edit(~/.cache/finplan/**)``) names it literally.
+    """
+    return os.path.join(os.path.expanduser("~"), ".cache", "finplan")
+
+
+def _cmd_workdir(args: argparse.Namespace) -> int:
+    """Create the work directory, readable by this account only, and print its path.
+
+    The files in it are written by the agent's own file tool, at the umask's mode, so
+    the directory's 0700 is what keeps a household's plan from other accounts. An
+    existing directory is tightened to 0700, and one that is a symlink or belongs to
+    another account is refused, since its owner could read everything put in it.
+    """
+    del args
+    path = work_dir()
+    try:
+        os.makedirs(path, mode=0o700, exist_ok=True)
+        if os.path.islink(path):
+            print(f"error: {path!r} is a symlink; remove it and retry", file=sys.stderr)
+            return EXIT_LOCAL_IO
+        getuid = getattr(os, "getuid", None)
+        if getuid is not None and os.stat(path).st_uid != getuid():
+            print(f"error: {path!r} belongs to another account; remove it", file=sys.stderr)
+            return EXIT_LOCAL_IO
+        os.chmod(path, 0o700)
+    except OSError as exc:
+        print(f"error: cannot create {path!r}: {exc}", file=sys.stderr)
+        return EXIT_LOCAL_IO
+    print(path)
+    return EXIT_OK
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Construct the argument parser and its subcommands."""
     parser = argparse.ArgumentParser(
@@ -1658,6 +1696,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="add *_dollars siblings for every *_cents leaf in a JSON document",
     )
     p_fmt.set_defaults(func=_cmd_fmt)
+
+    p_workdir = subparsers.add_parser(
+        "workdir",
+        help="create the private directory for plan data (mode 0700) and print its path",
+    )
+    p_workdir.set_defaults(func=_cmd_workdir)
 
     return parser
 

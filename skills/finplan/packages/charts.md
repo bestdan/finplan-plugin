@@ -116,12 +116,12 @@ Call `run_projection(...)`. The response includes:
 
 ### Step 2: Save the data and schema files locally
 
-Download the files so the injection script can read them:
+Download the files so the injection script can read them. In the Claude Code plugin, create the directory with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` rather than the `mkdir` line below (see [file-tools.md](file-tools.md#embedding-data-in-self-contained-html-files)):
 
 ```bash
-mkdir -p "${TMPDIR:-/tmp}/finplan"
-curl -s "https://mcp.finplan.tools/files/{uid}_data.json" -o "${TMPDIR:-/tmp}/finplan/projection_data.json"
-curl -s "https://mcp.finplan.tools/files/{uid}_schema.json" -o "${TMPDIR:-/tmp}/finplan/projection_schema.json"
+mkdir -p "$HOME/.cache/finplan" && chmod 700 "$HOME/.cache/finplan" &&
+  curl -s "https://mcp.finplan.tools/files/{uid}_data.json" -o "$HOME/.cache/finplan/projection_data.json"
+curl -s "https://mcp.finplan.tools/files/{uid}_schema.json" -o "$HOME/.cache/finplan/projection_schema.json"
 ```
 
 Use the actual URLs from `urls.data` and `urls.schema` in the tool response.
@@ -131,7 +131,7 @@ Use the actual URLs from `urls.data` and `urls.schema` in the tool response.
 Read the schema file (it's small) to confirm the field names and types you'll reference in your JS code:
 
 ```bash
-jq '.structure.fields | keys' "${TMPDIR:-/tmp}/finplan/projection_schema.json"
+jq '.structure.fields | keys' "$HOME/.cache/finplan/projection_schema.json"
 ```
 
 The schema tells you exactly what's in the data file without reading it. For `run_projection`, the key fields are:
@@ -163,7 +163,7 @@ Write the HTML file using the Write tool. Put a **placeholder token** where the 
 
 ### Step 5: Inject the data file into the HTML
 
-Run the [inject script](file-tools.md#embedding-data-in-self-contained-html-files) with `output.html` as the HTML file and one placeholder/file pair: `"__DATA_PROJECTION__" "${TMPDIR:-/tmp}/finplan/projection_data.json"`.
+Run the [inject script](file-tools.md#embedding-data-in-self-contained-html-files) with `output.html` as the HTML file and one placeholder/file pair: `"__DATA_PROJECTION__" "$HOME/.cache/finplan/projection_data.json"`.
 
 ### Step 6: Open
 

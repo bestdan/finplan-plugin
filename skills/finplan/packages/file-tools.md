@@ -52,17 +52,17 @@ Don't load data files into context — see [SKILL.md](../SKILL.md#data-files-sta
 
 ```bash
 # Download the data file once (use the actual urls.data from the response)
-mkdir -p "${TMPDIR:-/tmp}/finplan"
-curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/data.json"
+mkdir -p "$HOME/.cache/finplan" && chmod 700 "$HOME/.cache/finplan" &&
+  curl -s "<urls.data>" -o "$HOME/.cache/finplan/data.json"
 
 # Extract specific values
-jq '.percentile_timelines.p50[-1].total_value_cents' "${TMPDIR:-/tmp}/finplan/data.json"
+jq '.percentile_timelines.p50[-1].total_value_cents' "$HOME/.cache/finplan/data.json"
 
 # Get a range of months
-jq '.percentile_timelines.p50[0:12]' "${TMPDIR:-/tmp}/finplan/data.json"
+jq '.percentile_timelines.p50[0:12]' "$HOME/.cache/finplan/data.json"
 
 # Get p10 vs p90 range at final month
-jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "${TMPDIR:-/tmp}/finplan/data.json"
+jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_timelines.p90[-1].total_value_cents}' "$HOME/.cache/finplan/data.json"
 ```
 
 ## Embedding data in self-contained HTML files
@@ -70,13 +70,13 @@ jq '{p10: .percentile_timelines.p10[-1].total_value_cents, p90: .percentile_time
 When building HTML files, embed data via the placeholder/inject pattern rather than writing arrays as JS literals:
 
 1. **Write the HTML** with placeholder tokens where data should go (e.g., `__DATA_TOTAL_PORTFOLIO__`)
-2. **Download each `urls.data` file** into one scratch directory, `${TMPDIR:-/tmp}/finplan/`, never the user's working directory: `mkdir -p "${TMPDIR:-/tmp}/finplan" && curl -s "<urls.data>" -o "${TMPDIR:-/tmp}/finplan/<file>"`.
+2. **Download each `urls.data` file** into one private scratch directory, `~/.cache/finplan/`, never the user's working directory and never `/tmp`, which other accounts on the machine can read: `mkdir -p "$HOME/.cache/finplan" && chmod 700 "$HOME/.cache/finplan" && curl -s "<urls.data>" -o "$HOME/.cache/finplan/<file>"`. The `chmod 700` is what keeps the plan private, since the files themselves take the default mode. In the Claude Code plugin, create the directory with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` instead, and download into the path it prints: it also refuses a symlinked directory or one another account owns, and the plugin's allowlist already covers it. The `mkdir` and `chmod` commands on this page are for clients without the plugin.
 3. **Run `finplan.py inject`** (the helper that ships with the Claude Code plugin) to replace each placeholder with its downloaded file. Pass the HTML file, then one placeholder/file pair per token:
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject dashboard.html \
-  "__DATA_PLACEHOLDER_1__" "${TMPDIR:-/tmp}/finplan/scenario1_data.json" \
-  "__DATA_PLACEHOLDER_2__" "${TMPDIR:-/tmp}/finplan/scenario2_data.json"
+  "__DATA_PLACEHOLDER_1__" "$HOME/.cache/finplan/scenario1_data.json" \
+  "__DATA_PLACEHOLDER_2__" "$HOME/.cache/finplan/scenario2_data.json"
 ```
 
 This keeps the data out of your context window entirely. You already know the data shapes from the inline schemas — use them to write correct JavaScript rendering code.

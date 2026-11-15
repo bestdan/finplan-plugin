@@ -231,12 +231,12 @@ calculate net deposits as only cumulative contributions starting from zero.
 
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py inject OUTPUT_FILE.html \
-  "__DATA_TOTAL_PORTFOLIO__" "/tmp/finplan/abc123_data.json" \
-  "__DATA_RETIREMENT__" "/tmp/finplan/def456_data.json" \
-  "__DATA_EDUCATION__" "/tmp/finplan/ghi789_data.json"
+  "__DATA_TOTAL_PORTFOLIO__" "$HOME/.cache/finplan/abc123_data.json" \
+  "__DATA_RETIREMENT__" "$HOME/.cache/finplan/def456_data.json" \
+  "__DATA_EDUCATION__" "$HOME/.cache/finplan/ghi789_data.json"
 ```
 
-Use the actual `urls.data` paths returned by each MCP tool call. A `file://` path can be passed as-is (`inject` strips the prefix). `inject` reads only local files, so download an `https` URL first: `mkdir -p /tmp/finplan && curl -s "<urls.data>" -o /tmp/finplan/<file>`.
+Use the actual `urls.data` paths returned by each MCP tool call. A `file://` path can be passed as-is (`inject` strips the prefix). `inject` reads only local files, so download an `https` URL first, into the private directory `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/finplan.py workdir` creates and prints (`~/.cache/finplan`, readable only by you): `curl -s "<urls.data>" -o "$HOME/.cache/finplan/<file>"`. Never download into `/tmp`, which other accounts on the machine can read.
 
 **Summary**: Use `summary` for statistics, placeholder tokens + bash injection for HTML data embedding.
 
