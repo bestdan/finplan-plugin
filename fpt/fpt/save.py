@@ -123,7 +123,10 @@ _mcp_config: str | None = None
 # default and the variable match the server's (finplan_core.io.finplan_temp_dir).
 _DATA_DIR_ENV = "FINPLAN_DATA_DIR"
 _DEFAULT_DATA_DIR = "/tmp/finplan"
-# The server refuses to write a download larger than this (MAX_BUNDLE_SIZE_BYTES).
+# The server mints no plan download larger than this (MAX_STATE_DOWNLOAD_BYTES), so a
+# bigger one is not a state document. Every download fetched here is one: from
+# migrate_state, manage_state or the sync tools. Result bundles may be larger
+# (MAX_BUNDLE_SIZE_BYTES), but they are never fetched here.
 _MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024
 _DOWNLOAD_TIMEOUT_SECONDS = 60
 
